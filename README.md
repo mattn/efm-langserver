@@ -2,6 +2,8 @@
 
 General purpose Language Server that can use specified error message format generated from specified command. This is useful for editing code with linter.
 
+![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)
+
 ## Usage
 
 ```

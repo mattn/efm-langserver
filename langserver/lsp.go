@@ -57,6 +57,10 @@ type DidOpenTextDocumentParams struct {
 	TextDocument TextDocumentItem `json:"textDocument"`
 }
 
+type DidCloseTextDocumentParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
 type TextDocumentContentChangeEvent struct {
 	Range       Range  `json:"range"`
 	RangeLength int    `json:"rangeLength"`
@@ -69,7 +73,7 @@ type DidChangeTextDocumentParams struct {
 }
 
 type DidSaveTextDocumentParams struct {
-	Text         string                 `json:"text"`
+	Text         *string                `json:"text"`
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 

@@ -18,7 +18,7 @@ func (h *LangHandler) handleTextDocumentDidChange(ctx context.Context, conn *jso
 	}
 
 	if h.stdin {
-		h.UpdateFile(params.TextDocument.URI, params.ContentChanges[0].Text)
+		h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text)
 	}
 	return nil, nil
 }

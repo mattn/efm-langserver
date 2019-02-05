@@ -19,24 +19,27 @@ func NewHandler(efms []string, stdin bool, offset int, cmd string, args ...strin
 		efms = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 	}
 	var langHandler = &LangHandler{
-		files:  make(map[string]*File),
-		cmd:    cmd,
-		args:   args,
-		efms:   efms,
-		stdin:  stdin,
-		offset: offset,
+		efms:    efms,
+		cmd:     cmd,
+		stdin:   stdin,
+		offset:  offset,
+		args:    args,
+		files:   make(map[string]*File),
+		request: make(chan string),
 	}
+	go langHandler.linter()
 	return jsonrpc2.HandlerWithError(langHandler.handle)
 }
 
 type LangHandler struct {
-	files  map[string]*File
-	conn   *jsonrpc2.Conn
-	cmd    string
-	args   []string
-	efms   []string
-	stdin  bool
-	offset int
+	efms    []string
+	stdin   bool
+	offset  int
+	cmd     string
+	args    []string
+	conn    *jsonrpc2.Conn
+	files   map[string]*File
+	request chan string
 }
 
 type File struct {
@@ -81,77 +84,110 @@ func toURI(path string) *url.URL {
 	}
 }
 
-func (h *LangHandler) UpdateFile(uri string, text string) error {
-	f := &File{
-		Text: text,
+func (h *LangHandler) linter() {
+	for {
+		uri, ok := <-h.request
+		if !ok {
+			break
+		}
+		for k, v := range h.lint(uri) {
+			var diagnosticsParams PublishDiagnosticsParams
+			diagnosticsParams.URI = toURI(k).String()
+			diagnosticsParams.Diagnostics = v
+			h.conn.Notify(context.Background(), "textDocument/publishDiagnostics", &diagnosticsParams)
+		}
 	}
-	h.files[uri] = f
+}
+
+func (h *LangHandler) lint(uri string) map[string][]Diagnostic {
+	f, ok := h.files[uri]
+	if !ok {
+		fmt.Fprintf(os.Stderr, "document not found")
+		return nil
+	}
 
 	fname, err := fromURI(uri)
 	if err != nil {
-		return err
+		fmt.Fprint(os.Stderr, err)
+		return nil
 	}
 
 	efms, err := errorformat.NewErrorformat(h.efms)
 	if err != nil {
-		return err
+		fmt.Fprint(os.Stderr, err)
+		return nil
 	}
-	dmap := make(map[string][]Diagnostic)
+	diagnostics := make(map[string][]Diagnostic)
 	for k, _ := range h.files {
 		fname, err := fromURI(k)
 		if err != nil {
 			continue
 		}
-		dmap[fname] = []Diagnostic{}
+		diagnostics[fname] = []Diagnostic{}
 	}
 
 	cmd := exec.Command(h.cmd, h.args...)
 	if h.stdin {
-		cmd.Stdin = strings.NewReader(text)
+		cmd.Stdin = strings.NewReader(f.Text)
 	}
 	b, err := cmd.CombinedOutput()
-	if err != nil {
-		for _, line := range strings.Split(string(b), "\n") {
-			for _, ef := range efms.Efms {
-				m := ef.Match(string(line))
-				if m == nil {
-					continue
-				}
-				if h.stdin && (m.F == "stdin" || m.F == "-") {
-					m.F = fname
-				} else {
-					m.F = filepath.ToSlash(m.F)
-				}
-				if m.C == 0 {
-					m.C = 1
-				}
-				if _, ok := dmap[m.F]; !ok {
-					dmap[m.F] = []Diagnostic{}
-				}
-				fmt.Fprintf(os.Stderr, "%+v\n", m)
-				dmap[m.F] = append(dmap[m.F], Diagnostic{
-					Range: Range{
-						Start: Position{
-							Line:      m.L - 1 - h.offset,
-							Character: m.C - 1,
-						},
-						End: Position{
-							Line:      m.L - 1 - h.offset,
-							Character: m.C - 1,
-						},
-					},
-					Message:  m.M,
-					Severity: 1,
-				})
+	if err == nil {
+		fmt.Fprintf(os.Stderr, "succeeded: %q", f.Text)
+		return diagnostics
+	}
+	for _, line := range strings.Split(string(b), "\n") {
+		for _, ef := range efms.Efms {
+			m := ef.Match(string(line))
+			if m == nil {
+				continue
 			}
+			if h.stdin && (m.F == "stdin" || m.F == "-") {
+				m.F = fname
+			} else {
+				m.F = filepath.ToSlash(m.F)
+			}
+			if m.C == 0 {
+				m.C = 1
+			}
+			if _, ok := diagnostics[m.F]; !ok {
+				diagnostics[m.F] = []Diagnostic{}
+			}
+			diagnostics[m.F] = append(diagnostics[m.F], Diagnostic{
+				Range: Range{
+					Start: Position{
+						Line:      m.L - 1 - h.offset,
+						Character: m.C - 1,
+					},
+					End: Position{
+						Line:      m.L - 1 - h.offset,
+						Character: m.C - 1,
+					},
+				},
+				Message:  m.M,
+				Severity: 1,
+			})
 		}
 	}
-	for k, v := range dmap {
-		var diagnosticsParams PublishDiagnosticsParams
-		diagnosticsParams.URI = toURI(k).String()
-		diagnosticsParams.Diagnostics = v
-		h.conn.Notify(context.Background(), "textDocument/publishDiagnostics", &diagnosticsParams)
+	return diagnostics
+}
+
+func (h *LangHandler) closeFile(uri string) error {
+	delete(h.files, uri)
+	return nil
+}
+
+func (h *LangHandler) saveFile(uri string) error {
+	h.request <- uri
+	return nil
+}
+
+func (h *LangHandler) updateFile(uri string, text string) error {
+	f := &File{
+		Text: text,
 	}
+	h.files[uri] = f
+
+	h.request <- uri
 	return nil
 }
 
@@ -159,12 +195,16 @@ func (h *LangHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	switch req.Method {
 	case "initialize":
 		return h.handleInitialize(ctx, conn, req)
+	case "shutdown":
+		return h.handleShutdown(ctx, conn, req)
 	case "textDocument/didOpen":
 		return h.handleTextDocumentDidOpen(ctx, conn, req)
 	case "textDocument/didChange":
 		return h.handleTextDocumentDidChange(ctx, conn, req)
 	case "textDocument/didSave":
 		return h.handleTextDocumentDidSave(ctx, conn, req)
+	case "textDocument/didClose":
+		return h.handleTextDocumentDidClose(ctx, conn, req)
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}

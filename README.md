@@ -40,6 +40,18 @@ augroup LspVim
 augroup END
 ```
 
+### Configuration for Markdown with syntax check using [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli).
+```vim
+augroup LspMarkdown
+  au!
+  autocmd User lsp_setup call lsp#register_server({
+      \ 'name': 'efm-langserver-markdown',
+      \ 'cmd': {server_info->['efm-langserver', '-efm=%f: %l: %m', '-stdin', &shell, &shellcmdflag, 'markdownlint -s']},
+      \ 'whitelist': ['markdown'],
+      \ })
+augroup END
+```
+
 ## Installation
 
 ```

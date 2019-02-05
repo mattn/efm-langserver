@@ -91,10 +91,13 @@ func (h *LangHandler) linter() {
 			break
 		}
 		for k, v := range h.lint(uri) {
-			var diagnosticsParams PublishDiagnosticsParams
-			diagnosticsParams.URI = toURI(k).String()
-			diagnosticsParams.Diagnostics = v
-			h.conn.Notify(context.Background(), "textDocument/publishDiagnostics", &diagnosticsParams)
+			h.conn.Notify(
+				context.Background(),
+				"textDocument/publishDiagnostics",
+				&PublishDiagnosticsParams{
+					URI:         toURI(k).String(),
+					Diagnostics: v,
+				})
 		}
 	}
 }
@@ -154,14 +157,8 @@ func (h *LangHandler) lint(uri string) map[string][]Diagnostic {
 			}
 			diagnostics[m.F] = append(diagnostics[m.F], Diagnostic{
 				Range: Range{
-					Start: Position{
-						Line:      m.L - 1 - h.offset,
-						Character: m.C - 1,
-					},
-					End: Position{
-						Line:      m.L - 1 - h.offset,
-						Character: m.C - 1,
-					},
+					Start: Position{Line: m.L - 1 - h.offset, Character: m.C - 1},
+					End:   Position{Line: m.L - 1 - h.offset, Character: m.C - 1},
 				},
 				Message:  m.M,
 				Severity: 1,
@@ -179,6 +176,10 @@ func (h *LangHandler) closeFile(uri string) error {
 func (h *LangHandler) saveFile(uri string) error {
 	h.request <- uri
 	return nil
+}
+
+func (h *LangHandler) openFile(uri string, text string) error {
+	return h.updateFile(uri, text)
 }
 
 func (h *LangHandler) updateFile(uri string, text string) error {

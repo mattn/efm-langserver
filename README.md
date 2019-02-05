@@ -40,19 +40,6 @@ augroup LspVim
 augroup END
 ```
 
-### Configuration for Perl with syntax check.
-
-```vim
-augroup LspPerl
-  au!
-  autocmd User lsp_setup call lsp#register_server({
-      \ 'name': 'efm-langserver-perl',
-      \ 'cmd': {server_info->['efm-langserver', '-stdin', 'perl', '-c']},
-      \ 'whitelist': ['perl'],
-      \ })
-augroup END
-```
-
 ## Installation
 
 ```

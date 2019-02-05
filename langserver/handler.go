@@ -14,27 +14,29 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func NewHandler(efms []string, stdin bool, cmd string, args ...string) jsonrpc2.Handler {
+func NewHandler(efms []string, stdin bool, offset int, cmd string, args ...string) jsonrpc2.Handler {
 	if efms == nil || len(efms) == 0 {
 		efms = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 	}
 	var langHandler = &LangHandler{
-		files: make(map[string]*File),
-		cmd:   cmd,
-		args:  args,
-		efms:  efms,
-		stdin: stdin,
+		files:  make(map[string]*File),
+		cmd:    cmd,
+		args:   args,
+		efms:   efms,
+		stdin:  stdin,
+		offset: offset,
 	}
 	return jsonrpc2.HandlerWithError(langHandler.handle)
 }
 
 type LangHandler struct {
-	files map[string]*File
-	conn  *jsonrpc2.Conn
-	cmd   string
-	args  []string
-	efms  []string
-	stdin bool
+	files  map[string]*File
+	conn   *jsonrpc2.Conn
+	cmd    string
+	args   []string
+	efms   []string
+	stdin  bool
+	offset int
 }
 
 type File struct {
@@ -123,9 +125,6 @@ func (h *LangHandler) UpdateFile(uri string, text string) error {
 				if m.C == 0 {
 					m.C = 1
 				}
-				if m.L == 0 {
-					m.L = 1
-				}
 				if _, ok := dmap[m.F]; !ok {
 					dmap[m.F] = []Diagnostic{}
 				}
@@ -133,11 +132,11 @@ func (h *LangHandler) UpdateFile(uri string, text string) error {
 				dmap[m.F] = append(dmap[m.F], Diagnostic{
 					Range: Range{
 						Start: Position{
-							Line:      m.L - 1,
+							Line:      m.L - 1 - h.offset,
 							Character: m.C - 1,
 						},
 						End: Position{
-							Line:      m.L - 1,
+							Line:      m.L - 1 - h.offset,
 							Character: m.C - 1,
 						},
 					},

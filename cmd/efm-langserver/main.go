@@ -26,8 +26,10 @@ func (i *efms) Set(value string) error {
 func main() {
 	var efms efms
 	var stdin bool
+	var offset int
 	flag.Var(&efms, "efm", "errorformat")
 	flag.BoolVar(&stdin, "stdin", false, "use stdin")
+	flag.IntVar(&offset, "offset", 0, "number offset")
 	flag.Parse()
 	if flag.NArg() == 0 {
 		flag.Usage()
@@ -45,7 +47,7 @@ func main() {
 			args = append([]string{"/c", exe}, args...)
 		}
 	}
-	handler := langserver.NewHandler(efms, stdin, exe, args...)
+	handler := langserver.NewHandler(efms, stdin, offset, exe, args...)
 	var connOpt []jsonrpc2.ConnOpt
 	<-jsonrpc2.NewConn(
 		context.Background(),

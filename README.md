@@ -19,7 +19,7 @@ augroup LspERB
   au!
   autocmd User lsp_setup call lsp#register_server({
       \ 'name': 'efm-langserver-erb',
-      \ 'cmd': {server_info->['efm-langserver', '-stdin', &shell, &shellcmdflag, 'erb -x -T - | ruby -c']},
+      \ 'cmd': {server_info->['efm-langserver', '-offset=1', '-stdin', &shell, &shellcmdflag, 'erb -x -T - | ruby -c']},
       \ 'whitelist': ['eruby'],
       \ })
 augroup END

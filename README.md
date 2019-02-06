@@ -1,20 +1,21 @@
 # efm-langserver
 
-General purpose Language Server that can use specified error message format generated from specified command. This is useful for editing code with linter.
+General purpose Language Server that can use specified error message format
+generated from specified command. This is useful for editing code with linter.
 
 ![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)
 
 ## Usage
 
-```
+```text
 Usage: efm-langserver [command...]
   -efm value
-    	errorformat
+       errorformat
   -stdin
-    	use stdin
+       use stdin
 ```
 
-### Configuration for ERB with syntax check using erb command.
+### Configuration for ERB with syntax check using erb command
 
 ```vim
 augroup LspERB
@@ -27,7 +28,7 @@ augroup LspERB
 augroup END
 ```
 
-### Configuration for Vim script with syntax check using vint.
+### Configuration for Vim script with syntax check using [vint](https://github.com/Kuniwak/vint)
 
 ```vim
 augroup LspVim
@@ -40,7 +41,8 @@ augroup LspVim
 augroup END
 ```
 
-### Configuration for Markdown with syntax check using [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli).
+### Configuration for Markdown with syntax check using [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli)
+
 ```vim
 augroup LspMarkdown
   au!
@@ -54,7 +56,7 @@ augroup END
 
 ## Installation
 
-```
+```console
 $ go get github.com/mattn/efm-langserver/cmd/efm-langserver
 ```
 

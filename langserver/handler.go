@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"unicode"
 
@@ -90,19 +91,17 @@ func (h *LangHandler) linter() {
 		if !ok {
 			break
 		}
-		for k, v := range h.lint(uri) {
-			h.conn.Notify(
-				context.Background(),
-				"textDocument/publishDiagnostics",
-				&PublishDiagnosticsParams{
-					URI:         toURI(k).String(),
-					Diagnostics: v,
-				})
-		}
+		h.conn.Notify(
+			context.Background(),
+			"textDocument/publishDiagnostics",
+			&PublishDiagnosticsParams{
+				URI:         uri,
+				Diagnostics: h.lint(uri),
+			})
 	}
 }
 
-func (h *LangHandler) lint(uri string) map[string][]Diagnostic {
+func (h *LangHandler) lint(uri string) []Diagnostic {
 	f, ok := h.files[uri]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "document not found")
@@ -114,21 +113,17 @@ func (h *LangHandler) lint(uri string) map[string][]Diagnostic {
 		fmt.Fprint(os.Stderr, err)
 		return nil
 	}
+	fname = filepath.ToSlash(fname)
+	if runtime.GOOS == "windows" {
+		fname = strings.ToLower(fname)
+	}
 
 	efms, err := errorformat.NewErrorformat(h.efms)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		return nil
 	}
-	diagnostics := make(map[string][]Diagnostic)
-	for k, _ := range h.files {
-		fname, err := fromURI(k)
-		if err != nil {
-			continue
-		}
-		diagnostics[fname] = []Diagnostic{}
-	}
-
+	diagnostics := []Diagnostic{}
 	cmd := exec.Command(h.cmd, h.args...)
 	if h.stdin {
 		cmd.Stdin = strings.NewReader(f.Text)
@@ -152,10 +147,18 @@ func (h *LangHandler) lint(uri string) map[string][]Diagnostic {
 			if m.C == 0 {
 				m.C = 1
 			}
-			if _, ok := diagnostics[m.F]; !ok {
-				diagnostics[m.F] = []Diagnostic{}
+			path, err := filepath.Abs(m.F)
+			if err != nil {
+				continue
 			}
-			diagnostics[m.F] = append(diagnostics[m.F], Diagnostic{
+			path = filepath.ToSlash(path)
+			if runtime.GOOS == "windows" {
+				path = strings.ToLower(path)
+			}
+			if path != fname {
+				continue
+			}
+			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
 					Start: Position{Line: m.L - 1 - h.offset, Character: m.C - 1},
 					End:   Position{Line: m.L - 1 - h.offset, Character: m.C - 1},
@@ -165,6 +168,7 @@ func (h *LangHandler) lint(uri string) map[string][]Diagnostic {
 			})
 		}
 	}
+
 	return diagnostics
 }
 

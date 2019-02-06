@@ -34,7 +34,7 @@ type CompletionProvider struct {
 type ServerCapabilities struct {
 	TextDocumentSync       TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
 	DocumentSymbolProvider bool                 `json:"documentSymbolProvider,omitempty"`
-	CompletionProvider     CompletionProvider   `json:"completionProvider"`
+	CompletionProvider     *CompletionProvider  `json:"completionProvider, omitempty"`
 }
 
 type TextDocumentItem struct {

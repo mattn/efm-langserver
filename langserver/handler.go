@@ -2,6 +2,7 @@ package langserver
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -23,22 +24,17 @@ type Config struct {
 }
 
 type Language struct {
-	LintFormats []string `yaml:"lint-formats"`
-	LintStdin   bool     `yaml:"lint-stdin"`
-	LintOffset  int      `yaml:"lint-offset"`
-	LintCommand string   `yaml:"lint-command"`
+	LintFormats   []string `yaml:"lint-formats"`
+	LintStdin     bool     `yaml:"lint-stdin"`
+	LintOffset    int      `yaml:"lint-offset"`
+	LintCommand   string   `yaml:"lint-command"`
+	FormatCommand string   `yaml:"format-command"`
 }
 
 func NewHandler(config *Config) jsonrpc2.Handler {
-	for _, v := range config.Languages {
-		if v.LintFormats == nil || len(v.LintFormats) == -2 {
-			v.LintFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
-		}
-	}
 	if config.LogWriter == nil {
 		config.LogWriter = os.Stderr
 	}
-	// TODO Add formatCommand
 	var handler = &langHandler{
 		logger:  log.New(config.LogWriter, "", log.LstdFlags),
 		configs: config.Languages,
@@ -144,7 +140,12 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 		fname = strings.ToLower(fname)
 	}
 
-	efms, err := errorformat.NewErrorformat(config.LintFormats)
+	formats := config.LintFormats
+	if len(formats) == 0 {
+		formats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+	}
+
+	efms, err := errorformat.NewErrorformat(formats)
 	if err != nil {
 		h.logger.Printf("invalid error-format: %v", config.LintFormats)
 		return nil
@@ -235,6 +236,65 @@ func (h *langHandler) updateFile(uri string, text string) error {
 	return nil
 }
 
+func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
+	f, ok := h.files[uri]
+	if !ok {
+		return nil, fmt.Errorf("document not found: %v", uri)
+	}
+
+	config, ok := h.configs[f.LanguageId]
+	if !ok || config.FormatCommand == "" {
+		return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
+	}
+
+	fname, err := fromURI(uri)
+	if err != nil {
+		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
+	}
+
+	fname = filepath.ToSlash(fname)
+	if runtime.GOOS == "windows" {
+		fname = strings.ToLower(fname)
+	}
+
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", config.FormatCommand)
+	} else {
+		cmd = exec.Command("sh", "-c", config.FormatCommand)
+	}
+	cmd.Stdin = strings.NewReader(f.Text)
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, errors.New(string(b))
+	}
+	h.logger.Println("format succeeded")
+	text := string(b)
+	lines := strings.Split(text, "\n")
+
+	return []TextEdit{
+		{
+			Range: Range{
+				Start: Position{Line: 0, Character: 0},
+				End:   Position{Line: len(lines), Character: len(lines[len(lines)-1])},
+			},
+			NewText: text,
+		},
+	}, nil
+}
+
+func (h *langHandler) configFor(uri string) *Language {
+	f, ok := h.files[uri]
+	if !ok {
+		return &Language{}
+	}
+	c, ok := h.configs[f.LanguageId]
+	if !ok {
+		return &Language{}
+	}
+	return c
+}
+
 func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
 	switch req.Method {
 	case "initialize":
@@ -249,15 +309,9 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentDidSave(ctx, conn, req)
 	case "textDocument/didClose":
 		return h.handleTextDocumentDidClose(ctx, conn, req)
+	case "textDocument/formatting":
+		return h.handleTextDocumentFormatting(ctx, conn, req)
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
-}
-
-func (h *langHandler) configFor(uri string) *Language {
-	f, ok := h.files[uri]
-	if !ok {
-		return &Language{}
-	}
-	return h.configs[f.LanguageId]
 }

@@ -21,7 +21,8 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 
 	return InitializeResult{
 		Capabilities: ServerCapabilities{
-			TextDocumentSync: TDSKFull,
+			TextDocumentSync:           TDSKFull,
+			DocumentFormattingProvider: true,
 		},
 	}, nil
 }

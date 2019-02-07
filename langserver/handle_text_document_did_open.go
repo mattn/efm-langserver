@@ -7,7 +7,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *LangHandler) handleTextDocumentDidOpen(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleTextDocumentDidOpen(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -17,6 +17,9 @@ func (h *LangHandler) handleTextDocumentDidOpen(ctx context.Context, conn *jsonr
 		return nil, err
 	}
 
-	h.openFile(params.TextDocument.URI, params.TextDocument.Text)
+	h.openFile(params.TextDocument.URI, params.TextDocument.LanguageID)
+	if err := h.updateFile(params.TextDocument.URI, params.TextDocument.Text); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }

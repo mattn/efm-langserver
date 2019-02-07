@@ -32,9 +32,10 @@ type CompletionProvider struct {
 }
 
 type ServerCapabilities struct {
-	TextDocumentSync       TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
-	DocumentSymbolProvider bool                 `json:"documentSymbolProvider,omitempty"`
-	CompletionProvider     *CompletionProvider  `json:"completionProvider, omitempty"`
+	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
+	DocumentSymbolProvider     bool                 `json:"documentSymbolProvider,omitempty"`
+	CompletionProvider         *CompletionProvider  `json:"completionProvider,omitempty"`
+	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitEmpty"`
 }
 
 type TextDocumentItem struct {
@@ -109,4 +110,19 @@ type Diagnostic struct {
 type PublishDiagnosticsParams struct {
 	URI         string       `json:"uri"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
+}
+
+type FormattingOptions struct {
+	TabSize      int64 `json:"tabSize"`
+	InsertSpaces bool  `json:"insertSpaces"`
+}
+
+type DocumentFormattingParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Options      FormattingOptions      `json:"options"`
+}
+
+type TextEdit struct {
+	Range   Range  `json:"range"`
+	NewText string `json:"newText"`
 }

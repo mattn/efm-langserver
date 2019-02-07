@@ -8,51 +8,58 @@ generated from specified command. This is useful for editing code with linter.
 ## Usage
 
 ```text
-Usage: efm-langserver [command...]
-  -efm value
-       errorformat
-  -stdin
-       use stdin
+Usage of efm-langserver:
+  -c string
+        path to config.yaml
+  -log string
+        logfile
 ```
 
-### Configuration for ERB with syntax check using erb command
+### Example for config.yaml
+
+Location of config.yaml is:
+
+* UNIX: `$HOME/.config/efm-langserver/config.yaml`
+* Windows: `%APPDATA%\efm-langserver\config.yaml`
+
+Below is example for config.yaml .
+
+```yaml
+languages:
+  eruby:
+    lint-command: 'erb -x -T - | ruby -c'
+    lint-stdin: true
+    lint-offset: 1
+    format-command: 'htmlbeautifier'
+
+  vim:
+    lint-command: 'vint -'
+    lint-stdin: true
+
+  markdown:
+    lint-command: 'markdownlint -s'
+    lint-stdin: true
+    lint-formats:
+      - '%f: %l: %m'
+```
+
+### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
 
 ```vim
-augroup LspERB
+augroup LspEFM
   au!
   autocmd User lsp_setup call lsp#register_server({
       \ 'name': 'efm-langserver-erb',
-      \ 'cmd': {server_info->['efm-langserver', '-offset=1', '-stdin', &shell, &shellcmdflag, 'erb -x -T - | ruby -c']},
-      \ 'whitelist': ['eruby'],
+      \ 'cmd': {server_info->['efm-langserver', '-config=/path/to/your/config.yaml']},
+      \ 'whitelist': ['eruby', 'markdown'],
       \ })
 augroup END
 ```
 
-### Configuration for Vim script with syntax check using [vint](https://github.com/Kuniwak/vint)
+## Supported Lint tools
 
-```vim
-augroup LspVim
-  au!
-  autocmd User lsp_setup call lsp#register_server({
-      \ 'name': 'efm-langserver-vim',
-      \ 'cmd': {server_info->['efm-langserver', '-stdin', &shell, &shellcmdflag, 'vint -']},
-      \ 'whitelist': ['vim'],
-      \ })
-augroup END
-```
-
-### Configuration for Markdown with syntax check using [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli)
-
-```vim
-augroup LspMarkdown
-  au!
-  autocmd User lsp_setup call lsp#register_server({
-      \ 'name': 'efm-langserver-markdown',
-      \ 'cmd': {server_info->['efm-langserver', '-efm=%f: %l: %m', '-stdin', &shell, &shellcmdflag, 'markdownlint -s']},
-      \ 'whitelist': ['markdown'],
-      \ })
-augroup END
-```
+* [vint](https://github.com/Kuniwak/vint) for Vim script
+* [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) for Markdown
 
 ## Installation
 

@@ -5,6 +5,8 @@ import (
 	"flag"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"gopkg.in/yaml.v2"
 
@@ -12,28 +14,44 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func loadConfigs(yamlfile string) (map[string]langserver.Config, error) {
+func loadConfig(yamlfile string) (*langserver.Config, error) {
 	f, err := os.Open(yamlfile)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	var configs map[string]langserver.Config
-	err = yaml.NewDecoder(f).Decode(&configs)
+	var config langserver.Config
+	err = yaml.NewDecoder(f).Decode(&config.LangConfig)
 	if err != nil {
 		return nil, err
 	}
-	return configs, nil
+	return &config, nil
 }
 
 func main() {
 	var yamlfile string
-	flag.StringVar(&yamlfile, "c", "config.yaml", "path to config.yaml")
+	var logfile string
+	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
+	flag.StringVar(&logfile, "log", "", "logfile")
 	flag.Parse()
 
-	configs, err := loadConfigs(yamlfile)
+	if yamlfile == "" {
+		dir := os.Getenv("HOME")
+		if dir == "" && runtime.GOOS == "windows" {
+			dir = filepath.Join(os.Getenv("APPDATA"), "efm-langserver")
+		} else {
+			dir = filepath.Join(dir, ".config", "efm-langserver")
+		}
+		if err := os.MkdirAll(dir, 0700); err != nil {
+			log.Fatal(err)
+		}
+		yamlfile = filepath.Join(dir, "config.yaml")
+	}
+
+	config, err := loadConfig(yamlfile)
 	if err != nil {
+		log.Fatal(err)
 	}
 	if flag.NArg() != 0 {
 		flag.Usage()
@@ -41,7 +59,16 @@ func main() {
 	}
 	log.Println("efm-langserver: reading on stdin, writing on stdout")
 
-	handler := langserver.NewHandler(configs)
+	if logfile != "" {
+		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0660)
+		if err != nil {
+			log.Fatal(err)
+		}
+		defer f.Close()
+		config.LogWriter = f
+	}
+
+	handler := langserver.NewHandler(config)
 	var connOpt []jsonrpc2.ConnOpt
 	<-jsonrpc2.NewConn(
 		context.Background(),

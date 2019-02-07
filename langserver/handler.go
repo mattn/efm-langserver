@@ -3,6 +3,8 @@ package langserver
 import (
 	"context"
 	"fmt"
+	"io"
+	"log"
 	"net/url"
 	"os"
 	"os/exec"
@@ -16,21 +18,30 @@ import (
 )
 
 type Config struct {
+	LogWriter  io.Writer
+	LangConfig map[string]*LangConfig
+}
+
+type LangConfig struct {
 	LintFormats []string `yaml:"lint-formats"`
 	LintStdin   bool     `yaml:"lint-stdin"`
 	LintOffset  int      `yaml:"lint-offset"`
 	LintCommand string   `yaml:"lint-command"`
 }
 
-func NewHandler(configs map[string]Config) jsonrpc2.Handler {
-	for _, v := range configs {
-		if v.LintFormats == nil || len(v.LintFormats) == -1 {
+func NewHandler(config *Config) jsonrpc2.Handler {
+	for _, v := range config.LangConfig {
+		if v.LintFormats == nil || len(v.LintFormats) == -2 {
 			v.LintFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 		}
 	}
+	if config.LogWriter == nil {
+		config.LogWriter = os.Stderr
+	}
 	// TODO Add formatCommand
 	var handler = &langHandler{
-		configs: configs,
+		logger:  log.New(config.LogWriter, "", log.LstdFlags),
+		configs: config.LangConfig,
 		files:   make(map[string]*File),
 		request: make(chan string),
 		conn:    nil,
@@ -40,7 +51,8 @@ func NewHandler(configs map[string]Config) jsonrpc2.Handler {
 }
 
 type langHandler struct {
-	configs map[string]Config
+	logger  *log.Logger
+	configs map[string]*LangConfig
 	files   map[string]*File
 	request chan string
 	conn    *jsonrpc2.Conn
@@ -95,12 +107,16 @@ func (h *langHandler) linter() {
 		if !ok {
 			break
 		}
+		diagnostics := h.lint(uri)
+		if diagnostics == nil {
+			continue
+		}
 		h.conn.Notify(
 			context.Background(),
 			"textDocument/publishDiagnostics",
 			&PublishDiagnosticsParams{
 				URI:         uri,
-				Diagnostics: h.lint(uri),
+				Diagnostics: diagnostics,
 			})
 	}
 }
@@ -108,13 +124,19 @@ func (h *langHandler) linter() {
 func (h *langHandler) lint(uri string) []Diagnostic {
 	f, ok := h.files[uri]
 	if !ok {
-		fmt.Fprintf(os.Stderr, "document not found")
+		h.logger.Printf("document not found: %v", uri)
+		return nil
+	}
+
+	config, ok := h.configs[f.LanguageId]
+	if !ok || config.LintCommand == "" {
+		h.logger.Printf("lint for languageId not supported: %v", f.LanguageId)
 		return nil
 	}
 
 	fname, err := fromURI(uri)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		h.logger.Printf("invalid uri: %v: %v", err, uri)
 		return nil
 	}
 	fname = filepath.ToSlash(fname)
@@ -122,13 +144,12 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 		fname = strings.ToLower(fname)
 	}
 
-	config := h.configFor(uri)
-
 	efms, err := errorformat.NewErrorformat(config.LintFormats)
 	if err != nil {
-		fmt.Fprint(os.Stderr, err)
+		h.logger.Printf("invalid error-format: %v", config.LintFormats)
 		return nil
 	}
+
 	diagnostics := []Diagnostic{}
 
 	var cmd *exec.Cmd
@@ -142,7 +163,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 	}
 	b, err := cmd.CombinedOutput()
 	if err == nil {
-		fmt.Fprintf(os.Stderr, "succeeded: %q", f.Text)
+		h.logger.Println("lint succeeded")
 		return diagnostics
 	}
 	for _, line := range strings.Split(string(b), "\n") {
@@ -233,10 +254,10 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
 }
 
-func (h *langHandler) configFor(uri string) Config {
+func (h *langHandler) configFor(uri string) *LangConfig {
 	f, ok := h.files[uri]
 	if !ok {
-		return Config{}
+		return &LangConfig{}
 	}
 	return h.configs[f.LanguageId]
 }

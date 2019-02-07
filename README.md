@@ -28,11 +28,11 @@ augroup END
 
 ### Example for config.yaml
 
-
 ```yaml
 eruby:
   lint-command: 'erb -x -T - | ruby -c'
   lint-stdin: true
+  lint-offset: 1
 
 vim:
   lint-command: 'vint -'

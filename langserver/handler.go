@@ -269,7 +269,7 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 		return nil, errors.New(string(b))
 	}
 	h.logger.Println("format succeeded")
-	text := strings.ReplaceAll(string(b), "\r", "")
+	text := strings.Replace(string(b), "\r", "", -1)
 	lines := strings.Split(text, "\n")
 
 	return []TextEdit{

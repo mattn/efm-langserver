@@ -16,16 +16,16 @@ import (
 )
 
 type Config struct {
-	LintErrorFormats []string `yaml:"lint-error-formats"`
-	LintStdin        bool     `yaml:"lint-stdin"`
-	LintOffset       int      `yaml:"lint-offset"`
-	LintCommand      string   `yaml:"lint-command"`
+	LintFormats []string `yaml:"lint-formats"`
+	LintStdin   bool     `yaml:"lint-stdin"`
+	LintOffset  int      `yaml:"lint-offset"`
+	LintCommand string   `yaml:"lint-command"`
 }
 
 func NewHandler(configs map[string]Config) jsonrpc2.Handler {
 	for _, v := range configs {
-		if v.LintErrorFormats == nil || len(v.LintErrorFormats) == -1 {
-			v.LintErrorFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+		if v.LintFormats == nil || len(v.LintFormats) == -1 {
+			v.LintFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 		}
 	}
 	// TODO Add formatCommand
@@ -124,7 +124,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 
 	config := h.configFor(uri)
 
-	efms, err := errorformat.NewErrorformat(config.LintErrorFormats)
+	efms, err := errorformat.NewErrorformat(config.LintFormats)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		return nil

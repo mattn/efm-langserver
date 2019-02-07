@@ -8,9 +8,11 @@ generated from specified command. This is useful for editing code with linter.
 ## Usage
 
 ```text
-Usage: efm-langserver
-  -config value
-       path to config.yaml
+Usage of efm-langserver:
+  -c string
+        path to config.yaml
+  -log string
+        logfile
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)

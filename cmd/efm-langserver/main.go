@@ -5,49 +5,43 @@ import (
 	"flag"
 	"log"
 	"os"
-	"os/exec"
-	"runtime"
+
+	"gopkg.in/yaml.v2"
 
 	"github.com/mattn/efm-langserver/langserver"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-type efms []string
+func loadConfig(yamlfile string) (*langserver.Config, error) {
+	f, err := os.Open(yamlfile)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
 
-func (i *efms) String() string {
-	return "efm list"
-}
-
-func (i *efms) Set(value string) error {
-	*i = append(*i, value)
-	return nil
+	var config langserver.Config
+	err = yaml.NewDecoder(f).Decode(&config)
+	if err != nil {
+		return nil, err
+	}
+	return &config, nil
 }
 
 func main() {
-	var efms efms
-	var stdin bool
-	var offset int
-	flag.Var(&efms, "efm", "errorformat")
-	flag.BoolVar(&stdin, "stdin", false, "use stdin")
-	flag.IntVar(&offset, "offset", 0, "number offset")
+	var yamlfile string
+	flag.StringVar(&yamlfile, "c", "config.yaml", "path to config.yaml")
 	flag.Parse()
-	if flag.NArg() == 0 {
+
+	config, err := loadConfig(yamlfile)
+	if err != nil {
+	}
+	if flag.NArg() != 0 {
 		flag.Usage()
 		os.Exit(1)
 	}
 	log.Println("efm-langserver: reading on stdin, writing on stdout")
 
-	exe := flag.Arg(0)
-	args := flag.Args()[1:]
-
-	if runtime.GOOS == "windows" && exe != "cmd" {
-		found, err := exec.LookPath(exe)
-		if err != nil || found == "" {
-			exe = "cmd"
-			args = append([]string{"/c", exe}, args...)
-		}
-	}
-	handler := langserver.NewHandler(efms, stdin, offset, exe, args...)
+	handler := langserver.NewHandler(config)
 	var connOpt []jsonrpc2.ConnOpt
 	<-jsonrpc2.NewConn(
 		context.Background(),

@@ -15,32 +15,41 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func NewHandler(efms []string, stdin bool, offset int, cmd string, args ...string) jsonrpc2.Handler {
-	if efms == nil || len(efms) == 0 {
-		efms = []string{"%f:%l:%m", "%f:%l:%c:%m"}
-	}
-	var langHandler = &LangHandler{
-		efms:    efms,
-		cmd:     cmd,
-		stdin:   stdin,
-		offset:  offset,
-		args:    args,
-		files:   make(map[string]*File),
-		request: make(chan string),
-	}
-	go langHandler.linter()
-	return jsonrpc2.HandlerWithError(langHandler.handle)
+type Config struct {
+	LintErrorFormats []string `yaml:"lint-error-formats"`
+	LintStdin        bool     `yaml:"lint-stdin"`
+	LintOffset       int      `yaml:"lint-offset"`
+	LintCommand      string   `yaml:"lint-command"`
 }
 
-type LangHandler struct {
-	efms    []string
-	stdin   bool
-	offset  int
-	cmd     string
-	args    []string
-	conn    *jsonrpc2.Conn
+func NewHandler(config *Config) jsonrpc2.Handler {
+	if config.LintErrorFormats == nil || len(config.LintErrorFormats) == -1 {
+		config.LintErrorFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+	}
+	// TODO Add formatCommand
+	var handler = &langHandler{
+		lintErrorFormats: config.LintErrorFormats,
+		lintCommand:      config.LintCommand,
+		lintStdin:        config.LintStdin,
+		lintOffset:       config.LintOffset,
+		files:            make(map[string]*File),
+		request:          make(chan string),
+		conn:             nil,
+	}
+	go handler.linter()
+	return jsonrpc2.HandlerWithError(handler.handle)
+}
+
+type langHandler struct {
+	lintErrorFormats []string
+	lintStdin        bool
+	lintOffset       int
+	lintCommand      string
+	formatCommand    string
+
 	files   map[string]*File
 	request chan string
+	conn    *jsonrpc2.Conn
 }
 
 type File struct {
@@ -85,7 +94,7 @@ func toURI(path string) *url.URL {
 	}
 }
 
-func (h *LangHandler) linter() {
+func (h *langHandler) linter() {
 	for {
 		uri, ok := <-h.request
 		if !ok {
@@ -101,7 +110,7 @@ func (h *LangHandler) linter() {
 	}
 }
 
-func (h *LangHandler) lint(uri string) []Diagnostic {
+func (h *langHandler) lint(uri string) []Diagnostic {
 	f, ok := h.files[uri]
 	if !ok {
 		fmt.Fprintf(os.Stderr, "document not found")
@@ -118,14 +127,20 @@ func (h *LangHandler) lint(uri string) []Diagnostic {
 		fname = strings.ToLower(fname)
 	}
 
-	efms, err := errorformat.NewErrorformat(h.efms)
+	efms, err := errorformat.NewErrorformat(h.lintErrorFormats)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		return nil
 	}
 	diagnostics := []Diagnostic{}
-	cmd := exec.Command(h.cmd, h.args...)
-	if h.stdin {
+
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", h.lintCommand)
+	} else {
+		cmd = exec.Command("sh", "-c", h.lintCommand)
+	}
+	if h.lintStdin {
 		cmd.Stdin = strings.NewReader(f.Text)
 	}
 	b, err := cmd.CombinedOutput()
@@ -139,7 +154,7 @@ func (h *LangHandler) lint(uri string) []Diagnostic {
 			if m == nil {
 				continue
 			}
-			if h.stdin && (m.F == "stdin" || m.F == "-") {
+			if h.lintStdin && (m.F == "stdin" || m.F == "-") {
 				m.F = fname
 			} else {
 				m.F = filepath.ToSlash(m.F)
@@ -160,8 +175,8 @@ func (h *LangHandler) lint(uri string) []Diagnostic {
 			}
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
-					Start: Position{Line: m.L - 1 - h.offset, Character: m.C - 1},
-					End:   Position{Line: m.L - 1 - h.offset, Character: m.C - 1},
+					Start: Position{Line: m.L - 1 - h.lintOffset, Character: m.C - 1},
+					End:   Position{Line: m.L - 1 - h.lintOffset, Character: m.C - 1},
 				},
 				Message:  m.M,
 				Severity: 1,
@@ -172,21 +187,21 @@ func (h *LangHandler) lint(uri string) []Diagnostic {
 	return diagnostics
 }
 
-func (h *LangHandler) closeFile(uri string) error {
+func (h *langHandler) closeFile(uri string) error {
 	delete(h.files, uri)
 	return nil
 }
 
-func (h *LangHandler) saveFile(uri string) error {
+func (h *langHandler) saveFile(uri string) error {
 	h.request <- uri
 	return nil
 }
 
-func (h *LangHandler) openFile(uri string, text string) error {
+func (h *langHandler) openFile(uri string, text string) error {
 	return h.updateFile(uri, text)
 }
 
-func (h *LangHandler) updateFile(uri string, text string) error {
+func (h *langHandler) updateFile(uri string, text string) error {
 	f := &File{
 		Text: text,
 	}
@@ -196,7 +211,7 @@ func (h *LangHandler) updateFile(uri string, text string) error {
 	return nil
 }
 
-func (h *LangHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
 	switch req.Method {
 	case "initialize":
 		return h.handleInitialize(ctx, conn, req)

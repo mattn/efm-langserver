@@ -50,10 +50,26 @@ augroup LspEFM
   au!
   autocmd User lsp_setup call lsp#register_server({
       \ 'name': 'efm-langserver-erb',
-      \ 'cmd': {server_info->['efm-langserver', '-config=/path/to/your/config.yaml']},
+      \ 'cmd': {server_info->['efm-langserver', '-c=/path/to/your/config.yaml']},
       \ 'whitelist': ['eruby', 'markdown'],
       \ })
 augroup END
+```
+
+### Configuration for [coc.nvim](https://github.com/neoclide/coc.nvim)
+
+coc-settings.json
+```jsonc
+  // languageserver
+  "languageserver": {
+    "efm": {
+      "command": "efm-langserver",
+      "args": [],
+      // custom config path
+      // "args": ["-c", "/path/to/your/config.yaml"],
+      "filetypes": ["vim", "eruby", "markdown"]
+    }
+  },
 ```
 
 ## Supported Lint tools

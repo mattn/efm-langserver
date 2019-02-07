@@ -29,20 +29,21 @@ augroup END
 ### Example for config.yaml
 
 ```yaml
-eruby:
-  lint-command: 'erb -x -T - | ruby -c'
-  lint-stdin: true
-  lint-offset: 1
+languages:
+  eruby:
+    lint-command: 'erb -x -T - | ruby -c'
+    lint-stdin: true
+    lint-offset: 1
 
-vim:
-  lint-command: 'vint -'
-  lint-stdin: true
+  vim:
+    lint-command: 'vint -'
+    lint-stdin: true
 
-markdown:
-  lint-command: 'markdownlint -s'
-  lint-stdin: true
-  lint-formats:
-    - '%f: %l: %m'
+  markdown:
+    lint-command: 'markdownlint -s'
+    lint-stdin: true
+    lint-formats:
+      - '%f: %l: %m'
 ```
 
 ## Supported Lint tools

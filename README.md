@@ -15,20 +15,14 @@ Usage of efm-langserver:
         logfile
 ```
 
-### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
-
-```vim
-augroup LspEFM
-  au!
-  autocmd User lsp_setup call lsp#register_server({
-      \ 'name': 'efm-langserver-erb',
-      \ 'cmd': {server_info->['efm-langserver', '-config=/path/to/your/config.yaml']},
-      \ 'whitelist': ['eruby', 'markdown'],
-      \ })
-augroup END
-```
-
 ### Example for config.yaml
+
+Location of config.yaml is:
+
+* UNIX: `$HOME/.config/efm-langserver/config.yaml`
+* Windows: `%APPDATA%\efm-langserver\config.yaml`
+
+Below is example for config.yaml .
 
 ```yaml
 languages:
@@ -47,6 +41,19 @@ languages:
     lint-stdin: true
     lint-formats:
       - '%f: %l: %m'
+```
+
+### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
+
+```vim
+augroup LspEFM
+  au!
+  autocmd User lsp_setup call lsp#register_server({
+      \ 'name': 'efm-langserver-erb',
+      \ 'cmd': {server_info->['efm-langserver', '-config=/path/to/your/config.yaml']},
+      \ 'whitelist': ['eruby', 'markdown'],
+      \ })
+augroup END
 ```
 
 ## Supported Lint tools

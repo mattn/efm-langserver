@@ -34,6 +34,7 @@ languages:
     lint-command: 'erb -x -T - | ruby -c'
     lint-stdin: true
     lint-offset: 1
+    format-command: 'htmlbeautifier'
 
   vim:
     lint-command: 'vint -'

@@ -12,19 +12,19 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func loadConfig(yamlfile string) (*langserver.Config, error) {
+func loadConfigs(yamlfile string) (map[string]langserver.Config, error) {
 	f, err := os.Open(yamlfile)
 	if err != nil {
 		return nil, err
 	}
 	defer f.Close()
 
-	var config langserver.Config
-	err = yaml.NewDecoder(f).Decode(&config)
+	var configs map[string]langserver.Config
+	err = yaml.NewDecoder(f).Decode(&configs)
 	if err != nil {
 		return nil, err
 	}
-	return &config, nil
+	return configs, nil
 }
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 	flag.StringVar(&yamlfile, "c", "config.yaml", "path to config.yaml")
 	flag.Parse()
 
-	config, err := loadConfig(yamlfile)
+	configs, err := loadConfigs(yamlfile)
 	if err != nil {
 	}
 	if flag.NArg() != 0 {
@@ -41,7 +41,7 @@ func main() {
 	}
 	log.Println("efm-langserver: reading on stdin, writing on stdout")
 
-	handler := langserver.NewHandler(config)
+	handler := langserver.NewHandler(configs)
 	var connOpt []jsonrpc2.ConnOpt
 	<-jsonrpc2.NewConn(
 		context.Background(),

@@ -17,8 +17,10 @@ func (h *langHandler) handleTextDocumentDidChange(ctx context.Context, conn *jso
 		return nil, err
 	}
 
-	if h.lintStdin {
-		h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text)
+	if h.configFor(params.TextDocument.URI).LintStdin {
+		if err := h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text); err != nil {
+			return nil, err
+		}
 	}
 	return nil, nil
 }

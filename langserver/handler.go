@@ -22,38 +22,33 @@ type Config struct {
 	LintCommand      string   `yaml:"lint-command"`
 }
 
-func NewHandler(config *Config) jsonrpc2.Handler {
-	if config.LintErrorFormats == nil || len(config.LintErrorFormats) == -1 {
-		config.LintErrorFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+func NewHandler(configs map[string]Config) jsonrpc2.Handler {
+	for _, v := range configs {
+		if v.LintErrorFormats == nil || len(v.LintErrorFormats) == -1 {
+			v.LintErrorFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+		}
 	}
 	// TODO Add formatCommand
 	var handler = &langHandler{
-		lintErrorFormats: config.LintErrorFormats,
-		lintCommand:      config.LintCommand,
-		lintStdin:        config.LintStdin,
-		lintOffset:       config.LintOffset,
-		files:            make(map[string]*File),
-		request:          make(chan string),
-		conn:             nil,
+		configs: configs,
+		files:   make(map[string]*File),
+		request: make(chan string),
+		conn:    nil,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
 }
 
 type langHandler struct {
-	lintErrorFormats []string
-	lintStdin        bool
-	lintOffset       int
-	lintCommand      string
-	formatCommand    string
-
+	configs map[string]Config
 	files   map[string]*File
 	request chan string
 	conn    *jsonrpc2.Conn
 }
 
 type File struct {
-	Text string
+	LanguageId string
+	Text       string
 }
 
 func isWindowsDrivePath(path string) bool {
@@ -127,7 +122,9 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 		fname = strings.ToLower(fname)
 	}
 
-	efms, err := errorformat.NewErrorformat(h.lintErrorFormats)
+	config := h.configFor(uri)
+
+	efms, err := errorformat.NewErrorformat(config.LintErrorFormats)
 	if err != nil {
 		fmt.Fprint(os.Stderr, err)
 		return nil
@@ -136,11 +133,11 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", h.lintCommand)
+		cmd = exec.Command("cmd", "/c", config.LintCommand)
 	} else {
-		cmd = exec.Command("sh", "-c", h.lintCommand)
+		cmd = exec.Command("sh", "-c", config.LintCommand)
 	}
-	if h.lintStdin {
+	if config.LintStdin {
 		cmd.Stdin = strings.NewReader(f.Text)
 	}
 	b, err := cmd.CombinedOutput()
@@ -154,7 +151,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 			if m == nil {
 				continue
 			}
-			if h.lintStdin && (m.F == "stdin" || m.F == "-") {
+			if config.LintStdin && (m.F == "stdin" || m.F == "-") {
 				m.F = fname
 			} else {
 				m.F = filepath.ToSlash(m.F)
@@ -175,8 +172,8 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 			}
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
-					Start: Position{Line: m.L - 1 - h.lintOffset, Character: m.C - 1},
-					End:   Position{Line: m.L - 1 - h.lintOffset, Character: m.C - 1},
+					Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+					End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
 				},
 				Message:  m.M,
 				Severity: 1,
@@ -197,15 +194,21 @@ func (h *langHandler) saveFile(uri string) error {
 	return nil
 }
 
-func (h *langHandler) openFile(uri string, text string) error {
-	return h.updateFile(uri, text)
+func (h *langHandler) openFile(uri string, languageId string) error {
+	f := &File{
+		Text:       "",
+		LanguageId: languageId,
+	}
+	h.files[uri] = f
+	return nil
 }
 
 func (h *langHandler) updateFile(uri string, text string) error {
-	f := &File{
-		Text: text,
+	f, ok := h.files[uri]
+	if !ok {
+		return fmt.Errorf("document not found: %v", uri)
 	}
-	h.files[uri] = f
+	f.Text = text
 
 	h.request <- uri
 	return nil
@@ -228,4 +231,12 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
+}
+
+func (h *langHandler) configFor(uri string) Config {
+	f, ok := h.files[uri]
+	if !ok {
+		return Config{}
+	}
+	return h.configs[f.LanguageId]
 }

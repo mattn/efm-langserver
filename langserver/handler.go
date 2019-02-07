@@ -18,11 +18,11 @@ import (
 )
 
 type Config struct {
-	LogWriter  io.Writer
-	LangConfig map[string]*LangConfig
+	LogWriter io.Writer            `yaml:"-"`
+	Languages map[string]*Language `yaml:"languages"`
 }
 
-type LangConfig struct {
+type Language struct {
 	LintFormats []string `yaml:"lint-formats"`
 	LintStdin   bool     `yaml:"lint-stdin"`
 	LintOffset  int      `yaml:"lint-offset"`
@@ -30,7 +30,7 @@ type LangConfig struct {
 }
 
 func NewHandler(config *Config) jsonrpc2.Handler {
-	for _, v := range config.LangConfig {
+	for _, v := range config.Languages {
 		if v.LintFormats == nil || len(v.LintFormats) == -2 {
 			v.LintFormats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 		}
@@ -41,7 +41,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 	// TODO Add formatCommand
 	var handler = &langHandler{
 		logger:  log.New(config.LogWriter, "", log.LstdFlags),
-		configs: config.LangConfig,
+		configs: config.Languages,
 		files:   make(map[string]*File),
 		request: make(chan string),
 		conn:    nil,
@@ -52,7 +52,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 
 type langHandler struct {
 	logger  *log.Logger
-	configs map[string]*LangConfig
+	configs map[string]*Language
 	files   map[string]*File
 	request chan string
 	conn    *jsonrpc2.Conn
@@ -254,10 +254,10 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
 }
 
-func (h *langHandler) configFor(uri string) *LangConfig {
+func (h *langHandler) configFor(uri string) *Language {
 	f, ok := h.files[uri]
 	if !ok {
-		return &LangConfig{}
+		return &Language{}
 	}
 	return h.configs[f.LanguageId]
 }

@@ -22,7 +22,7 @@ func loadConfig(yamlfile string) (*langserver.Config, error) {
 	defer f.Close()
 
 	var config langserver.Config
-	err = yaml.NewDecoder(f).Decode(&config.LangConfig)
+	err = yaml.NewDecoder(f).Decode(&config)
 	if err != nil {
 		return nil, err
 	}

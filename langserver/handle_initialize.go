@@ -19,10 +19,13 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 		return nil, err
 	}
 
+	h.rootPath = params.RootPath
+
 	return InitializeResult{
 		Capabilities: ServerCapabilities{
 			TextDocumentSync:           TDSKFull,
 			DocumentFormattingProvider: true,
+			DocumentSymbolProvider:     true,
 		},
 	}, nil
 }

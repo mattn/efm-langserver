@@ -126,3 +126,15 @@ type TextEdit struct {
 	Range   Range  `json:"range"`
 	NewText string `json:"newText"`
 }
+
+type DocumentSymbolParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+}
+
+type SymbolInformation struct {
+	Name          string   `json:"name"`
+	Kind          int64    `json:"kind"`
+	Deprecated    bool     `json:"deprecated"`
+	Location      Location `json:"location"`
+	ContainerName *string  `containerName`
+}

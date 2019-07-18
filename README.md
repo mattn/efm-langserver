@@ -41,6 +41,12 @@ languages:
     lint-stdin: true
     lint-formats:
       - '%f: %l: %m'
+
+  yaml:
+    lint-command: 'yamllint -f parsable -'
+    lint-stdin: true
+    lint-formats:
+      - '%f:%l:%c: %m'
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
@@ -67,7 +73,7 @@ coc-settings.json
       "args": [],
       // custom config path
       // "args": ["-c", "/path/to/your/config.yaml"],
-      "filetypes": ["vim", "eruby", "markdown"]
+      "filetypes": ["vim", "eruby", "markdown", "yaml"]
     }
   },
 ```

@@ -10,7 +10,7 @@ build:
     - script:
         name: go get
         code: |
-          go get -t ./cmd/efm-langserver
+          go get -t ./...
     - script:
         name: go test
         code: |
@@ -21,7 +21,7 @@ deploy:
     - script:
         name: go get
         code: |
-          go get ./cmd/efm-langserver
+          go get ./...
     - wercker/gox:
         os: darwin linux windows
         arch: 386 amd64

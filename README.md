@@ -86,7 +86,7 @@ coc-settings.json
 ## Installation
 
 ```console
-$ go get github.com/mattn/efm-langserver/cmd/efm-langserver
+$ go get github.com/mattn/efm-langserver
 ```
 
 ## License

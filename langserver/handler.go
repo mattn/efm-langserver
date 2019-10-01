@@ -143,6 +143,17 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
+	var command string
+
+	if config.LintStdin {
+		command = config.LintCommand
+	} else {
+		if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
+			command = strings.ReplaceAll(config.LintCommand, "${INPUT}", fname)
+		} else {
+			command = config.LintCommand + " " + fname
+		}
+	}
 
 	formats := config.LintFormats
 	if len(formats) == 0 {
@@ -159,9 +170,9 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", config.LintCommand)
+		cmd = exec.Command("cmd", "/c", command)
 	} else {
-		cmd = exec.Command("sh", "-c", config.LintCommand)
+		cmd = exec.Command("sh", "-c", command)
 	}
 	if config.LintStdin {
 		cmd.Stdin = strings.NewReader(f.Text)
@@ -260,12 +271,19 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
+	var command string
+
+	if strings.Index(config.FormatCommand, "${INPUT}") != -1 {
+		command = strings.ReplaceAll(config.FormatCommand, "${INPUT}", fname)
+	} else {
+		command = config.FormatCommand + " " + fname
+	}
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", config.FormatCommand)
+		cmd = exec.Command("cmd", "/c", command)
 	} else {
-		cmd = exec.Command("sh", "-c", config.FormatCommand)
+		cmd = exec.Command("sh", "-c", command)
 	}
 	cmd.Stdin = strings.NewReader(f.Text)
 	b, err := cmd.CombinedOutput()
@@ -310,6 +328,13 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
+	var command string
+
+	if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
+		command = strings.ReplaceAll(config.SymbolCommand, "${INPUT}", fname)
+	} else {
+		command = config.SymbolCommand + " " + fname
+	}
 
 	efms, err := errorformat.NewErrorformat([]string{"%f:%l:%c:%m"})
 	if err != nil {
@@ -321,9 +346,9 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", config.SymbolCommand+" "+fname)
+		cmd = exec.Command("cmd", "/c", command)
 	} else {
-		cmd = exec.Command("sh", "-c", config.SymbolCommand+" "+fname)
+		cmd = exec.Command("sh", "-c", command)
 	}
 
 	b, err := cmd.CombinedOutput()

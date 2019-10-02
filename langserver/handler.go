@@ -148,7 +148,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 	if config.LintStdin {
 		command = config.LintCommand
 	} else {
-		if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
+		if strings.Index(config.LintCommand, "${INPUT}") != -1 {
 			command = strings.ReplaceAll(config.LintCommand, "${INPUT}", fname)
 		} else {
 			command = config.LintCommand + " " + fname

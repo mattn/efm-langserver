@@ -149,7 +149,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 		command = config.LintCommand
 	} else {
 		if strings.Index(config.LintCommand, "${INPUT}") != -1 {
-			command = strings.ReplaceAll(config.LintCommand, "${INPUT}", fname)
+			command = strings.Replace(config.LintCommand, "${INPUT}", fname, -1)
 		} else {
 			command = config.LintCommand + " " + fname
 		}
@@ -274,7 +274,7 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 	var command string
 
 	if strings.Index(config.FormatCommand, "${INPUT}") != -1 {
-		command = strings.ReplaceAll(config.FormatCommand, "${INPUT}", fname)
+		command = strings.Replace(config.FormatCommand, "${INPUT}", fname, -1)
 	} else {
 		command = config.FormatCommand + " " + fname
 	}
@@ -331,7 +331,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	var command string
 
 	if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
-		command = strings.ReplaceAll(config.SymbolCommand, "${INPUT}", fname)
+		command = strings.Replace(config.SymbolCommand, "${INPUT}", fname, -1)
 	} else {
 		command = config.SymbolCommand + " " + fname
 	}

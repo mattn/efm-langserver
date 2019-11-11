@@ -16,7 +16,7 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/haya14busa/errorformat"
+	"github.com/reviewdog/errorformat"
 	"github.com/sourcegraph/jsonrpc2"
 )
 

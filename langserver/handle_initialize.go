@@ -26,6 +26,9 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 			TextDocumentSync:           TDSKFull,
 			DocumentFormattingProvider: true,
 			DocumentSymbolProvider:     true,
+			CompletionProvider: &CompletionProvider{
+				TriggerCharacters: []string{"*"},
+			},
 		},
 	}, nil
 }

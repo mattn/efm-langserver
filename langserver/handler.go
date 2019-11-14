@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -26,12 +27,13 @@ type Config struct {
 }
 
 type Language struct {
-	LintFormats   []string `yaml:"lint-formats"`
-	LintStdin     bool     `yaml:"lint-stdin"`
-	LintOffset    int      `yaml:"lint-offset"`
-	LintCommand   string   `yaml:"lint-command"`
-	FormatCommand string   `yaml:"format-command"`
-	SymbolCommand string   `yaml:"symbol-command"`
+	LintFormats       []string `yaml:"lint-formats"`
+	LintStdin         bool     `yaml:"lint-stdin"`
+	LintOffset        int      `yaml:"lint-offset"`
+	LintCommand       string   `yaml:"lint-command"`
+	FormatCommand     string   `yaml:"format-command"`
+	SymbolCommand     string   `yaml:"symbol-command"`
+	CompletionCommand string   `yaml:"completion-command"`
 }
 
 func NewHandler(config *Config) jsonrpc2.Handler {
@@ -421,10 +423,67 @@ func (h *langHandler) configFor(uri string) *Language {
 	return c
 }
 
+func (h *langHandler) completion(uri string, params *CompletionParams) ([]CompletionItem, error) {
+	f, ok := h.files[uri]
+	if !ok {
+		return nil, fmt.Errorf("document not found: %v", uri)
+	}
+
+	config, ok := h.configs[f.LanguageId]
+	if !ok {
+		return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
+	}
+	fname, err := fromURI(uri)
+	if err != nil {
+		h.logger.Println("invalid uri")
+		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
+	}
+	fname = filepath.ToSlash(fname)
+	if runtime.GOOS == "windows" {
+		fname = strings.ToLower(fname)
+	}
+	command := config.CompletionCommand
+
+	if strings.Index(command, "${POSITION}") != -1 {
+		command = strings.Replace(command, "${POSITION}", fmt.Sprintf("%d:%d", params.TextDocumentPositionParams.Position.Line, params.Position.Character), -1)
+	}
+	if strings.Index(command, "${INPUT}") != -1 {
+		command = strings.Replace(command, "${INPUT}", fname, -1)
+	} else {
+		command = command + " " + "" + " " + fname
+	}
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", command)
+	} else {
+		cmd = exec.Command("sh", "-c", command)
+	}
+
+	b, err := cmd.CombinedOutput()
+	ioutil.WriteFile("out.txt", []byte(command), 0644)
+
+	if err != nil {
+		h.logger.Printf("completion command failed: %v", err)
+		return nil, fmt.Errorf("completion command failed: %v", err)
+	}
+
+	result := []CompletionItem{}
+	scanner := bufio.NewScanner(bytes.NewReader(b))
+	for scanner.Scan() {
+		result = append(result, CompletionItem{
+			Label:      scanner.Text(),
+			InsertText: scanner.Text(),
+		})
+	}
+	return result, nil
+}
+
 func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
 	switch req.Method {
 	case "initialize":
 		return h.handleInitialize(ctx, conn, req)
+	case "initialized":
+		return
 	case "shutdown":
 		return h.handleShutdown(ctx, conn, req)
 	case "textDocument/didOpen":
@@ -439,6 +498,8 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentFormatting(ctx, conn, req)
 	case "textDocument/documentSymbol":
 		return h.handleTextDocumentSymbol(ctx, conn, req)
+	case "textDocument/completion":
+		return h.handleTextDocumentCompletion(ctx, conn, req)
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}

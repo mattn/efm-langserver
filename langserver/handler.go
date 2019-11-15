@@ -433,6 +433,10 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 	if !ok {
 		return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
 	}
+	if config.CompletionCommand == "" {
+		return nil, nil
+	}
+
 	fname, err := fromURI(uri)
 	if err != nil {
 		h.logger.Println("invalid uri")

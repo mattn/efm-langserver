@@ -27,13 +27,14 @@ type Config struct {
 }
 
 type Language struct {
-	LintFormats       []string `yaml:"lint-formats"`
-	LintStdin         bool     `yaml:"lint-stdin"`
-	LintOffset        int      `yaml:"lint-offset"`
-	LintCommand       string   `yaml:"lint-command"`
-	FormatCommand     string   `yaml:"format-command"`
-	SymbolCommand     string   `yaml:"symbol-command"`
-	CompletionCommand string   `yaml:"completion-command"`
+	LintFormats        []string `yaml:"lint-formats"`
+	LintStdin          bool     `yaml:"lint-stdin"`
+	LintOffset         int      `yaml:"lint-offset"`
+	LintCommand        string   `yaml:"lint-command"`
+	LintIgnoreExitCode bool     `yaml:"lint-ignore-exit-code"`
+	FormatCommand      string   `yaml:"format-command"`
+	SymbolCommand      string   `yaml:"symbol-command"`
+	CompletionCommand  string   `yaml:"completion-command"`
 }
 
 func NewHandler(config *Config) jsonrpc2.Handler {
@@ -180,7 +181,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 		cmd.Stdin = strings.NewReader(f.Text)
 	}
 	b, err := cmd.CombinedOutput()
-	if err == nil {
+	if err == nil && !config.LintIgnoreExitCode {
 		h.logger.Println("lint succeeded")
 		return diagnostics
 	}
@@ -190,7 +191,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 			if m == nil {
 				continue
 			}
-			if config.LintStdin && (m.F == "stdin" || m.F == "-") {
+			if config.LintStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
 				m.F = fname
 			} else {
 				m.F = filepath.ToSlash(m.F)

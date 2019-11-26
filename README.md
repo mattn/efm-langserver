@@ -47,6 +47,11 @@ languages:
     lint-stdin: true
     lint-formats:
       - '%f:%l:%c: %m'
+
+  javascript:
+    lint-command: 'eslint -f unix --stdin'
+    lint-ignore-exit-code: true
+    lint-stdin: true
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)

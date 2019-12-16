@@ -47,6 +47,8 @@ languages:
     lint-stdin: true
     lint-formats:
       - '%f:%l:%c: %m'
+    env:
+      - 'PYTHONIOENCODING=UTF-8'
 
   javascript:
     lint-command: 'eslint -f unix --stdin'

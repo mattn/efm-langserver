@@ -35,6 +35,7 @@ type Language struct {
 	FormatCommand      string   `yaml:"format-command"`
 	SymbolCommand      string   `yaml:"symbol-command"`
 	CompletionCommand  string   `yaml:"completion-command"`
+	Env                []string `yaml:"env"`
 }
 
 func NewHandler(config *Config) jsonrpc2.Handler {
@@ -177,6 +178,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 	} else {
 		cmd = exec.Command("sh", "-c", command)
 	}
+	cmd.Env = append(os.Environ(), config.Env...)
 	if config.LintStdin {
 		cmd.Stdin = strings.NewReader(f.Text)
 	}
@@ -288,6 +290,7 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 	} else {
 		cmd = exec.Command("sh", "-c", command)
 	}
+	cmd.Env = append(os.Environ(), config.Env...)
 	cmd.Stdin = strings.NewReader(f.Text)
 	b, err := cmd.CombinedOutput()
 	if err != nil {
@@ -353,6 +356,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	} else {
 		cmd = exec.Command("sh", "-c", command)
 	}
+	cmd.Env = append(os.Environ(), config.Env...)
 
 	b, err := cmd.CombinedOutput()
 	if err != nil {
@@ -463,6 +467,7 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 	} else {
 		cmd = exec.Command("sh", "-c", command)
 	}
+	cmd.Env = append(os.Environ(), config.Env...)
 
 	b, err := cmd.CombinedOutput()
 	ioutil.WriteFile("out.txt", []byte(command), 0644)

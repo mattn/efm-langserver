@@ -40,7 +40,7 @@ languages:
     lint-command: 'markdownlint -s'
     lint-stdin: true
     lint-formats:
-      - '%f: %l: %m'
+      - '%f:%l %m'
 
   yaml:
     lint-command: 'yamllint -f parsable -'

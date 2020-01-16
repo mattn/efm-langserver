@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -16,7 +15,9 @@ import (
 	"runtime"
 	"strings"
 	"unicode"
+	"unicode/utf16"
 
+	"github.com/mattn/go-unicodeclass"
 	"github.com/reviewdog/errorformat"
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -35,6 +36,8 @@ type Language struct {
 	FormatCommand      string   `yaml:"format-command"`
 	SymbolCommand      string   `yaml:"symbol-command"`
 	CompletionCommand  string   `yaml:"completion-command"`
+	HoverCommand       string   `yaml:"hover-command"`
+	HoverStdin         bool     `yaml:"hover-stdin"`
 	Env                []string `yaml:"env"`
 }
 
@@ -111,8 +114,9 @@ func (h *langHandler) linter() {
 		if !ok {
 			break
 		}
-		diagnostics := h.lint(uri)
-		if diagnostics == nil {
+		diagnostics, err := h.lint(uri)
+		if err != nil {
+			h.logger.Println(err)
 			continue
 		}
 		h.conn.Notify(
@@ -125,23 +129,20 @@ func (h *langHandler) linter() {
 	}
 }
 
-func (h *langHandler) lint(uri string) []Diagnostic {
+func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
-		h.logger.Printf("document not found: %v", uri)
-		return nil
+		return nil, fmt.Errorf("document not found: %v", uri)
 	}
 
 	config, ok := h.configs[f.LanguageId]
 	if !ok || config.LintCommand == "" {
-		h.logger.Printf("lint for languageId not supported: %v", f.LanguageId)
-		return nil
+		return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
 	}
 
 	fname, err := fromURI(uri)
 	if err != nil {
-		h.logger.Printf("invalid uri: %v: %v", err, uri)
-		return nil
+		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
 	}
 	fname = filepath.ToSlash(fname)
 	if runtime.GOOS == "windows" {
@@ -166,8 +167,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 
 	efms, err := errorformat.NewErrorformat(formats)
 	if err != nil {
-		h.logger.Printf("invalid error-format: %v", config.LintFormats)
-		return nil
+		return nil, fmt.Errorf("invalid error-format: %v", config.LintFormats)
 	}
 
 	diagnostics := []Diagnostic{}
@@ -184,8 +184,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 	}
 	b, err := cmd.CombinedOutput()
 	if err == nil && !config.LintIgnoreExitCode {
-		h.logger.Println("lint succeeded")
-		return diagnostics
+		return diagnostics, nil
 	}
 	for _, line := range strings.Split(string(b), "\n") {
 		for _, ef := range efms.Efms {
@@ -223,7 +222,7 @@ func (h *langHandler) lint(uri string) []Diagnostic {
 		}
 	}
 
-	return diagnostics
+	return diagnostics, nil
 }
 
 func (h *langHandler) closeFile(uri string) error {
@@ -470,7 +469,6 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 	cmd.Env = append(os.Environ(), config.Env...)
 
 	b, err := cmd.CombinedOutput()
-	ioutil.WriteFile("out.txt", []byte(command), 0644)
 
 	if err != nil {
 		h.logger.Printf("completion command failed: %v", err)
@@ -486,6 +484,87 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 		})
 	}
 	return result, nil
+}
+
+func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
+	f, ok := h.files[uri]
+	if !ok {
+		return nil, fmt.Errorf("document not found: %v", uri)
+	}
+
+	config, ok := h.configs[f.LanguageId]
+	if !ok || config.HoverCommand == "" {
+		return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
+	}
+
+	lines := strings.Split(f.Text, "\n")
+	if params.Position.Line < 0 || params.Position.Line > len(lines) {
+		return nil, fmt.Errorf("invalid position: %v", params.Position)
+	}
+	chars := utf16.Encode([]rune(lines[params.Position.Line]))
+	if params.Position.Character < 0 || params.Position.Character > len(chars) {
+		return nil, fmt.Errorf("invalid position: %v", params.Position)
+	}
+	prevPos := 0
+	currPos := -1
+	prevCls := unicodeclass.Invalid
+	for i, char := range chars {
+		currCls := unicodeclass.Is(rune(char))
+		if currCls != prevCls {
+			if i <= params.Position.Character {
+				prevPos = i
+			} else {
+				currPos = i
+				break
+			}
+		}
+		prevCls = currCls
+	}
+	if currPos == -1 {
+		currPos = len(chars)
+	}
+	word := string(utf16.Decode(chars[prevPos:currPos]))
+
+	var command string
+
+	if config.HoverStdin {
+		command = config.HoverCommand
+	} else {
+		if strings.Index(config.HoverCommand, "${INPUT}") != -1 {
+			command = strings.Replace(config.HoverCommand, "${INPUT}", word, -1)
+		} else {
+			command = config.HoverCommand + " " + word
+		}
+	}
+
+	var cmd *exec.Cmd
+	if runtime.GOOS == "windows" {
+		cmd = exec.Command("cmd", "/c", command)
+	} else {
+		cmd = exec.Command("sh", "-c", command)
+	}
+	cmd.Env = append(os.Environ(), config.Env...)
+	if config.HoverStdin {
+		cmd.Stdin = strings.NewReader(word)
+	}
+	b, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, err
+	}
+
+	return &Hover{
+		Contents: strings.TrimSpace(string(b)),
+		Range: &Range{
+			Start: Position{
+				Line:      params.Position.Line,
+				Character: prevPos,
+			},
+			End: Position{
+				Line:      params.Position.Line,
+				Character: currPos,
+			},
+		},
+	}, nil
 }
 
 func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
@@ -510,6 +589,8 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentSymbol(ctx, conn, req)
 	case "textDocument/completion":
 		return h.handleTextDocumentCompletion(ctx, conn, req)
+	case "textDocument/hover":
+		return h.handleTextDocumentHover(ctx, conn, req)
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}

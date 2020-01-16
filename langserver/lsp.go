@@ -35,7 +35,8 @@ type ServerCapabilities struct {
 	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
 	DocumentSymbolProvider     bool                 `json:"documentSymbolProvider,omitempty"`
 	CompletionProvider         *CompletionProvider  `json:"completionProvider,omitempty"`
-	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitEmpty"`
+	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitempty"`
+	HoverProvider              bool                 `json:"hoverProvider,omitempty"`
 }
 
 type TextDocumentItem struct {
@@ -90,6 +91,10 @@ type CompletionParams struct {
 type CompletionContext struct {
 	TriggerKind      int     `json:"triggerKind"`
 	TriggerCharacter *string `json:"triggerCharacter"`
+}
+
+type HoverParams struct {
+	TextDocumentPositionParams
 }
 
 type Location struct {
@@ -215,4 +220,9 @@ type CompletionItem struct {
 	CommitCharacters    []string            `json:"commitCharacters,omitempty"`
 	Command             *Command            `json:"command,omitempty"`
 	Data                interface{}         `json:"data,omitempty"`
+}
+
+type Hover struct {
+	Contents interface{} `json:"contents"`
+	Range    *Range      `json:"range"`
 }

@@ -29,6 +29,7 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 			CompletionProvider: &CompletionProvider{
 				TriggerCharacters: []string{"*"},
 			},
+			HoverProvider: true,
 		},
 	}, nil
 }

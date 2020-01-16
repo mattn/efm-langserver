@@ -136,7 +136,13 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 	}
 
 	config, ok := h.configs[f.LanguageId]
-	if !ok || config.LintCommand == "" {
+	if !ok {
+		config, ok = h.configs["*"]
+		if !ok {
+			return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
+		}
+	}
+	if config.LintCommand == "" {
 		return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
 	}
 
@@ -262,7 +268,13 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 	}
 
 	config, ok := h.configs[f.LanguageId]
-	if !ok || config.FormatCommand == "" {
+	if !ok {
+		config, ok = h.configs["*"]
+		if !ok {
+			return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
+		}
+	}
+	if config.FormatCommand == "" {
 		return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
 	}
 
@@ -318,7 +330,10 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 
 	config, ok := h.configs[f.LanguageId]
 	if !ok {
-		return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
+		config, ok = h.configs["*"]
+		if !ok {
+			return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
+		}
 	}
 	if config.SymbolCommand == "" {
 		config.SymbolCommand = "ctags -x --_xformat=%{input}:%n:1:%K!%N"
@@ -435,7 +450,10 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 
 	config, ok := h.configs[f.LanguageId]
 	if !ok {
-		return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
+		config, ok = h.configs["*"]
+		if !ok {
+			return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
+		}
 	}
 	if config.CompletionCommand == "" {
 		return nil, nil
@@ -493,7 +511,13 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	}
 
 	config, ok := h.configs[f.LanguageId]
-	if !ok || config.HoverCommand == "" {
+	if !ok {
+		config, ok = h.configs["*"]
+		if !ok {
+			return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
+		}
+	}
+	if config.HoverCommand == "" {
 		return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
 	}
 

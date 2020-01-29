@@ -217,13 +217,24 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 			if path != fname {
 				continue
 			}
+			severity := 1
+			switch {
+			case m.T == 'E' || m.T == 'e':
+				severity = 1
+			case m.T == 'W' || m.T == 'w':
+				severity = 2
+			case m.T == 'I' || m.T == 'i':
+				severity = 3
+			case m.T == 'H' || m.T == 'h':
+				severity = 4
+			}
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
 					Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
 					End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
 				},
 				Message:  m.M,
-				Severity: 1,
+				Severity: severity,
 			})
 		}
 	}

@@ -309,13 +309,13 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 	}
 	h.logger.Println("format succeeded")
 	text := strings.Replace(string(b), "\r", "", -1)
-	lines := strings.Split(text, "\n")
+	flines := strings.Split(f.Text, "\n")
 
 	return []TextEdit{
 		{
 			Range: Range{
 				Start: Position{Line: 0, Character: 0},
-				End:   Position{Line: len(lines), Character: len(lines[len(lines)-1])},
+				End:   Position{Line: len(flines), Character: len(flines[len(flines)-1])},
 			},
 			NewText: text,
 		},

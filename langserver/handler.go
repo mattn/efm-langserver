@@ -154,17 +154,12 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
-	var command string
 
-	if config.LintStdin {
-		command = config.LintCommand
-	} else {
-		if strings.Index(config.LintCommand, "${INPUT}") != -1 {
-			command = strings.Replace(config.LintCommand, "${INPUT}", fname, -1)
-		} else {
-			command = config.LintCommand + " " + fname
-		}
+	command := config.LintCommand
+	if !config.LintStdin && strings.Index(config.LintCommand, "${INPUT}") == -1 {
+		command = config.LintCommand + " ${INPUT}"
 	}
+	command = strings.Replace(config.LintCommand, "${INPUT}", fname, -1)
 
 	formats := config.LintFormats
 	if len(formats) == 0 {

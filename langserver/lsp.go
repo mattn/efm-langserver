@@ -226,3 +226,14 @@ type Hover struct {
 	Contents interface{} `json:"contents"`
 	Range    *Range      `json:"range"`
 }
+
+type WorkDoneProgressParams struct {
+	WorkDoneToken interface{} `json:"workDoneToken"`
+}
+
+type ExecuteCommandParams struct {
+	WorkDoneProgressParams
+
+	Command   string        `json:"command"`
+	Arguments []interface{} `json:"arguments"`
+}

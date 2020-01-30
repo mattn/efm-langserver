@@ -623,10 +623,19 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	}
 
 	var cmd *exec.Cmd
+	var args []string
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command.Command)
+		args = []string{"/c", command.Command}
+		for _, arg := range command.Arguments {
+			args = append(args, fmt.Sprint(arg))
+		}
+		cmd = exec.Command("cmd", args...)
 	} else {
-		cmd = exec.Command("sh", "-c", command.Command)
+		args = []string{"-c", command.Command}
+		for _, arg := range command.Arguments {
+			args = append(args, fmt.Sprint(arg))
+		}
+		cmd = exec.Command("sh", args...)
 	}
 	b, err := cmd.CombinedOutput()
 	if err != nil {

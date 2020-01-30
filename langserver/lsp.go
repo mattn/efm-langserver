@@ -202,7 +202,6 @@ type Command struct {
 	Title     string        `json:"title" yaml:"title"`
 	Command   string        `json:"command" yaml:"command"`
 	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
-	Path      string        `yaml:"-"`
 }
 
 type CompletionItem struct {

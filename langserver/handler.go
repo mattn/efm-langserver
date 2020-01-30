@@ -154,17 +154,12 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
-	var command string
 
-	if config.LintStdin {
-		command = config.LintCommand
-	} else {
-		if strings.Index(config.LintCommand, "${INPUT}") != -1 {
-			command = strings.Replace(config.LintCommand, "${INPUT}", fname, -1)
-		} else {
-			command = config.LintCommand + " " + fname
-		}
+	command := config.LintCommand
+	if !config.LintStdin && strings.Index(command, "${INPUT}") == -1 {
+		command = command + " ${INPUT}"
 	}
+	command = strings.Replace(command, "${INPUT}", fname, -1)
 
 	formats := config.LintFormats
 	if len(formats) == 0 {
@@ -560,17 +555,11 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	}
 	word := string(utf16.Decode(chars[prevPos:currPos]))
 
-	var command string
-
-	if config.HoverStdin {
-		command = config.HoverCommand
-	} else {
-		if strings.Index(config.HoverCommand, "${INPUT}") != -1 {
-			command = strings.Replace(config.HoverCommand, "${INPUT}", word, -1)
-		} else {
-			command = config.HoverCommand + " " + word
-		}
+	command := config.HoverCommand
+	if !config.HoverStdin && strings.Index(command, "${INPUT}") == -1 {
+		command = command + " ${INPUT}"
 	}
+	command = strings.Replace(command, "${INPUT}", word, -1)
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {

@@ -12,5 +12,5 @@ require (
 	golang.org/x/tools v0.0.0-20200116011002-7042ee646e79 // indirect
 	golang.org/x/tools/gopls v0.2.2 // indirect
 	golang.org/x/xerrors v0.0.0-20191204190536-9bdfabe68543 // indirect
-	gopkg.in/yaml.v2 v2.2.7
+	gopkg.in/yaml.v2 v2.2.8
 )

@@ -24,7 +24,7 @@ import (
 
 type Config struct {
 	LogWriter io.Writer            `yaml:"-"`
-	Commands  map[string]string    `yaml:"commands"`
+	Commands  []Command            `yaml:"commands"`
 	Languages map[string]*Language `yaml:"languages"`
 }
 
@@ -60,7 +60,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 
 type langHandler struct {
 	logger   *log.Logger
-	commands map[string]string
+	commands []Command
 	configs  map[string]*Language
 	files    map[string]*File
 	request  chan string
@@ -594,17 +594,39 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	}, nil
 }
 
+func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Command, error) {
+	commands := []Command{}
+	for _, v := range h.commands {
+		commands = append(commands, Command{
+			Title:     v.Title,
+			Command:   v.Command,
+			Arguments: v.Arguments,
+		})
+	}
+	return commands, nil
+}
+
+func (h *langHandler) didChangeConfiguration(params *DidChangeConfigurationParams) (interface{}, error) {
+	return nil, nil
+}
+
 func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{}, error) {
-	command, ok := h.commands[params.Command]
-	if !ok {
+	var command *Command
+	for i, v := range h.commands {
+		if params.Command == v.Command {
+			command = &h.commands[i]
+			break
+		}
+	}
+	if command == nil {
 		return nil, fmt.Errorf("command not found: %v", params.Command)
 	}
 
 	var cmd *exec.Cmd
 	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
+		cmd = exec.Command("cmd", "/c", command.Command)
 	} else {
-		cmd = exec.Command("sh", "-c", command)
+		cmd = exec.Command("sh", "-c", command.Command)
 	}
 	b, err := cmd.CombinedOutput()
 	if err != nil {
@@ -637,8 +659,12 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentCompletion(ctx, conn, req)
 	case "textDocument/hover":
 		return h.handleTextDocumentHover(ctx, conn, req)
+	case "textDocument/codeAction":
+		return h.handleTextDocumentCodeAction(ctx, conn, req)
 	case "workspace/executeCommand":
 		return h.handleWorkspaceExecuteCommand(ctx, conn, req)
+	case "workspace/didChangeConfiguration":
+		return h.handleWorkspaceDidChangeConfiguration(ctx, conn, req)
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}

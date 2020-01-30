@@ -37,6 +37,7 @@ type ServerCapabilities struct {
 	CompletionProvider         *CompletionProvider  `json:"completionProvider,omitempty"`
 	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitempty"`
 	HoverProvider              bool                 `json:"hoverProvider,omitempty"`
+	CodeActionProvider         bool                 `json:"codeActionProvider,omitempty"`
 }
 
 type TextDocumentItem struct {
@@ -198,9 +199,10 @@ const (
 )
 
 type Command struct {
-	Title     string        `json:"title"`
-	Command   string        `json:"command"`
-	Arguments []interface{} `json:"arguments,omitempty"`
+	Title     string        `json:"title" yaml:"title"`
+	Command   string        `json:"command" yaml:"command"`
+	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
+	Path      string        `yaml:"-"`
 }
 
 type CompletionItem struct {
@@ -235,5 +237,40 @@ type ExecuteCommandParams struct {
 	WorkDoneProgressParams
 
 	Command   string        `json:"command"`
-	Arguments []interface{} `json:"arguments"`
+	Arguments []interface{} `json:"arguments,omitempty"`
+}
+
+type CodeActionKind string
+
+const (
+	Empty                 CodeActionKind = ""
+	QuickFix                             = "quickfix"
+	Refactor                             = "refactor"
+	RefactorExtract                      = "refactor.extract"
+	RefactorInline                       = "refactor.inline"
+	RefactorRewrite                      = "refactor.rewrite"
+	Source                               = "source"
+	SourceOrganizeImports                = "source.organizeImports"
+)
+
+type CodeActionContext struct {
+	Diagnostics []Diagnostic     `json:"diagnostics"`
+	Only        []CodeActionKind `json:"only,omitempty"`
+}
+
+type PartialResultParams struct {
+	PartialResultToken interface{} `json:"partialResultToken"`
+}
+
+type CodeActionParams struct {
+	WorkDoneProgressParams
+	PartialResultParams
+
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Range        Range                  `json:"range"`
+	Context      CodeActionContext      `json:"context"`
+}
+
+type DidChangeConfigurationParams struct {
+	Settings interface{} `json:"settings"`
 }

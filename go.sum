@@ -17,6 +17,8 @@ github.com/reviewdog/errorformat v0.0.0-20190922193611-a885a245ae0b h1:NABkU7Tlp
 github.com/reviewdog/errorformat v0.0.0-20190922193611-a885a245ae0b/go.mod h1:giYAXnpegRDPsXUO7TRpDKXJo1lFGYxyWRfEt5iQ+OA=
 github.com/reviewdog/errorformat v0.0.0-20200104154450-5b92f813bd0d h1:VpQ2UG6pFevKaDniSEVFs3pxbhZ/UrYw6+foL2e4dKo=
 github.com/reviewdog/errorformat v0.0.0-20200104154450-5b92f813bd0d/go.mod h1:giYAXnpegRDPsXUO7TRpDKXJo1lFGYxyWRfEt5iQ+OA=
+github.com/reviewdog/errorformat v0.0.0-20200131115011-f81d8fd336b8 h1:fHTqYmEBHji9kxsy4mVhqTl2XAWiL9jLVkd4369XehI=
+github.com/reviewdog/errorformat v0.0.0-20200131115011-f81d8fd336b8/go.mod h1:giYAXnpegRDPsXUO7TRpDKXJo1lFGYxyWRfEt5iQ+OA=
 github.com/rogpeppe/go-internal v1.3.0/go.mod h1:M8bDsm7K2OlrFYOpmOWEs/qY81heoFRclV5y23lUDJ4=
 github.com/sergi/go-diff v1.0.0 h1:Kpca3qRNrduNnOQeazBd0ysaKrUJiIuISHxogkT9RPQ=
 github.com/sergi/go-diff v1.0.0/go.mod h1:0CfEIISq7TuYL3j771MWULgwwjU+GofnZX9QAmXWZgo=

@@ -4,7 +4,7 @@ go 1.13
 
 require (
 	github.com/mattn/go-unicodeclass v0.0.1
-	github.com/reviewdog/errorformat v0.0.0-20200104154450-5b92f813bd0d
+	github.com/reviewdog/errorformat v0.0.0-20200131115011-f81d8fd336b8
 	github.com/sergi/go-diff v1.1.0 // indirect
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20191222043438-96c4efab7ee2
 	golang.org/x/mod v0.2.0 // indirect

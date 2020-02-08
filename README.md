@@ -33,7 +33,7 @@ languages:
     format-command: 'htmlbeautifier'
 
   vim:
-    lint-command: 'vint -'
+    lint-command: 'vint --stdin-display-name ${INPUT} -'
     lint-stdin: true
 
   markdown:

@@ -61,6 +61,12 @@ languages:
   sh:
     lint-command: 'shellcheck -f tty -'
     lint-stdin: true
+
+  go:
+    lint-command: "golangci-lint run"
+
+  php:
+    lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)

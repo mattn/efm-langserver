@@ -35,25 +35,25 @@ func TestLintNoFileMatched(t *testing.T) {
 
 func TestLintFileMatched(t *testing.T) {
 	h := &langHandler{
-		rootPath: "C:/",
+		rootPath: "/base",
 		configs: map[string][]Language{
 			"vim": {
 				{
-					LintCommand:        `echo C:/foo:2:No it is normal!`,
+					LintCommand:        `echo /base/foo:2:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
 				},
 			},
 		},
 		files: map[string]*File{
-			"file:///C:/foo": &File{
+			"file:///base/foo": &File{
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
 		},
 	}
 
-	d, err := h.lint("file:///C:/foo")
+	d, err := h.lint("file:///base/foo")
 	if err != nil {
 		t.Fatal(err)
 	}

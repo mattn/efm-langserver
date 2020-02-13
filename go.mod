@@ -8,5 +8,5 @@ require (
 	github.com/reviewdog/errorformat v0.0.0-20200131115011-f81d8fd336b8
 	github.com/sourcegraph/jsonrpc2 v0.0.0-20191222043438-96c4efab7ee2
 	gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 // indirect
-	gopkg.in/yaml.v2 v2.2.8
+	gopkg.in/yaml.v3 v3.0.0-20200121175148-a6ecf24a6d71
 )

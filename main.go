@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/mattn/efm-langserver/langserver"
 	"github.com/sourcegraph/jsonrpc2"

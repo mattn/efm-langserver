@@ -39,9 +39,9 @@ func loadConfig(yamlfile string) (*langserver.Config, error) {
 		config.Version = config1.Version
 		config.Commands = config1.Commands
 		config.LogWriter = config1.LogWriter
-		languages := make(map[string][]*langserver.Language)
+		languages := make(map[string][]langserver.Language)
 		for k, v := range config1.Languages {
-			languages[k] = []*langserver.Language{v}
+			languages[k] = []langserver.Language{v}
 		}
 		config.Languages = languages
 	}
@@ -51,8 +51,10 @@ func loadConfig(yamlfile string) (*langserver.Config, error) {
 func main() {
 	var yamlfile string
 	var logfile string
+	var dump bool
 	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
 	flag.StringVar(&logfile, "log", "", "logfile")
+	flag.BoolVar(&dump, "d", false, "dump configuration")
 	flag.Parse()
 
 	if yamlfile == "" {
@@ -72,6 +74,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if dump {
+		err = yaml.NewEncoder(os.Stdout).Encode(&config)
+		if err != nil {
+			log.Fatal(err)
+		}
+		os.Exit(0)
+	}
+
 	if flag.NArg() != 0 {
 		flag.Usage()
 		os.Exit(1)

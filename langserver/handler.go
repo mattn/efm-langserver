@@ -22,18 +22,18 @@ import (
 )
 
 type Config struct {
-	Version   int                    `yaml:"version"`
-	Commands  []Command              `yaml:"commands"`
-	Languages map[string][]*Language `yaml:"languages"`
+	Version   int                   `yaml:"version"`
+	Commands  []Command             `yaml:"commands"`
+	Languages map[string][]Language `yaml:"languages"`
 
 	LogWriter io.Writer `yaml:"-"`
 }
 
 type Config1 struct {
-	Version   int                  `yaml:"version"`
-	LogWriter io.Writer            `yaml:"-"`
-	Commands  []Command            `yaml:"commands"`
-	Languages map[string]*Language `yaml:"languages"`
+	Version   int                 `yaml:"version"`
+	LogWriter io.Writer           `yaml:"-"`
+	Commands  []Command           `yaml:"commands"`
+	Languages map[string]Language `yaml:"languages"`
 }
 
 type Language struct {
@@ -69,7 +69,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 type langHandler struct {
 	logger   *log.Logger
 	commands []Command
-	configs  map[string][]*Language
+	configs  map[string][]Language
 	files    map[string]*File
 	request  chan string
 	conn     *jsonrpc2.Conn
@@ -483,14 +483,14 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	return symbols, nil
 }
 
-func (h *langHandler) configFor(uri string) []*Language {
+func (h *langHandler) configFor(uri string) []Language {
 	f, ok := h.files[uri]
 	if !ok {
-		return []*Language{}
+		return []Language{}
 	}
 	c, ok := h.configs[f.LanguageId]
 	if !ok {
-		return []*Language{}
+		return []Language{}
 	}
 	return c
 }

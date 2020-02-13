@@ -37,7 +37,7 @@ func TestLintNoFileMatched(t *testing.T) {
 func TestLintFileMatched(t *testing.T) {
 	base := "/base"
 	file := "/base/foo"
-	uri := "file:///base/fo"
+	uri := "file:///base/foo"
 	if runtime.GOOS == "windows" {
 		base = "C:/base"
 		file = "C:/base/foo"

@@ -25,42 +25,84 @@ Location of config.yaml is:
 Below is example for config.yaml .
 
 ```yaml
-languages:
-  eruby:
+version: 2
+commands:
+  - command: notepad
+    arguments:
+      - ${INPUT}
+    title: メモ帳
+
+tools:
+  eruby-erb: &eruby-erb
     lint-command: 'erb -x -T - | ruby -c'
     lint-stdin: true
     lint-offset: 1
-    format-command: 'htmlbeautifier'
+    format-command: htmlbeautifier
 
-  vim:
-    lint-command: 'vint --stdin-display-name ${INPUT} -'
+  vim-vint: &vim-vint
+    lint-command: 'vint -'
     lint-stdin: true
 
-  markdown:
-    lint-command: 'markdownlint -s'
+  make-checkmake: &make-checkmake
+    lint-command: 'checkmake'
+    lint-stdin: true
+
+  markdown-markdownlint: &markdown-markdownlint
+    lint-command: 'markdownlint -s -c %USERPROFILE%\.markdownlintrc'
     lint-stdin: true
     lint-formats:
-      - '%f:%l %m'
+      - '%f: %l: %m'
 
-  yaml:
+  yaml-yamllint: &yaml-yamllint
     lint-command: 'yamllint -f parsable -'
     lint-stdin: true
-    lint-formats:
-      - '%f:%l:%c: %m'
-    env:
-      - 'PYTHONIOENCODING=UTF-8'
 
-  javascript:
+  javascript-eslint: &javascript-eslint
     lint-command: 'eslint -f unix --stdin'
     lint-ignore-exit-code: true
     lint-stdin: true
 
-  ruby:
-    format-command: 'rufo'
+  json-jq: &json-jq
+    lint-command: 'jq .'
 
-  sh:
-    lint-command: 'shellcheck -f tty -'
-    lint-stdin: true
+  json-fixjson: &json-fixjson
+    format-command: 'fixjson'
+
+  csv-csvlint: &csv-csvlint
+    lint-command: 'csvlint'
+
+  any-excitetranslate: &any-excitetranslate
+    hover-command: 'excitetranslate'
+    hover-stdin: true
+
+languages:
+  eruby:
+    - <<: *eruby-erb
+
+  vim:
+    - <<: *vim-vint
+
+  make:
+    - <<: *make-checkmake
+
+  markdown:
+    - <<: *markdown-markdownlint
+
+  yaml:
+    - <<: *yaml-yamllint
+
+  javascript:
+    - <<: *javascript-eslint
+
+  json:
+    - <<: *json-jq
+    - <<: *json-fixjson
+
+  csv:
+    - <<: *csv-csvlint
+
+  _:
+    - <<: *any-excitetranslate
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
@@ -76,9 +118,12 @@ augroup LspEFM
 augroup END
 ```
 
+[vim-lsp-settings](https://github.com/mattn/vim-lsp-settings) provide installer for efm-langserver.
+
 ### Configuration for [coc.nvim](https://github.com/neoclide/coc.nvim)
 
 coc-settings.json
+
 ```jsonc
   // languageserver
   "languageserver": {
@@ -100,7 +145,7 @@ coc-settings.json
 ## Installation
 
 ```console
-$ go get github.com/mattn/efm-langserver
+go get github.com/mattn/efm-langserver
 ```
 
 ## License

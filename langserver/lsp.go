@@ -1,5 +1,6 @@
 package langserver
 
+// InitializeParams is
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`
 	RootPath              string             `json:"rootPath,omitempty"`
@@ -8,29 +9,36 @@ type InitializeParams struct {
 	Trace                 string             `json:"trace,omitempty"`
 }
 
+// InitializeOptions is
 type InitializeOptions struct {
 }
 
+// ClientCapabilities is
 type ClientCapabilities struct {
 }
 
+// InitializeResult is
 type InitializeResult struct {
 	Capabilities ServerCapabilities `json:"capabilities,omitempty"`
 }
 
+// TextDocumentSyncKind is
 type TextDocumentSyncKind int
 
+// TDSKNone is
 const (
 	TDSKNone        TextDocumentSyncKind = 0
 	TDSKFull                             = 1
 	TDSKIncremental                      = 2
 )
 
+// CompletionProvider is
 type CompletionProvider struct {
 	ResolveProvider   bool     `json:"resolveProvider,omitempty"`
 	TriggerCharacters []string `json:"triggerCharacters"`
 }
 
+// ServerCapabilities is
 type ServerCapabilities struct {
 	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
 	DocumentSymbolProvider     bool                 `json:"documentSymbolProvider,omitempty"`
@@ -40,6 +48,7 @@ type ServerCapabilities struct {
 	CodeActionProvider         bool                 `json:"codeActionProvider,omitempty"`
 }
 
+// TextDocumentItem is
 type TextDocumentItem struct {
 	URI        string `json:"uri"`
 	LanguageID string `json:"languageId"`
@@ -47,77 +56,94 @@ type TextDocumentItem struct {
 	Text       string `json:"text"`
 }
 
+// VersionedTextDocumentIdentifier is
 type VersionedTextDocumentIdentifier struct {
 	TextDocumentIdentifier
 	Version int `json:"version"`
 }
 
+// TextDocumentIdentifier is
 type TextDocumentIdentifier struct {
 	URI string `json:"uri"`
 }
 
+// DidOpenTextDocumentParams is
 type DidOpenTextDocumentParams struct {
 	TextDocument TextDocumentItem `json:"textDocument"`
 }
 
+// DidCloseTextDocumentParams is
 type DidCloseTextDocumentParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
+// TextDocumentContentChangeEvent is
 type TextDocumentContentChangeEvent struct {
 	Range       Range  `json:"range"`
 	RangeLength int    `json:"rangeLength"`
 	Text        string `json:"text"`
 }
 
+// DidChangeTextDocumentParams is
 type DidChangeTextDocumentParams struct {
 	TextDocument   VersionedTextDocumentIdentifier  `json:"textDocument"`
 	ContentChanges []TextDocumentContentChangeEvent `json:"contentChanges"`
 }
 
+// DidSaveTextDocumentParams is
 type DidSaveTextDocumentParams struct {
 	Text         *string                `json:"text"`
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
+// TextDocumentPositionParams is
 type TextDocumentPositionParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Position     Position               `json:"position"`
 }
+
+// CompletionParams is
 type CompletionParams struct {
 	TextDocumentPositionParams
 	CompletionContext CompletionContext `json:"contentChanges"`
 }
 
+// CompletionContext is
 type CompletionContext struct {
 	TriggerKind      int     `json:"triggerKind"`
 	TriggerCharacter *string `json:"triggerCharacter"`
 }
 
+// HoverParams is
 type HoverParams struct {
 	TextDocumentPositionParams
 }
 
+// Location is
 type Location struct {
 	URI   string `json:"uri"`
 	Range Range  `json:"range"`
 }
 
+// Range is
 type Range struct {
 	Start Position `json:"start"`
 	End   Position `json:"end"`
 }
 
+// Position is
 type Position struct {
 	Line      int `json:"line"`
 	Character int `json:"character"`
 }
 
+// DiagnosticRelatedInformation is
 type DiagnosticRelatedInformation struct {
 	Location Location `json:"location"`
 	Message  string   `json:"message"`
 }
 
+// Diagnostic is
 type Diagnostic struct {
 	Range              Range                          `json:"range"`
 	Severity           int                            `json:"severity,omitempty"`
@@ -127,40 +153,48 @@ type Diagnostic struct {
 	RelatedInformation []DiagnosticRelatedInformation `json:"relatedInformation,omitempty"`
 }
 
+// PublishDiagnosticsParams is
 type PublishDiagnosticsParams struct {
 	URI         string       `json:"uri"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
 }
 
+// FormattingOptions is
 type FormattingOptions struct {
 	TabSize      int64 `json:"tabSize"`
 	InsertSpaces bool  `json:"insertSpaces"`
 }
 
+// DocumentFormattingParams is
 type DocumentFormattingParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 	Options      FormattingOptions      `json:"options"`
 }
 
+// TextEdit is
 type TextEdit struct {
 	Range   Range  `json:"range"`
 	NewText string `json:"newText"`
 }
 
+// DocumentSymbolParams is
 type DocumentSymbolParams struct {
 	TextDocument TextDocumentIdentifier `json:"textDocument"`
 }
 
+// SymbolInformation is
 type SymbolInformation struct {
 	Name          string   `json:"name"`
 	Kind          int64    `json:"kind"`
 	Deprecated    bool     `json:"deprecated"`
 	Location      Location `json:"location"`
-	ContainerName *string  `containerName`
+	ContainerName *string  `json:"containerName"`
 }
 
+// CompletionItemKind is
 type CompletionItemKind int
 
+// TextCompletion is
 const (
 	TextCompletion          CompletionItemKind = 1
 	MethodCompletion        CompletionItemKind = 2
@@ -189,21 +223,26 @@ const (
 	TypeParameterCompletion CompletionItemKind = 25
 )
 
+// CompletionItemTag is
 type CompletionItemTag int
 
+// InsertTextFormat is
 type InsertTextFormat int
 
+// PlainTextTextFormat is
 const (
 	PlainTextTextFormat InsertTextFormat = 1
 	SnippetTextFormat   InsertTextFormat = 2
 )
 
+// Command is
 type Command struct {
 	Title     string        `json:"title" yaml:"title"`
 	Command   string        `json:"command" yaml:"command"`
 	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
 }
 
+// CompletionItem is
 type CompletionItem struct {
 	Label               string              `json:"label"`
 	Kind                CompletionItemKind  `json:"kind,omitempty"`
@@ -223,15 +262,18 @@ type CompletionItem struct {
 	Data                interface{}         `json:"data,omitempty"`
 }
 
+// Hover is
 type Hover struct {
 	Contents interface{} `json:"contents"`
 	Range    *Range      `json:"range"`
 }
 
+// WorkDoneProgressParams is
 type WorkDoneProgressParams struct {
 	WorkDoneToken interface{} `json:"workDoneToken"`
 }
 
+// ExecuteCommandParams is
 type ExecuteCommandParams struct {
 	WorkDoneProgressParams
 
@@ -239,8 +281,10 @@ type ExecuteCommandParams struct {
 	Arguments []interface{} `json:"arguments,omitempty"`
 }
 
+// CodeActionKind is
 type CodeActionKind string
 
+// Empty is
 const (
 	Empty                 CodeActionKind = ""
 	QuickFix                             = "quickfix"
@@ -252,15 +296,18 @@ const (
 	SourceOrganizeImports                = "source.organizeImports"
 )
 
+// CodeActionContext is
 type CodeActionContext struct {
 	Diagnostics []Diagnostic     `json:"diagnostics"`
 	Only        []CodeActionKind `json:"only,omitempty"`
 }
 
+// PartialResultParams is
 type PartialResultParams struct {
 	PartialResultToken interface{} `json:"partialResultToken"`
 }
 
+// CodeActionParams is
 type CodeActionParams struct {
 	WorkDoneProgressParams
 	PartialResultParams
@@ -270,6 +317,7 @@ type CodeActionParams struct {
 	Context      CodeActionContext      `json:"context"`
 }
 
+// DidChangeConfigurationParams is
 type DidChangeConfigurationParams struct {
 	Settings interface{} `json:"settings"`
 }

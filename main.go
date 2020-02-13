@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,9 +23,27 @@ func loadConfig(yamlfile string) (*langserver.Config, error) {
 	defer f.Close()
 
 	var config langserver.Config
-	err = yaml.NewDecoder(f).Decode(&config)
-	if err != nil {
-		return nil, err
+	var config1 langserver.Config1
+	err = yaml.NewDecoder(f).Decode(&config1)
+	if err != nil || config1.Version == 2 {
+		f, err = os.Open(yamlfile)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		err = yaml.NewDecoder(f).Decode(&config)
+		if err != nil {
+			return nil, fmt.Errorf("can not read configuration: %v", err)
+		}
+	} else {
+		config.Version = config1.Version
+		config.Commands = config1.Commands
+		config.LogWriter = config1.LogWriter
+		languages := make(map[string][]langserver.Language)
+		for k, v := range config1.Languages {
+			languages[k] = []langserver.Language{v}
+		}
+		config.Languages = languages
 	}
 	return &config, nil
 }
@@ -32,8 +51,10 @@ func loadConfig(yamlfile string) (*langserver.Config, error) {
 func main() {
 	var yamlfile string
 	var logfile string
+	var dump bool
 	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
 	flag.StringVar(&logfile, "log", "", "logfile")
+	flag.BoolVar(&dump, "d", false, "dump configuration")
 	flag.Parse()
 
 	if yamlfile == "" {
@@ -53,6 +74,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	if dump {
+		err = yaml.NewEncoder(os.Stdout).Encode(&config)
+		if err != nil {
+			log.Fatal(err)
+		}
+		os.Exit(0)
+	}
+
 	if flag.NArg() != 0 {
 		flag.Usage()
 		os.Exit(1)

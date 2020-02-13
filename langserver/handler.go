@@ -17,6 +17,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
+// Config is
 type Config struct {
 	Version   int                   `yaml:"version"`
 	Commands  []Command             `yaml:"commands"`
@@ -25,6 +26,7 @@ type Config struct {
 	LogWriter io.Writer `yaml:"-"`
 }
 
+// Config1 is
 type Config1 struct {
 	Version   int                 `yaml:"version"`
 	LogWriter io.Writer           `yaml:"-"`
@@ -32,6 +34,7 @@ type Config1 struct {
 	Languages map[string]Language `yaml:"languages"`
 }
 
+// Language is
 type Language struct {
 	LintFormats        []string `yaml:"lint-formats"`
 	LintStdin          bool     `yaml:"lint-stdin"`
@@ -46,6 +49,7 @@ type Language struct {
 	Env                []string `yaml:"env"`
 }
 
+// NewHandler create JSON-RPC handler for this language server.
 func NewHandler(config *Config) jsonrpc2.Handler {
 	if config.LogWriter == nil {
 		config.LogWriter = os.Stderr
@@ -72,8 +76,9 @@ type langHandler struct {
 	rootPath string
 }
 
+// File is
 type File struct {
-	LanguageId string
+	LanguageID string
 	Text       string
 }
 
@@ -151,11 +156,11 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		fname = strings.ToLower(fname)
 	}
 
-	configs, ok := h.configs[f.LanguageId]
+	configs, ok := h.configs[f.LanguageID]
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
+			return nil, fmt.Errorf("lint for LanguageID not supported: %v", f.LanguageID)
 		}
 	}
 	found := 0
@@ -165,7 +170,7 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
+		return nil, fmt.Errorf("lint for LanguageID not supported: %v", f.LanguageID)
 	}
 
 	diagnostics := []Diagnostic{}
@@ -265,10 +270,10 @@ func (h *langHandler) saveFile(uri string) error {
 	return nil
 }
 
-func (h *langHandler) openFile(uri string, languageId string) error {
+func (h *langHandler) openFile(uri string, languageID string) error {
 	f := &File{
 		Text:       "",
-		LanguageId: languageId,
+		LanguageID: languageID,
 	}
 	h.files[uri] = f
 	return nil
@@ -290,7 +295,7 @@ func (h *langHandler) configFor(uri string) []Language {
 	if !ok {
 		return []Language{}
 	}
-	c, ok := h.configs[f.LanguageId]
+	c, ok := h.configs[f.LanguageID]
 	if !ok {
 		return []Language{}
 	}

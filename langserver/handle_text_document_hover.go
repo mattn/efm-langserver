@@ -61,11 +61,11 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	}
 	word := string(utf16.Decode(chars[prevPos:currPos]))
 
-	configs, ok := h.configs[f.LanguageId]
+	configs, ok := h.configs[f.LanguageID]
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
+			return nil, fmt.Errorf("hover for LanguageID not supported: %v", f.LanguageID)
 		}
 	}
 	found := 0
@@ -75,7 +75,7 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
+		return nil, fmt.Errorf("hover for LanguageID not supported: %v", f.LanguageID)
 	}
 
 	for _, config := range configs {
@@ -119,5 +119,5 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
+	return nil, fmt.Errorf("hover for LanguageID not supported: %v", f.LanguageID)
 }

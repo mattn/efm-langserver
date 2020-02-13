@@ -74,11 +74,11 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 		fname = strings.ToLower(fname)
 	}
 
-	configs, ok := h.configs[f.LanguageId]
+	configs, ok := h.configs[f.LanguageID]
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
+			return nil, fmt.Errorf("symbol for LanguageID not supported: %v", f.LanguageID)
 		}
 	}
 	found := 0
@@ -88,7 +88,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
+		return nil, fmt.Errorf("symbol for LanguageID not supported: %v", f.LanguageID)
 	}
 
 	symbols := []SymbolInformation{}

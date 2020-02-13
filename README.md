@@ -1,6 +1,6 @@
 # efm-langserver
 
-[![Actions Status](https://github.com/mattn/efm-langserver/workflows/ci/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/CI/badge.svg)](https://github.com/mattn/efm-langserver/actions)
 
 General purpose Language Server that can use specified error message format
 generated from specified command. This is useful for editing code with linter.

@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -34,26 +35,35 @@ func TestLintNoFileMatched(t *testing.T) {
 }
 
 func TestLintFileMatched(t *testing.T) {
+	base := "/base"
+	file := "/base/foo"
+	uri := "file:///base/fo"
+	if runtime.GOOS == "windows" {
+		base = "C:/base"
+		file = "C:/base/foo"
+		uri = "file:///C:/base/foo"
+	}
+
 	h := &langHandler{
-		rootPath: "/base",
+		rootPath: base,
 		configs: map[string][]Language{
 			"vim": {
 				{
-					LintCommand:        `echo /base/foo:2:No it is normal!`,
+					LintCommand:        `echo ` + file + `:2:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
 				},
 			},
 		},
 		files: map[string]*File{
-			"file:///base/foo": &File{
+			uri: &File{
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
 		},
 	}
 
-	d, err := h.lint("file:///base/foo")
+	d, err := h.lint(uri)
 	if err != nil {
 		t.Fatal(err)
 	}

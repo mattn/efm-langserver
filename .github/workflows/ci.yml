@@ -3,16 +3,22 @@ name: CI
 on: [push, pull_request]
 
 jobs:
-
-  build:
-    name: Build
-    runs-on: ubuntu-latest
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
     steps:
-    - name: Checkout code
-      uses: actions/checkout@master
-    - name: Setup Go
-      uses: actions/setup-go@v1
-      with:
-        go-version: 1.x
-    - name: Build
-      run: go build -v .
+      - name: Checkout code
+        uses: actions/checkout@master
+      - name: Setup Go
+        uses: actions/setup-go@v1
+        with:
+          go-version: 1.x
+      - name: Add $GOPATH/bin to $PATH
+        run: echo "::add-path::$(go env GOPATH)/bin"
+      - name: Test
+        run: make test
+      - name: Lint
+        run: make lint

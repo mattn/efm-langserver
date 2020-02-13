@@ -1,5 +1,13 @@
 # efm-langserver
 
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/reviewdog/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/linux_vim/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/linux_neovim/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/windows_vim/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/windows_neovim/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+[![Actions Status](https://github.com/mattn/efm-langserver/workflows/mac_neovim/badge.svg)](https://github.com/mattn/efm-langserver/actions)
+
+
 General purpose Language Server that can use specified error message format
 generated from specified command. This is useful for editing code with linter.
 

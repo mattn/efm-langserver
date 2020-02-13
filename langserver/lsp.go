@@ -156,7 +156,7 @@ type SymbolInformation struct {
 	Kind          int64    `json:"kind"`
 	Deprecated    bool     `json:"deprecated"`
 	Location      Location `json:"location"`
-	ContainerName *string  `containerName`
+	ContainerName *string  `json:"containerName"`
 }
 
 type CompletionItemKind int

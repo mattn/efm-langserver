@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -23,6 +22,15 @@ import (
 )
 
 type Config struct {
+	Version   int                    `yaml:"version"`
+	Commands  []Command              `yaml:"commands"`
+	Languages map[string][]*Language `yaml:"languages"`
+
+	LogWriter io.Writer `yaml:"-"`
+}
+
+type Config1 struct {
+	Version   int                  `yaml:"version"`
 	LogWriter io.Writer            `yaml:"-"`
 	Commands  []Command            `yaml:"commands"`
 	Languages map[string]*Language `yaml:"languages"`
@@ -61,7 +69,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 type langHandler struct {
 	logger   *log.Logger
 	commands []Command
-	configs  map[string]*Language
+	configs  map[string][]*Language
 	files    map[string]*File
 	request  chan string
 	conn     *jsonrpc2.Conn
@@ -138,17 +146,6 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		return nil, fmt.Errorf("document not found: %v", uri)
 	}
 
-	config, ok := h.configs[f.LanguageId]
-	if !ok || config.LintCommand == "" {
-		config, ok = h.configs["_"]
-		if !ok {
-			return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
-		}
-	}
-	if config.LintCommand == "" {
-		return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
-	}
-
 	fname, err := fromURI(uri)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
@@ -158,82 +155,104 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		fname = strings.ToLower(fname)
 	}
 
-	command := config.LintCommand
-	if !config.LintStdin && strings.Index(command, "${INPUT}") == -1 {
-		command = command + " ${INPUT}"
+	configs, ok := h.configs[f.LanguageId]
+	if !ok {
+		configs, ok = h.configs["_"]
+		if !ok || len(configs) < 1 {
+			return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
+		}
 	}
-	command = strings.Replace(command, "${INPUT}", fname, -1)
-
-	formats := config.LintFormats
-	if len(formats) == 0 {
-		formats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+	found := 0
+	for _, config := range configs {
+		if config.LintCommand != "" {
+			found++
+		}
 	}
-
-	efms, err := errorformat.NewErrorformat(formats)
-	if err != nil {
-		return nil, fmt.Errorf("invalid error-format: %v", config.LintFormats)
+	if found == 0 {
+		return nil, fmt.Errorf("lint for languageId not supported: %v", f.LanguageId)
 	}
 
 	diagnostics := []Diagnostic{}
+	for _, config := range configs {
+		if config.LintCommand == "" {
+			continue
+		}
 
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
-	cmd.Env = append(os.Environ(), config.Env...)
-	if config.LintStdin {
-		cmd.Stdin = strings.NewReader(f.Text)
-	}
-	b, err := cmd.CombinedOutput()
-	if err == nil && !config.LintIgnoreExitCode {
-		return diagnostics, nil
-	}
-	for _, line := range strings.Split(string(b), "\n") {
-		for _, ef := range efms.Efms {
-			m := ef.Match(string(line))
-			if m == nil {
-				continue
+		command := config.LintCommand
+		if !config.LintStdin && strings.Index(command, "${INPUT}") == -1 {
+			command = command + " ${INPUT}"
+		}
+		command = strings.Replace(command, "${INPUT}", fname, -1)
+
+		formats := config.LintFormats
+		if len(formats) == 0 {
+			formats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
+		}
+
+		efms, err := errorformat.NewErrorformat(formats)
+		if err != nil {
+			return nil, fmt.Errorf("invalid error-format: %v", config.LintFormats)
+		}
+
+		var cmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			cmd = exec.Command("cmd", "/c", command)
+		} else {
+			cmd = exec.Command("sh", "-c", command)
+		}
+		cmd.Env = append(os.Environ(), config.Env...)
+		if config.LintStdin {
+			cmd.Stdin = strings.NewReader(f.Text)
+		}
+		b, err := cmd.CombinedOutput()
+		if err == nil && !config.LintIgnoreExitCode {
+			continue
+		}
+		for _, line := range strings.Split(string(b), "\n") {
+			for _, ef := range efms.Efms {
+				m := ef.Match(string(line))
+				if m == nil {
+					continue
+				}
+				if config.LintStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
+					m.F = fname
+				} else {
+					m.F = filepath.ToSlash(m.F)
+				}
+				if m.C == 0 {
+					m.C = 1
+				}
+				path, err := filepath.Abs(m.F)
+				if err != nil {
+					continue
+				}
+				path = filepath.ToSlash(path)
+				if runtime.GOOS == "windows" {
+					path = strings.ToLower(path)
+				}
+				if path != fname {
+					continue
+				}
+				severity := 1
+				switch {
+				case m.T == 'E' || m.T == 'e':
+					severity = 1
+				case m.T == 'W' || m.T == 'w':
+					severity = 2
+				case m.T == 'I' || m.T == 'i':
+					severity = 3
+				case m.T == 'H' || m.T == 'h':
+					severity = 4
+				}
+				diagnostics = append(diagnostics, Diagnostic{
+					Range: Range{
+						Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+						End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+					},
+					Message:  m.M,
+					Severity: severity,
+				})
 			}
-			if config.LintStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
-				m.F = fname
-			} else {
-				m.F = filepath.ToSlash(m.F)
-			}
-			if m.C == 0 {
-				m.C = 1
-			}
-			path, err := filepath.Abs(m.F)
-			if err != nil {
-				continue
-			}
-			path = filepath.ToSlash(path)
-			if runtime.GOOS == "windows" {
-				path = strings.ToLower(path)
-			}
-			if path != fname {
-				continue
-			}
-			severity := 1
-			switch {
-			case m.T == 'E' || m.T == 'e':
-				severity = 1
-			case m.T == 'W' || m.T == 'w':
-				severity = 2
-			case m.T == 'I' || m.T == 'i':
-				severity = 3
-			case m.T == 'H' || m.T == 'h':
-				severity = 4
-			}
-			diagnostics = append(diagnostics, Diagnostic{
-				Range: Range{
-					Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-					End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-				},
-				Message:  m.M,
-				Severity: severity,
-			})
 		}
 	}
 
@@ -276,76 +295,78 @@ func (h *langHandler) formatFile(uri string) ([]TextEdit, error) {
 		return nil, fmt.Errorf("document not found: %v", uri)
 	}
 
-	config, ok := h.configs[f.LanguageId]
-	if !ok || config.FormatCommand == "" {
-		config, ok = h.configs["_"]
-		if !ok {
-			return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
-		}
-	}
-	if config.FormatCommand == "" {
-		return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
-	}
-
 	fname, err := fromURI(uri)
 	if err != nil {
 		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
 	}
-
 	fname = filepath.ToSlash(fname)
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
-	var command string
 
-	if strings.Index(config.FormatCommand, "${INPUT}") != -1 {
-		command = strings.Replace(config.FormatCommand, "${INPUT}", fname, -1)
-	} else {
-		command = config.FormatCommand + " " + fname
+	configs, ok := h.configs[f.LanguageId]
+	if !ok {
+		configs, ok = h.configs["_"]
+		if !ok || len(configs) < 1 {
+			return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
+		}
+	}
+	found := 0
+	for _, config := range configs {
+		if config.FormatCommand != "" {
+			found++
+		}
+	}
+	if found == 0 {
+		return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
 	}
 
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
-	cmd.Env = append(os.Environ(), config.Env...)
-	cmd.Stdin = strings.NewReader(f.Text)
-	b, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, errors.New(string(b))
-	}
-	h.logger.Println("format succeeded")
-	text := strings.Replace(string(b), "\r", "", -1)
-	flines := strings.Split(f.Text, "\n")
+	for _, config := range configs {
+		if config.FormatCommand == "" {
+			continue
+		}
 
-	return []TextEdit{
-		{
-			Range: Range{
-				Start: Position{Line: 0, Character: 0},
-				End:   Position{Line: len(flines), Character: len(flines[len(flines)-1])},
+		var command string
+
+		if strings.Index(config.FormatCommand, "${INPUT}") != -1 {
+			command = strings.Replace(config.FormatCommand, "${INPUT}", fname, -1)
+		} else {
+			command = config.FormatCommand + " " + fname
+		}
+
+		var cmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			cmd = exec.Command("cmd", "/c", command)
+		} else {
+			cmd = exec.Command("sh", "-c", command)
+		}
+		cmd.Env = append(os.Environ(), config.Env...)
+		cmd.Stdin = strings.NewReader(f.Text)
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			continue
+		}
+		h.logger.Println("format succeeded")
+		text := strings.Replace(string(b), "\r", "", -1)
+		flines := strings.Split(f.Text, "\n")
+		return []TextEdit{
+			{
+				Range: Range{
+					Start: Position{Line: 0, Character: 0},
+					End:   Position{Line: len(flines), Character: len(flines[len(flines)-1])},
+				},
+				NewText: text,
 			},
-			NewText: text,
-		},
-	}, nil
+		}, nil
+	}
+
+	return nil, fmt.Errorf("format for languageId not supported: %v", f.LanguageId)
 }
 
 func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
-	}
-
-	config, ok := h.configs[f.LanguageId]
-	if !ok || config.SymbolCommand == "" {
-		config, ok = h.configs["_"]
-		if !ok {
-			return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
-		}
-	}
-	if config.SymbolCommand == "" {
-		config.SymbolCommand = "ctags -x --_xformat=%{input}:%n:1:%K!%N"
 	}
 
 	fname, err := fromURI(uri)
@@ -357,96 +378,119 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
-	var command string
 
-	if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
-		command = strings.Replace(config.SymbolCommand, "${INPUT}", fname, -1)
-	} else {
-		command = config.SymbolCommand + " " + fname
+	configs, ok := h.configs[f.LanguageId]
+	if !ok {
+		configs, ok = h.configs["_"]
+		if !ok || len(configs) < 1 {
+			return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
+		}
 	}
-
-	efms, err := errorformat.NewErrorformat([]string{"%f:%l:%c:%m"})
-	if err != nil {
-		h.logger.Println("invalid error-format")
-		return nil, fmt.Errorf("invalid error-format: %v", config.LintFormats)
+	found := 0
+	for _, config := range configs {
+		if config.SymbolCommand != "" {
+			found++
+		}
+	}
+	if found == 0 {
+		return nil, fmt.Errorf("symbol for languageId not supported: %v", f.LanguageId)
 	}
 
 	symbols := []SymbolInformation{}
+	for _, config := range configs {
+		if config.SymbolCommand == "" {
+			config.SymbolCommand = "ctags -x --_xformat=%{input}:%n:1:%K!%N"
+		}
 
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
-	cmd.Env = append(os.Environ(), config.Env...)
+		var command string
 
-	b, err := cmd.CombinedOutput()
-	if err != nil {
-		h.logger.Printf("symbol command failed: %v", err)
-		return nil, fmt.Errorf("symbol command failed: %v", err)
-	}
+		if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
+			command = strings.Replace(config.SymbolCommand, "${INPUT}", fname, -1)
+		} else {
+			command = config.SymbolCommand + " " + fname
+		}
 
-	scanner := bufio.NewScanner(bytes.NewReader(b))
-	for scanner.Scan() {
-		for _, ef := range efms.Efms {
-			h.logger.Println(scanner.Text())
-			m := ef.Match(string(scanner.Text()))
-			if m == nil {
-				h.logger.Println("ignore1")
-				continue
-			}
-			m.F = filepath.ToSlash(m.F)
-			if m.C == 0 {
-				m.C = 1
-			}
-			path, err := filepath.Abs(m.F)
-			if err != nil {
-				h.logger.Println(err)
-				continue
-			}
-			path = filepath.ToSlash(path)
-			if runtime.GOOS == "windows" {
-				path = strings.ToLower(path)
-			}
-			if path != fname {
-				h.logger.Println(path, fname)
-				continue
-			}
-			token := strings.SplitN(m.M, "!", 2)
-			if len(token) != 2 {
-				h.logger.Println("invalid token")
-				continue
-			}
-			kind, ok := symbolKindMap[strings.ToLower(token[0])]
-			if !ok {
-				kind = symbolKindMap["file"]
-			}
-			symbols = append(symbols, SymbolInformation{
-				Location: Location{
-					URI: uri,
-					Range: Range{
-						Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-						End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+		efms, err := errorformat.NewErrorformat([]string{"%f:%l:%c:%m"})
+		if err != nil {
+			h.logger.Println("invalid error-format")
+			return nil, fmt.Errorf("invalid error-format: %v", config.LintFormats)
+		}
+
+		var cmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			cmd = exec.Command("cmd", "/c", command)
+		} else {
+			cmd = exec.Command("sh", "-c", command)
+		}
+		cmd.Env = append(os.Environ(), config.Env...)
+
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			h.logger.Printf("symbol command failed: %v", err)
+			return nil, fmt.Errorf("symbol command failed: %v", err)
+		}
+
+		scanner := bufio.NewScanner(bytes.NewReader(b))
+		for scanner.Scan() {
+			for _, ef := range efms.Efms {
+				h.logger.Println(scanner.Text())
+				m := ef.Match(string(scanner.Text()))
+				if m == nil {
+					h.logger.Println("ignore1")
+					continue
+				}
+				m.F = filepath.ToSlash(m.F)
+				if m.C == 0 {
+					m.C = 1
+				}
+				path, err := filepath.Abs(m.F)
+				if err != nil {
+					h.logger.Println(err)
+					continue
+				}
+				path = filepath.ToSlash(path)
+				if runtime.GOOS == "windows" {
+					path = strings.ToLower(path)
+				}
+				if path != fname {
+					h.logger.Println(path, fname)
+					continue
+				}
+				token := strings.SplitN(m.M, "!", 2)
+				if len(token) != 2 {
+					h.logger.Println("invalid token")
+					continue
+				}
+				kind, ok := symbolKindMap[strings.ToLower(token[0])]
+				if !ok {
+					kind = symbolKindMap["file"]
+				}
+				symbols = append(symbols, SymbolInformation{
+					Location: Location{
+						URI: uri,
+						Range: Range{
+							Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+							End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+						},
 					},
-				},
-				Kind: int64(kind),
-				Name: token[1],
-			})
+					Kind: int64(kind),
+					Name: token[1],
+				})
+			}
 		}
 	}
 
 	return symbols, nil
 }
 
-func (h *langHandler) configFor(uri string) *Language {
+func (h *langHandler) configFor(uri string) []*Language {
 	f, ok := h.files[uri]
 	if !ok {
-		return &Language{}
+		return []*Language{}
 	}
 	c, ok := h.configs[f.LanguageId]
 	if !ok {
-		return &Language{}
+		return []*Language{}
 	}
 	return c
 }
@@ -457,17 +501,6 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 		return nil, fmt.Errorf("document not found: %v", uri)
 	}
 
-	config, ok := h.configs[f.LanguageId]
-	if !ok || config.CompletionCommand == "" {
-		config, ok = h.configs["_"]
-		if !ok {
-			return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
-		}
-	}
-	if config.CompletionCommand == "" {
-		return nil, nil
-	}
-
 	fname, err := fromURI(uri)
 	if err != nil {
 		h.logger.Println("invalid uri")
@@ -477,57 +510,72 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 	if runtime.GOOS == "windows" {
 		fname = strings.ToLower(fname)
 	}
-	command := config.CompletionCommand
 
-	if strings.Index(command, "${POSITION}") != -1 {
-		command = strings.Replace(command, "${POSITION}", fmt.Sprintf("%d:%d", params.TextDocumentPositionParams.Position.Line, params.Position.Character), -1)
+	configs, ok := h.configs[f.LanguageId]
+	if !ok {
+		configs, ok = h.configs["_"]
+		if !ok || len(configs) < 1 {
+			return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
+		}
 	}
-	if strings.Index(command, "${INPUT}") != -1 {
-		command = strings.Replace(command, "${INPUT}", fname, -1)
-	} else {
-		command = command + " " + "" + " " + fname
+	found := 0
+	for _, config := range configs {
+		if config.CompletionCommand != "" {
+			found++
+		}
 	}
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
-	}
-	cmd.Env = append(os.Environ(), config.Env...)
-
-	b, err := cmd.CombinedOutput()
-
-	if err != nil {
-		h.logger.Printf("completion command failed: %v", err)
-		return nil, fmt.Errorf("completion command failed: %v", err)
+	if found == 0 {
+		return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
 	}
 
-	result := []CompletionItem{}
-	scanner := bufio.NewScanner(bytes.NewReader(b))
-	for scanner.Scan() {
-		result = append(result, CompletionItem{
-			Label:      scanner.Text(),
-			InsertText: scanner.Text(),
-		})
+	for _, config := range configs {
+		if config.CompletionCommand == "" {
+			return nil, nil
+		}
+
+		command := config.CompletionCommand
+
+		if strings.Index(command, "${POSITION}") != -1 {
+			command = strings.Replace(command, "${POSITION}", fmt.Sprintf("%d:%d", params.TextDocumentPositionParams.Position.Line, params.Position.Character), -1)
+		}
+		if strings.Index(command, "${INPUT}") != -1 {
+			command = strings.Replace(command, "${INPUT}", fname, -1)
+		} else {
+			command = command + " " + "" + " " + fname
+		}
+		var cmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			cmd = exec.Command("cmd", "/c", command)
+		} else {
+			cmd = exec.Command("sh", "-c", command)
+		}
+		cmd.Env = append(os.Environ(), config.Env...)
+
+		b, err := cmd.CombinedOutput()
+
+		if err != nil {
+			h.logger.Printf("completion command failed: %v", err)
+			return nil, fmt.Errorf("completion command failed: %v", err)
+		}
+
+		result := []CompletionItem{}
+		scanner := bufio.NewScanner(bytes.NewReader(b))
+		for scanner.Scan() {
+			result = append(result, CompletionItem{
+				Label:      scanner.Text(),
+				InsertText: scanner.Text(),
+			})
+		}
+		return result, nil
 	}
-	return result, nil
+
+	return nil, fmt.Errorf("completion for languageId not supported: %v", f.LanguageId)
 }
 
 func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
-	}
-
-	config, ok := h.configs[f.LanguageId]
-	if !ok || config.HoverCommand == "" {
-		config, ok = h.configs["_"]
-		if !ok {
-			return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
-		}
-	}
-	if config.HoverCommand == "" {
-		return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
 	}
 
 	lines := strings.Split(f.Text, "\n")
@@ -558,40 +606,65 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	}
 	word := string(utf16.Decode(chars[prevPos:currPos]))
 
-	command := config.HoverCommand
-	if !config.HoverStdin && strings.Index(command, "${INPUT}") == -1 {
-		command = command + " ${INPUT}"
+	configs, ok := h.configs[f.LanguageId]
+	if !ok {
+		configs, ok = h.configs["_"]
+		if !ok || len(configs) < 1 {
+			return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
+		}
 	}
-	command = strings.Replace(command, "${INPUT}", word, -1)
-
-	var cmd *exec.Cmd
-	if runtime.GOOS == "windows" {
-		cmd = exec.Command("cmd", "/c", command)
-	} else {
-		cmd = exec.Command("sh", "-c", command)
+	found := 0
+	for _, config := range configs {
+		if config.HoverCommand != "" {
+			found++
+		}
 	}
-	cmd.Env = append(os.Environ(), config.Env...)
-	if config.HoverStdin {
-		cmd.Stdin = strings.NewReader(word)
-	}
-	b, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
+	if found == 0 {
+		return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
 	}
 
-	return &Hover{
-		Contents: strings.TrimSpace(string(b)),
-		Range: &Range{
-			Start: Position{
-				Line:      params.Position.Line,
-				Character: prevPos,
+	for _, config := range configs {
+		if config.HoverCommand == "" {
+			continue
+		}
+
+		command := config.HoverCommand
+		if !config.HoverStdin && strings.Index(command, "${INPUT}") == -1 {
+			command = command + " ${INPUT}"
+		}
+		command = strings.Replace(command, "${INPUT}", word, -1)
+
+		var cmd *exec.Cmd
+		if runtime.GOOS == "windows" {
+			cmd = exec.Command("cmd", "/c", command)
+		} else {
+			cmd = exec.Command("sh", "-c", command)
+		}
+		cmd.Env = append(os.Environ(), config.Env...)
+		if config.HoverStdin {
+			cmd.Stdin = strings.NewReader(word)
+		}
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, err
+		}
+
+		return &Hover{
+			Contents: strings.TrimSpace(string(b)),
+			Range: &Range{
+				Start: Position{
+					Line:      params.Position.Line,
+					Character: prevPos,
+				},
+				End: Position{
+					Line:      params.Position.Line,
+					Character: currPos,
+				},
 			},
-			End: Position{
-				Line:      params.Position.Line,
-				Character: currPos,
-			},
-		},
-	}, nil
+		}, nil
+	}
+
+	return nil, fmt.Errorf("hover for languageId not supported: %v", f.LanguageId)
 }
 
 func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Command, error) {

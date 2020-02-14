@@ -242,6 +242,20 @@ type Command struct {
 	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
 }
 
+type WorkspaceEdit struct {
+	Changes         interface{} `json:"changes"`         // { [uri: DocumentUri]: TextEdit[]; };
+	DocumentChanges interface{} `json:"documentChanges"` // (TextDocumentEdit[] | (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[]);
+}
+
+// CodeAction is
+type CodeAction struct {
+	Title       string         `json:"title"`
+	Diagnostics []Diagnostic   `json:"diagnostics"`
+	IsPreferred bool           `json:"isPreferred"` // TODO
+	Edit        *WorkspaceEdit `json:"edit"`
+	Command     *Command       `json:"command"`
+}
+
 // CompletionItem is
 type CompletionItem struct {
 	Label               string              `json:"label"`
@@ -320,4 +334,10 @@ type CodeActionParams struct {
 // DidChangeConfigurationParams is
 type DidChangeConfigurationParams struct {
 	Settings interface{} `json:"settings"`
+}
+
+// NotificationMessage is
+type NotificationMessage struct {
+	Method string      `json:"message"`
+	Params interface{} `json:"params"`
 }

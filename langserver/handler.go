@@ -209,7 +209,7 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 			cmd.Stdin = strings.NewReader(f.Text)
 		}
 		b, err := cmd.CombinedOutput()
-		if err == nil && !config.LintIgnoreExitCode {
+		if err != nil && !config.LintIgnoreExitCode {
 			continue
 		}
 		for _, line := range strings.Split(string(b), "\n") {

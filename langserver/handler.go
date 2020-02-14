@@ -46,6 +46,7 @@ type Language struct {
 	CompletionCommand  string   `yaml:"completion-command"`
 	HoverCommand       string   `yaml:"hover-command"`
 	HoverStdin         bool     `yaml:"hover-stdin"`
+	HoverType          string   `yaml:"hover-type"`
 	Env                []string `yaml:"env"`
 }
 
@@ -160,7 +161,8 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("lint for LanguageID not supported: %v", f.LanguageID)
+			h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
+			return []Diagnostic{}, nil
 		}
 	}
 	found := 0
@@ -170,7 +172,8 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("lint for LanguageID not supported: %v", f.LanguageID)
+		h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
+		return []Diagnostic{}, nil
 	}
 
 	diagnostics := []Diagnostic{}

@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"log"
 	"runtime"
 	"strings"
 	"testing"
@@ -8,6 +9,7 @@ import (
 
 func TestLintNoLinter(t *testing.T) {
 	h := &langHandler{
+		logger:  log.New(log.Writer(), "", log.LstdFlags),
 		configs: map[string][]Language{},
 		files: map[string]*File{
 			"file:///foo": &File{},
@@ -15,13 +17,14 @@ func TestLintNoLinter(t *testing.T) {
 	}
 
 	_, err := h.lint("file:///foo")
-	if err == nil {
-		t.Fatal("Should be an error if no linters")
+	if err != nil {
+		t.Fatal("Should not be an error if no linters")
 	}
 }
 
 func TestLintNoFileMatched(t *testing.T) {
 	h := &langHandler{
+		logger:  log.New(log.Writer(), "", log.LstdFlags),
 		configs: map[string][]Language{},
 		files: map[string]*File{
 			"file:///foo": &File{},
@@ -45,6 +48,7 @@ func TestLintFileMatched(t *testing.T) {
 	}
 
 	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
 		rootPath: base,
 		configs: map[string][]Language{
 			"vim": {

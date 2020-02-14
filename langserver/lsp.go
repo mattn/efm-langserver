@@ -242,6 +242,21 @@ type Command struct {
 	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
 }
 
+// WorkspaceEdit is
+type WorkspaceEdit struct {
+	Changes         interface{} `json:"changes"`         // { [uri: DocumentUri]: TextEdit[]; };
+	DocumentChanges interface{} `json:"documentChanges"` // (TextDocumentEdit[] | (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[]);
+}
+
+// CodeAction is
+type CodeAction struct {
+	Title       string         `json:"title"`
+	Diagnostics []Diagnostic   `json:"diagnostics"`
+	IsPreferred bool           `json:"isPreferred"` // TODO
+	Edit        *WorkspaceEdit `json:"edit"`
+	Command     *Command       `json:"command"`
+}
+
 // CompletionItem is
 type CompletionItem struct {
 	Label               string              `json:"label"`
@@ -266,6 +281,27 @@ type CompletionItem struct {
 type Hover struct {
 	Contents interface{} `json:"contents"`
 	Range    *Range      `json:"range"`
+}
+
+// MarkedString is
+type MarkedString struct {
+	Language string `json:"language"`
+	Value    string `json:"value"`
+}
+
+// MarkupKind is
+type MarkupKind string
+
+// PlainText is
+const (
+	PlainText MarkupKind = "plaintext"
+	Markdown             = "markdown"
+)
+
+// MarkupContent is
+type MarkupContent struct {
+	Kind  MarkupKind `json:"kind"`
+	Value string     `json:"value"`
 }
 
 // WorkDoneProgressParams is
@@ -320,4 +356,10 @@ type CodeActionParams struct {
 // DidChangeConfigurationParams is
 type DidChangeConfigurationParams struct {
 	Settings interface{} `json:"settings"`
+}
+
+// NotificationMessage is
+type NotificationMessage struct {
+	Method string      `json:"message"`
+	Params interface{} `json:"params"`
 }

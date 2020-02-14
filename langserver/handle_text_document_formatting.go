@@ -45,7 +45,8 @@ func (h *langHandler) formatting(uri string) ([]TextEdit, error) {
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("format for LanguageID not supported: %v", f.LanguageID)
+			h.logger.Printf("format for LanguageID not supported: %v", f.LanguageID)
+			return nil, nil
 		}
 	}
 	found := 0
@@ -55,7 +56,8 @@ func (h *langHandler) formatting(uri string) ([]TextEdit, error) {
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("format for LanguageID not supported: %v", f.LanguageID)
+		h.logger.Printf("format for LanguageID not supported: %v", f.LanguageID)
+		return nil, nil
 	}
 
 	for _, config := range configs {

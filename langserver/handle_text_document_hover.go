@@ -65,7 +65,8 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("hover for LanguageID not supported: %v", f.LanguageID)
+			h.logger.Printf("hover for LanguageID not supported: %v", f.LanguageID)
+			return nil, nil
 		}
 	}
 	found := 0
@@ -75,7 +76,8 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("hover for LanguageID not supported: %v", f.LanguageID)
+		h.logger.Printf("hover for LanguageID not supported: %v", f.LanguageID)
+		return nil, nil
 	}
 
 	for _, config := range configs {
@@ -104,8 +106,16 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 			return nil, err
 		}
 
+		var content MarkupContent
+		if config.HoverType == "markdown" {
+			content.Kind = Markdown
+		} else {
+			content.Kind = PlainText
+		}
+		content.Value = strings.TrimSpace(string(b))
+
 		return &Hover{
-			Contents: strings.TrimSpace(string(b)),
+			Contents: content,
 			Range: &Range{
 				Start: Position{
 					Line:      params.Position.Line,
@@ -119,5 +129,5 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 		}, nil
 	}
 
-	return nil, fmt.Errorf("hover for LanguageID not supported: %v", f.LanguageID)
+	return nil, nil
 }

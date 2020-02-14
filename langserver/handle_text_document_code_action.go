@@ -78,6 +78,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	if err != nil {
 		return nil, err
 	}
+
 	return string(b), nil
 }
 

@@ -242,6 +242,7 @@ type Command struct {
 	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
 }
 
+// WorkspaceEdit is
 type WorkspaceEdit struct {
 	Changes         interface{} `json:"changes"`         // { [uri: DocumentUri]: TextEdit[]; };
 	DocumentChanges interface{} `json:"documentChanges"` // (TextDocumentEdit[] | (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[]);

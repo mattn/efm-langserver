@@ -106,8 +106,16 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 			return nil, err
 		}
 
+		var content MarkupContent
+		if config.HoverType == "markdown" {
+			content.Kind = Markdown
+		} else {
+			content.Kind = PlainText
+		}
+		content.Value = strings.TrimSpace(string(b))
+
 		return &Hover{
-			Contents: strings.TrimSpace(string(b)),
+			Contents: content,
 			Range: &Range{
 				Start: Position{
 					Line:      params.Position.Line,

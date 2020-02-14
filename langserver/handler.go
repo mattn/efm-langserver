@@ -46,6 +46,7 @@ type Language struct {
 	CompletionCommand  string   `yaml:"completion-command"`
 	HoverCommand       string   `yaml:"hover-command"`
 	HoverStdin         bool     `yaml:"hover-stdin"`
+	HoverType          string   `yaml:"hover-type"`
 	Env                []string `yaml:"env"`
 }
 

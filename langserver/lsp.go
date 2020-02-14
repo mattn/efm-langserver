@@ -282,6 +282,27 @@ type Hover struct {
 	Range    *Range      `json:"range"`
 }
 
+// MarkedString is
+type MarkedString struct {
+	Language string `json:"language"`
+	Value    string `json:"value"`
+}
+
+// MarkupKind is
+type MarkupKind string
+
+// PlainText is
+const (
+	PlainText MarkupKind = "plaintext"
+	Markdown             = "markdown"
+)
+
+// MarkupContent is
+type MarkupContent struct {
+	Kind  MarkupKind `json:"kind"`
+	Value string     `json:"value"`
+}
+
 // WorkDoneProgressParams is
 type WorkDoneProgressParams struct {
 	WorkDoneToken interface{} `json:"workDoneToken"`

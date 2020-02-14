@@ -1,0 +1,107 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "additionalProperties": false,
+  "definitions": {
+    "command-definition": {
+      "description": "list of commands",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "description": "arguments for the command",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "description": "command to execute",
+            "type": "string"
+          },
+          "title": {
+            "description": "title for clients",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "tool-definition": {
+      "description": "definition of the tool",
+      "additionalProperties": false,
+      "properties": {
+        "format-command": {
+          "description": "format command",
+          "type": "string"
+        },
+        "lint-command": {
+          "description": "lint command",
+          "type": "string"
+        },
+        "lint-formats": {
+          "description": "list of lint format",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "lint-offset": {
+          "description": "offset value to skip lines",
+          "type": "number"
+        },
+        "lint-stdin": {
+          "description": "use stdin for the lint",
+          "type": "boolean"
+        },
+        "lint-ignore-exit-code": {
+          "description": "ignore exit code of lint",
+          "type": "boolean"
+        },
+        "hover-command": {
+          "description": "hover command",
+          "type": "string"
+        },
+        "hover-stdin": {
+          "description": "use stdin for the hover",
+          "type": "boolean"
+        }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "commands": {
+      "$ref": "#/definitions/command-definition"
+    },
+    "languages": {
+      "description": "list of language",
+      "patternProperties": {
+        "^([a-z0-9_-]+)+$": {
+          "items": {
+            "$ref": "#/definitions/tool-definition"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "tools": {
+      "description": "definition of tools",
+      "patternProperties": {
+        "^([a-z0-9_-]+)+$": {
+          "items": {
+            "$ref": "#/definitions/tool-definition"
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "version": {
+      "description": "version of this yaml format",
+      "type": "number"
+    }
+  },
+  "title": "efm-langserver",
+  "type": "object"
+}

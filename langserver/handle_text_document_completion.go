@@ -48,7 +48,8 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 	if !ok {
 		configs, ok = h.configs["_"]
 		if !ok || len(configs) < 1 {
-			return nil, fmt.Errorf("completion for LanguageID not supported: %v", f.LanguageID)
+			h.logger.Printf("completion for LanguageID not supported: %v", f.LanguageID)
+			return nil, nil
 		}
 	}
 	found := 0
@@ -58,7 +59,8 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 		}
 	}
 	if found == 0 {
-		return nil, fmt.Errorf("completion for LanguageID not supported: %v", f.LanguageID)
+		h.logger.Printf("completion for LanguageID not supported: %v", f.LanguageID)
+		return nil, nil
 	}
 
 	for _, config := range configs {

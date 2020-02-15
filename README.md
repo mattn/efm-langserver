@@ -64,6 +64,9 @@ tools:
     lint-ignore-exit-code: true
     lint-stdin: true
 
+  php-phpstan: &php-phpstan
+    lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
+
   json-jq: &json-jq
     lint-command: 'jq .'
 
@@ -95,6 +98,9 @@ languages:
 
   javascript:
     - <<: *javascript-eslint
+
+  php:
+    - <<: *php-phpstan
 
   json:
     - <<: *json-jq

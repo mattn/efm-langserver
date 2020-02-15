@@ -28,35 +28,12 @@
       "type": "array"
     },
     "tool-definition": {
-      "description": "definition of the tool",
       "additionalProperties": false,
+      "description": "definition of the tool",
       "properties": {
         "format-command": {
           "description": "format command",
           "type": "string"
-        },
-        "lint-command": {
-          "description": "lint command",
-          "type": "string"
-        },
-        "lint-formats": {
-          "description": "list of lint format",
-          "type": "array",
-          "items": {
-            "type": "string"
-          }
-        },
-        "lint-offset": {
-          "description": "offset value to skip lines",
-          "type": "number"
-        },
-        "lint-stdin": {
-          "description": "use stdin for the lint",
-          "type": "boolean"
-        },
-        "lint-ignore-exit-code": {
-          "description": "ignore exit code of lint",
-          "type": "boolean"
         },
         "hover-command": {
           "description": "hover command",
@@ -64,6 +41,31 @@
         },
         "hover-stdin": {
           "description": "use stdin for the hover",
+          "type": "boolean"
+        },
+        "lint-command": {
+          "description": "lint command",
+          "type": "string"
+        },
+        "lint-formats": {
+          "description": "list of lint format",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lint-ignore-exit-code": {
+          "default": true,
+          "description": "ignore exit code of lint",
+          "type": "boolean"
+        },
+        "lint-offset": {
+          "description": "offset value to skip lines",
+          "type": "number"
+        },
+        "lint-stdin": {
+          "default": true,
+          "description": "use stdin for the lint",
           "type": "boolean"
         }
       },

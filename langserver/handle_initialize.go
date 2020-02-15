@@ -21,16 +21,25 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 
 	h.rootPath = params.RootPath
 
+	var completion *CompletionProvider
+	for _, config := range h.configs {
+		for _, v := range config {
+			if v.CompletionCommand != "" {
+				completion = &CompletionProvider{
+					TriggerCharacters: []string{"*"},
+				}
+			}
+		}
+	}
+
 	return InitializeResult{
 		Capabilities: ServerCapabilities{
 			TextDocumentSync:           TDSKFull,
 			DocumentFormattingProvider: true,
 			DocumentSymbolProvider:     true,
-			CompletionProvider: &CompletionProvider{
-				TriggerCharacters: []string{"*"},
-			},
-			HoverProvider:      true,
-			CodeActionProvider: true,
+			CompletionProvider:         completion,
+			HoverProvider:              true,
+			CodeActionProvider:         true,
 		},
 	}, nil
 }

@@ -67,6 +67,15 @@ tools:
   php-phpstan: &php-phpstan
     lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
 
+  html-prettier: &html-prettier
+    format-command: './node_modules/.bin/prettier --parser html'
+
+  css-prettier: &css-prettier
+    format-command: './node_modules/.bin/prettier --parser css'
+
+  json-prettier: &json-prettier
+    format-command: './node_modules/.bin/prettier --parser json'
+
   json-jq: &json-jq
     lint-command: 'jq .'
 
@@ -102,9 +111,16 @@ languages:
   php:
     - <<: *php-phpstan
 
+  html:
+    - <<: *html-prettier
+
+  css:
+    - <<: *css-prettier
+
   json:
     - <<: *json-jq
     - <<: *json-fixjson
+    # - <<: *json-prettier
 
   csv:
     - <<: *csv-csvlint

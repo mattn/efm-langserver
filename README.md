@@ -59,6 +59,13 @@ tools:
     lint-command: 'yamllint -f parsable -'
     lint-stdin: true
 
+  python-flake8: &python-flake8
+    lint-command: 'flake8 --stdin-display-name ${INPUT} -'
+    lint-stdin: true
+
+  python-mypy: &python-mypy
+    lint-command: 'mypy --show-column-numbers'
+
   javascript-eslint: &javascript-eslint
     lint-command: 'eslint -f unix --stdin'
     lint-ignore-exit-code: true
@@ -104,6 +111,10 @@ languages:
 
   yaml:
     - <<: *yaml-yamllint
+
+  python:
+    - <<: *python-flake8
+    - <<: *python-mypy
 
   javascript:
     - <<: *javascript-eslint

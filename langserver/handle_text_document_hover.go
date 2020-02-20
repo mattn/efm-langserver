@@ -61,14 +61,14 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 	}
 	word := string(utf16.Decode(chars[prevPos:currPos]))
 
-	configs, ok := h.configs[f.LanguageID]
-	if !ok {
-		configs, ok = h.configs["_"]
-		if !ok || len(configs) < 1 {
-			h.logger.Printf("hover for LanguageID not supported: %v", f.LanguageID)
-			return nil, nil
-		}
+	var configs []Language
+	if cfgs, ok := h.configs[f.LanguageID]; ok {
+		configs = append(configs, cfgs...)
 	}
+	if cfgs, ok := h.configs["!"]; ok {
+		configs = append(configs, cfgs...)
+	}
+
 	found := 0
 	for _, config := range configs {
 		if config.HoverCommand != "" {

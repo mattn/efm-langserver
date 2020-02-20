@@ -74,14 +74,14 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 		fname = strings.ToLower(fname)
 	}
 
-	configs, ok := h.configs[f.LanguageID]
-	if !ok {
-		configs, ok = h.configs["_"]
-		if !ok || len(configs) < 1 {
-			h.logger.Printf("symbol for LanguageID not supported: %v", f.LanguageID)
-			return nil, nil
-		}
+	var configs []Language
+	if cfgs, ok := h.configs[f.LanguageID]; ok {
+		configs = append(configs, cfgs...)
 	}
+	if cfgs, ok := h.configs["!"]; ok {
+		configs = append(configs, cfgs...)
+	}
+
 	found := 0
 	for _, config := range configs {
 		if config.SymbolCommand != "" {

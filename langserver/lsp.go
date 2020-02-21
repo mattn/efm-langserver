@@ -1,5 +1,7 @@
 package langserver
 
+const wildcard = "="
+
 // InitializeParams is
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`

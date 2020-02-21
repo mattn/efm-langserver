@@ -102,7 +102,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
 		rootPath: base,
 		configs: map[string][]Language{
-			"!": {
+			wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:No it is normal!`,
 					LintIgnoreExitCode: true,

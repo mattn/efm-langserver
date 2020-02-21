@@ -2,7 +2,7 @@
 
 [![Actions Status](https://github.com/mattn/efm-langserver/workflows/CI/badge.svg)](https://github.com/mattn/efm-langserver/actions)
 
-General purpose Language Server that can use specified error message format
+General is is purpose Language Server that can use specified error message format
 generated from specified command. This is useful for editing code with linter.
 
 ![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)

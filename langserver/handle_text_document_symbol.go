@@ -78,7 +78,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
 		configs = append(configs, cfgs...)
 	}
-	if cfgs, ok := h.configs["!"]; ok {
+	if cfgs, ok := h.configs[wildcard]; ok {
 		configs = append(configs, cfgs...)
 	}
 
@@ -153,7 +153,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 					h.logger.Println(path, fname)
 					continue
 				}
-				token := strings.SplitN(m.M, "!", 2)
+				token := strings.SplitN(m.M, wildcard, 2)
 				if len(token) != 2 {
 					h.logger.Println("invalid token")
 					continue

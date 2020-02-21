@@ -48,7 +48,7 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
 		configs = append(configs, cfgs...)
 	}
-	if cfgs, ok := h.configs["!"]; ok {
+	if cfgs, ok := h.configs[wildcard]; ok {
 		configs = append(configs, cfgs...)
 	}
 

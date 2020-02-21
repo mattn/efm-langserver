@@ -161,7 +161,7 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
 		configs = append(configs, cfgs...)
 	}
-	if cfgs, ok := h.configs["!"]; ok {
+	if cfgs, ok := h.configs[wildcard]; ok {
 		configs = append(configs, cfgs...)
 	}
 

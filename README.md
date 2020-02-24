@@ -62,9 +62,15 @@ tools:
   python-flake8: &python-flake8
     lint-command: 'flake8 --stdin-display-name ${INPUT} -'
     lint-stdin: true
+    lint-formats:
+      - '%f:%l:%c: %m'
 
   python-mypy: &python-mypy
     lint-command: 'mypy --show-column-numbers'
+    lint-formats:
+      - '%f:%l:%c: %trror: %m'
+      - '%f:%l:%c: %tarning: %m'
+      - '%f:%l:%c: %tote: %m'
 
   javascript-eslint: &javascript-eslint
     lint-command: 'eslint -f unix --stdin'

@@ -35,6 +35,10 @@
           "description": "format command",
           "type": "string"
         },
+        "format-stdin": {
+          "description": "use stdin for the format",
+          "type": "boolean"
+        },
         "hover-command": {
           "description": "hover command",
           "type": "string"

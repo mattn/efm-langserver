@@ -42,6 +42,7 @@ type Language struct {
 	LintCommand        string   `yaml:"lint-command"`
 	LintIgnoreExitCode bool     `yaml:"lint-ignore-exit-code"`
 	FormatCommand      string   `yaml:"format-command"`
+	FormatStdin        bool     `yaml:"format-stdin"`
 	SymbolCommand      string   `yaml:"symbol-command"`
 	CompletionCommand  string   `yaml:"completion-command"`
 	HoverCommand       string   `yaml:"hover-command"`

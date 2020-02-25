@@ -65,13 +65,11 @@ func (h *langHandler) formatting(uri string) ([]TextEdit, error) {
 			continue
 		}
 
-		var command string
-
-		if strings.Index(config.FormatCommand, "${INPUT}") != -1 {
-			command = strings.Replace(config.FormatCommand, "${INPUT}", fname, -1)
-		} else {
-			command = config.FormatCommand + " " + fname
+		command := config.FormatCommand
+		if !config.FormatStdin && strings.Index(command, "${INPUT}") == -1 {
+			command = command + " ${INPUT}"
 		}
+		command = strings.Replace(command, "${INPUT}", fname, -1)
 
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {
@@ -80,7 +78,9 @@ func (h *langHandler) formatting(uri string) ([]TextEdit, error) {
 			cmd = exec.Command("sh", "-c", command)
 		}
 		cmd.Env = append(os.Environ(), config.Env...)
-		cmd.Stdin = strings.NewReader(f.Text)
+		if config.FormatStdin {
+			cmd.Stdin = strings.NewReader(f.Text)
+		}
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			continue

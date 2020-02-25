@@ -94,7 +94,6 @@ func (h *langHandler) ctags(fname string, word string) ([]Location, error) {
 func (h *langHandler) findTags(fname string) string {
 	base := filepath.Clean(filepath.Dir(fname))
 	for {
-		h.logger.Printf("base: %v", base)
 		_, err := os.Stat(filepath.Join(base, "tags"))
 		if err == nil {
 			break

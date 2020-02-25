@@ -5,7 +5,7 @@ const wildcard = "="
 // InitializeParams is
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`
-	RootPath              string             `json:"rootPath,omitempty"`
+	RootURI               string             `json:"rootUri,omitempty"`
 	InitializationOptions InitializeOptions  `json:"initializationOptions,omitempty"`
 	Capabilities          ClientCapabilities `json:"capabilities,omitempty"`
 	Trace                 string             `json:"trace,omitempty"`
@@ -45,6 +45,7 @@ type ServerCapabilities struct {
 	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
 	DocumentSymbolProvider     bool                 `json:"documentSymbolProvider,omitempty"`
 	CompletionProvider         *CompletionProvider  `json:"completionProvider,omitempty"`
+	DefinitionProvider         bool                 `json:"definitionProvider,omitempty"`
 	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitempty"`
 	HoverProvider              bool                 `json:"hoverProvider,omitempty"`
 	CodeActionProvider         bool                 `json:"codeActionProvider,omitempty"`
@@ -364,4 +365,11 @@ type DidChangeConfigurationParams struct {
 type NotificationMessage struct {
 	Method string      `json:"message"`
 	Params interface{} `json:"params"`
+}
+
+// DocumentDefinitionParams is
+type DocumentDefinitionParams struct {
+	TextDocumentPositionParams
+	WorkDoneProgressParams
+	PartialResultParams
 }

@@ -3,6 +3,7 @@ package langserver
 import (
 	"context"
 	"encoding/json"
+	"path/filepath"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -19,7 +20,11 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 		return nil, err
 	}
 
-	h.rootPath = params.RootPath
+	rootPath, err := fromURI(params.RootURI)
+	if err != nil {
+		return nil, err
+	}
+	h.rootPath = filepath.Clean(rootPath)
 
 	var completion *CompletionProvider
 	for _, config := range h.configs {
@@ -37,6 +42,7 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 			TextDocumentSync:           TDSKFull,
 			DocumentFormattingProvider: true,
 			DocumentSymbolProvider:     true,
+			DefinitionProvider:         true,
 			CompletionProvider:         completion,
 			HoverProvider:              true,
 			CodeActionProvider:         true,

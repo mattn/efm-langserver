@@ -110,7 +110,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 		efms, err := errorformat.NewErrorformat([]string{"%f:%l:%c:%m"})
 		if err != nil {
 			h.logger.Println("invalid error-format")
-			return nil, fmt.Errorf("invalid error-format: %v", config.LintFormats)
+			return nil, fmt.Errorf("invalid error-format: %v", "%f:%l:%c:%m")
 		}
 
 		var cmd *exec.Cmd
@@ -133,7 +133,6 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 				h.logger.Println(scanner.Text())
 				m := ef.Match(string(scanner.Text()))
 				if m == nil {
-					h.logger.Println("ignore1")
 					continue
 				}
 				m.F = filepath.ToSlash(m.F)

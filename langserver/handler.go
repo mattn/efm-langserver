@@ -332,6 +332,8 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentSymbol(ctx, conn, req)
 	case "textDocument/completion":
 		return h.handleTextDocumentCompletion(ctx, conn, req)
+	case "textDocument/definition":
+		return h.handleTextDocumentDefinition(ctx, conn, req)
 	case "textDocument/hover":
 		return h.handleTextDocumentHover(ctx, conn, req)
 	case "textDocument/codeAction":

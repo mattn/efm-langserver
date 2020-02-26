@@ -210,6 +210,11 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 			cmd.Stdin = strings.NewReader(f.Text)
 		}
 		b, err := cmd.CombinedOutput()
+		// Most of lint tools exit with non-zero value. But some commands
+		// return with zero value. We can not handle the output is real result
+		// or output of usage. So efm-langserver ignore that command exiting
+		// with zero-value. So if you want to handle the command which exit
+		// with zero value, please specify lint-ignore-exit-code.
 		if err == nil && !config.LintIgnoreExitCode {
 			continue
 		}

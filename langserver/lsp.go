@@ -24,8 +24,10 @@ type InitializeResult struct {
 	Capabilities ServerCapabilities `json:"capabilities,omitempty"`
 }
 
+// MessageType is
 type MessageType int
 
+// LogError is
 const (
 	LogError   MessageType = 1
 	LogWarning             = 2

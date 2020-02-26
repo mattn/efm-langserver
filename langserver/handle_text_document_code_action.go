@@ -85,6 +85,17 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Command, error) {
 	commands := []Command{}
 	for _, v := range h.commands {
+		if v.OS != "" {
+			found := false
+			for _, os := range strings.FieldsFunc(v.OS, func(r rune) bool { return r == ',' }) {
+				if strings.TrimSpace(os) == runtime.GOOS {
+					found = true
+				}
+			}
+			if !found {
+				continue
+			}
+		}
 		commands = append(commands, Command{
 			Title:     v.Title,
 			Command:   v.Command,

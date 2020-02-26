@@ -243,6 +243,7 @@ type Command struct {
 	Title     string        `json:"title" yaml:"title"`
 	Command   string        `json:"command" yaml:"command"`
 	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
+	OS        string        `json:"-" yaml:"os,omitempty"`
 }
 
 // WorkspaceEdit is

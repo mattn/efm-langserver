@@ -24,6 +24,15 @@ type InitializeResult struct {
 	Capabilities ServerCapabilities `json:"capabilities,omitempty"`
 }
 
+type MessageType int
+
+const (
+	LogError   MessageType = 1
+	LogWarning             = 2
+	LogInfo                = 3
+	LogLog                 = 4
+)
+
 // TextDocumentSyncKind is
 type TextDocumentSyncKind int
 
@@ -373,4 +382,16 @@ type DocumentDefinitionParams struct {
 	TextDocumentPositionParams
 	WorkDoneProgressParams
 	PartialResultParams
+}
+
+// ShowMessageParams is
+type ShowMessageParams struct {
+	Type    MessageType `json:"type"`
+	Message string      `json:"message"`
+}
+
+// LogMessageParams is
+type LogMessageParams struct {
+	Type    MessageType `json:"type"`
+	Message string      `json:"message"`
 }

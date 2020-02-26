@@ -63,19 +63,21 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 
 	var configs []Language
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
-		configs = append(configs, cfgs...)
-	}
-	if cfgs, ok := h.configs[wildcard]; ok {
-		configs = append(configs, cfgs...)
-	}
-
-	found := 0
-	for _, config := range configs {
-		if config.HoverCommand != "" {
-			found++
+		for _, cfg := range cfgs {
+			if cfg.HoverCommand != "" {
+				configs = append(configs, cfg)
+			}
 		}
 	}
-	if found == 0 {
+	if cfgs, ok := h.configs[wildcard]; ok {
+		for _, cfg := range cfgs {
+			if cfg.HoverCommand != "" {
+				configs = append(configs, cfg)
+			}
+		}
+	}
+
+	if len(configs) == 0 {
 		h.logger.Printf("hover for LanguageID not supported: %v", f.LanguageID)
 		return nil, nil
 	}

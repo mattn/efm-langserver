@@ -76,41 +76,46 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 
 	var configs []Language
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
-		configs = append(configs, cfgs...)
-	}
-	if cfgs, ok := h.configs[wildcard]; ok {
-		configs = append(configs, cfgs...)
-	}
-
-	found := 0
-	for _, config := range configs {
-		if config.SymbolCommand != "" {
-			found++
+		for _, cfg := range cfgs {
+			if cfg.SymbolCommand != "" {
+				configs = append(configs, cfg)
+			}
 		}
 	}
-	if found == 0 {
-		h.logger.Printf("symbol for LanguageID not supported: %v", f.LanguageID)
-		return nil, nil
+	if cfgs, ok := h.configs[wildcard]; ok {
+		for _, cfg := range cfgs {
+			if cfg.SymbolCommand != "" {
+				configs = append(configs, cfg)
+			}
+		}
+	}
+
+	if len(configs) == 0 {
+		configs = []Language{
+			{
+				SymbolCommand: "ctags -x --_xformat=%{input}:%n:1:%K!%N",
+				SymbolFormats: []string{"%f:%l:%c:%m"},
+			},
+		}
 	}
 
 	symbols := []SymbolInformation{}
 	for _, config := range configs {
-		if config.SymbolCommand == "" {
-			config.SymbolCommand = "ctags -x --_xformat=%{input}:%n:1:%K!%N"
+		command := config.SymbolCommand
+		if !config.SymbolStdin && strings.Index(command, "${INPUT}") == -1 {
+			command = command + " ${INPUT}"
+		}
+		command = strings.Replace(command, "${INPUT}", fname, -1)
+
+		formats := config.LintFormats
+		if len(formats) == 0 {
+			formats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 		}
 
-		var command string
-
-		if strings.Index(config.SymbolCommand, "${INPUT}") != -1 {
-			command = strings.Replace(config.SymbolCommand, "${INPUT}", fname, -1)
-		} else {
-			command = config.SymbolCommand + " " + fname
-		}
-
-		efms, err := errorformat.NewErrorformat([]string{"%f:%l:%c:%m"})
+		efms, err := errorformat.NewErrorformat(formats)
 		if err != nil {
 			h.logger.Println("invalid error-format")
-			return nil, fmt.Errorf("invalid error-format: %v", "%f:%l:%c:%m")
+			return nil, fmt.Errorf("invalid error-format: %v", config.SymbolFormats)
 		}
 
 		var cmd *exec.Cmd
@@ -120,22 +125,26 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 			cmd = exec.Command("sh", "-c", command)
 		}
 		cmd.Env = append(os.Environ(), config.Env...)
-
+		if config.SymbolStdin {
+			cmd.Stdin = strings.NewReader(f.Text)
+		}
 		b, err := cmd.CombinedOutput()
 		if err != nil {
-			h.logger.Printf("symbol command failed: %v", err)
-			return nil, fmt.Errorf("symbol command failed: %v", err)
+			continue
 		}
 
 		scanner := bufio.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {
 			for _, ef := range efms.Efms {
-				h.logger.Println(scanner.Text())
 				m := ef.Match(string(scanner.Text()))
 				if m == nil {
 					continue
 				}
-				m.F = filepath.ToSlash(m.F)
+				if config.SymbolStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
+					m.F = fname
+				} else {
+					m.F = filepath.ToSlash(m.F)
+				}
 				if m.C == 0 {
 					m.C = 1
 				}
@@ -152,14 +161,14 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 					h.logger.Println(path, fname)
 					continue
 				}
-				token := strings.SplitN(m.M, wildcard, 2)
-				if len(token) != 2 {
-					h.logger.Println("invalid token")
-					continue
-				}
-				kind, ok := symbolKindMap[strings.ToLower(token[0])]
-				if !ok {
-					kind = symbolKindMap["file"]
+				token := strings.SplitN(m.M, "!", 2)
+				kind := symbolKindMap["key"]
+				if len(token) == 2 {
+					if tmp, ok := symbolKindMap[strings.ToLower(token[0])]; ok {
+						kind = tmp
+					}
+				} else {
+					token = []string{"", m.M}
 				}
 				symbols = append(symbols, SymbolInformation{
 					Location: Location{

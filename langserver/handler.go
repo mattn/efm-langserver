@@ -44,6 +44,8 @@ type Language struct {
 	FormatCommand      string   `yaml:"format-command"`
 	FormatStdin        bool     `yaml:"format-stdin"`
 	SymbolCommand      string   `yaml:"symbol-command"`
+	SymbolStdin        bool     `yaml:"symbol-stdin"`
+	SymbolFormats      []string `yaml:"symbol-formats"`
 	CompletionCommand  string   `yaml:"completion-command"`
 	HoverCommand       string   `yaml:"hover-command"`
 	HoverStdin         bool     `yaml:"hover-stdin"`
@@ -122,6 +124,16 @@ func toURI(path string) *url.URL {
 	}
 }
 
+func (h *langHandler) logMessage(typ MessageType, message string) {
+	h.conn.Notify(
+		context.Background(),
+		"window/logMessage",
+		&LogMessageParams{
+			Type:    typ,
+			Message: message,
+		})
+}
+
 func (h *langHandler) linter() {
 	for {
 		uri, ok := <-h.request
@@ -160,19 +172,21 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 
 	var configs []Language
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
-		configs = append(configs, cfgs...)
-	}
-	if cfgs, ok := h.configs[wildcard]; ok {
-		configs = append(configs, cfgs...)
-	}
-
-	found := 0
-	for _, config := range configs {
-		if config.LintCommand != "" {
-			found++
+		for _, cfg := range cfgs {
+			if cfg.LintCommand != "" {
+				configs = append(configs, cfg)
+			}
 		}
 	}
-	if found == 0 {
+	if cfgs, ok := h.configs[wildcard]; ok {
+		for _, cfg := range cfgs {
+			if cfg.LintCommand != "" {
+				configs = append(configs, cfg)
+			}
+		}
+	}
+
+	if len(configs) == 0 {
 		h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
 		return []Diagnostic{}, nil
 	}

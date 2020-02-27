@@ -57,9 +57,25 @@ func (h *langHandler) findTag(fname string, tag string) ([]Location, error) {
 			}
 			lines := strings.Split(string(b), "\n")
 			if strings.HasPrefix(token[2], "/") {
-				pattern := strings.TrimLeft(strings.TrimRight(token[2], "$/"), "/^")
+				pattern := token[2]
+				hasPrefix := strings.HasPrefix(pattern, "/^")
+				if hasPrefix {
+					pattern = strings.TrimLeft(pattern, "/^")
+				}
+				hasSuffix := strings.HasSuffix(pattern, "$/")
+				if hasSuffix {
+					pattern = strings.TrimRight(pattern, "$/")
+				}
 				for i, line := range lines {
-					if line == pattern {
+					match := false
+					if hasPrefix && hasSuffix && line == pattern {
+						match = true
+					} else if hasPrefix && strings.HasPrefix(line, pattern) {
+						match = true
+					} else if hasSuffix && strings.HasSuffix(line, pattern) {
+						match = true
+					}
+					if match {
 						locations = append(locations, Location{
 							URI: toURI(fullpath).String(),
 							Range: Range{

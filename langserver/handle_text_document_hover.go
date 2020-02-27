@@ -50,6 +50,9 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 			if i <= params.Position.Character {
 				prevPos = i
 			} else {
+				if char == '_' {
+					continue
+				}
 				currPos = i
 				break
 			}

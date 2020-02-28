@@ -144,7 +144,7 @@ func (h *langHandler) definition(uri string, params *DocumentDefinitionParams) (
 
 	fname, err := fromURI(uri)
 	if err != nil {
-		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
+		return nil, nil
 	}
 	fname = filepath.ToSlash(fname)
 	if runtime.GOOS == "windows" {
@@ -153,7 +153,7 @@ func (h *langHandler) definition(uri string, params *DocumentDefinitionParams) (
 
 	base := h.findTags(fname)
 	if base == "" {
-		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
+		return nil, nil
 	}
 	return h.ctags(filepath.Join(base, "tags"), word)
 }

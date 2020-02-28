@@ -8,14 +8,14 @@ import (
 	"testing"
 )
 
-func TestFindTags(t *testing.T) {
+func TestFindTagFile(t *testing.T) {
 	cwd, _ := os.Getwd()
 	cwd = filepath.Clean(filepath.Join(cwd, ".."))
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
 		rootPath: cwd,
 	}
-	base := h.findTags(filepath.Join(cwd, "testdata/foo/bar"))
+	base := h.findTagsFile(filepath.Join(cwd, "testdata/foo/bar"))
 	if base == "" {
 		t.Fatal("tags file must be found")
 	}
@@ -24,14 +24,14 @@ func TestFindTags(t *testing.T) {
 	}
 }
 
-func TestCtags(t *testing.T) {
+func TestFindTag(t *testing.T) {
 	cwd, _ := os.Getwd()
 	cwd = filepath.Clean(filepath.Join(cwd, ".."))
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
 		rootPath: cwd,
 	}
-	locations, err := h.ctags(filepath.Join(cwd, "testdata/tags"), "langHandler")
+	locations, err := h.findTag(filepath.Join(cwd, "testdata/tags"), "langHandler")
 	if err != nil {
 		t.Fatal(err)
 	}

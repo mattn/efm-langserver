@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
@@ -31,7 +30,7 @@ func (h *langHandler) handleTextDocumentDefinition(ctx context.Context, conn *js
 	return h.definition(params.TextDocument.URI, &params)
 }
 
-func (h *langHandler) ctags(fname string, word string) ([]Location, error) {
+func (h *langHandler) findTag(fname string, tag string) ([]Location, error) {
 	f, err := os.Open(fname)
 	if err != nil {
 		return nil, err
@@ -49,7 +48,7 @@ func (h *langHandler) ctags(fname string, word string) ([]Location, error) {
 		if len(token) < 4 {
 			continue
 		}
-		if token[0] == word {
+		if token[0] == tag {
 			token[2] = strings.TrimRight(token[2], `;"`)
 			fullpath := filepath.Clean(filepath.Join(h.rootPath, token[1]))
 			b, err := ioutil.ReadFile(fullpath)
@@ -57,13 +56,26 @@ func (h *langHandler) ctags(fname string, word string) ([]Location, error) {
 				continue
 			}
 			lines := strings.Split(string(b), "\n")
-			if token[2][0] == '/' {
-				re, err := regexp.Compile(token[2][1:])
-				if err != nil {
-					continue
+			if strings.HasPrefix(token[2], "/") {
+				pattern := token[2]
+				hasPrefix := strings.HasPrefix(pattern, "/^")
+				if hasPrefix {
+					pattern = strings.TrimLeft(pattern, "/^")
+				}
+				hasSuffix := strings.HasSuffix(pattern, "$/")
+				if hasSuffix {
+					pattern = strings.TrimRight(pattern, "$/")
 				}
 				for i, line := range lines {
-					if re.MatchString(line) {
+					match := false
+					if hasPrefix && hasSuffix && line == pattern {
+						match = true
+					} else if hasPrefix && strings.HasPrefix(line, pattern) {
+						match = true
+					} else if hasSuffix && strings.HasSuffix(line, pattern) {
+						match = true
+					}
+					if match {
 						locations = append(locations, Location{
 							URI: toURI(fullpath).String(),
 							Range: Range{
@@ -91,15 +103,19 @@ func (h *langHandler) ctags(fname string, word string) ([]Location, error) {
 	return locations, nil
 }
 
-func (h *langHandler) findTags(fname string) string {
+func (h *langHandler) findTagsFile(fname string) string {
 	base := filepath.Clean(filepath.Dir(fname))
 	for {
 		_, err := os.Stat(filepath.Join(base, "tags"))
 		if err == nil {
 			break
 		}
+		if base == h.rootPath {
+			base = ""
+			break
+		}
 		tmp := filepath.Dir(base)
-		if tmp == "" || tmp == base || tmp == h.rootPath {
+		if tmp == "" || tmp == base {
 			base = ""
 			break
 		}
@@ -131,6 +147,9 @@ func (h *langHandler) definition(uri string, params *DocumentDefinitionParams) (
 			if i <= params.Position.Character {
 				prevPos = i
 			} else {
+				if char == '_' {
+					continue
+				}
 				currPos = i
 				break
 			}
@@ -140,7 +159,7 @@ func (h *langHandler) definition(uri string, params *DocumentDefinitionParams) (
 	if currPos == -1 {
 		currPos = len(chars)
 	}
-	word := string(utf16.Decode(chars[prevPos:currPos]))
+	tag := string(utf16.Decode(chars[prevPos:currPos]))
 
 	fname, err := fromURI(uri)
 	if err != nil {
@@ -151,9 +170,9 @@ func (h *langHandler) definition(uri string, params *DocumentDefinitionParams) (
 		fname = strings.ToLower(fname)
 	}
 
-	base := h.findTags(fname)
+	base := h.findTagsFile(fname)
 	if base == "" {
 		return nil, nil
 	}
-	return h.ctags(filepath.Join(base, "tags"), word)
+	return h.findTag(filepath.Join(base, "tags"), tag)
 }

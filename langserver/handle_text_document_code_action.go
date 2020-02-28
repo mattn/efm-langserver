@@ -29,15 +29,14 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	if len(params.Arguments) != 1 {
 		return nil, fmt.Errorf("invalid command")
 	}
+
 	uri := fmt.Sprint(params.Arguments[0])
-	fname, err := fromURI(uri)
-	if err != nil {
-		h.logger.Println("invalid uri")
-		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
-	}
-	fname = filepath.ToSlash(fname)
-	if runtime.GOOS == "windows" {
-		fname = strings.ToLower(fname)
+	fname, _ := fromURI(uri)
+	if fname != "" {
+		fname = filepath.ToSlash(fname)
+		if runtime.GOOS == "windows" {
+			fname = strings.ToLower(fname)
+		}
 	}
 
 	var command *Command
@@ -53,33 +52,56 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 
 	var cmd *exec.Cmd
 	var args []string
-	if runtime.GOOS == "windows" {
-		args = []string{"/c", command.Command}
-		for _, v := range command.Arguments {
-			arg := fmt.Sprint(v)
-			if arg == "${INPUT}" {
-				arg = fname
+	var output string
+	if !strings.HasPrefix(command.Command, ":") {
+		if runtime.GOOS == "windows" {
+			args = []string{"/c", command.Command}
+			for _, v := range command.Arguments {
+				arg := fmt.Sprint(v)
+				if arg == "${INPUT}" {
+					if fname == "" {
+						h.logger.Println("invalid uri")
+						return nil, fmt.Errorf("invalid uri: %v", uri)
+					}
+					arg = fname
+				}
+				args = append(args, arg)
 			}
-			args = append(args, arg)
+			cmd = exec.Command("cmd", args...)
+		} else {
+			args = []string{"-c", command.Command}
+			for _, v := range command.Arguments {
+				arg := fmt.Sprint(v)
+				if arg == "${INPUT}" {
+					if fname == "" {
+						h.logger.Println("invalid uri")
+						return nil, fmt.Errorf("invalid uri: %v", uri)
+					}
+					arg = fname
+				}
+				args = append(args, arg)
+			}
+			cmd = exec.Command("sh", args...)
 		}
-		cmd = exec.Command("cmd", args...)
+		b, err := cmd.CombinedOutput()
+		if err != nil {
+			return nil, err
+		}
+		output = string(b)
 	} else {
-		args = []string{"-c", command.Command}
-		for _, v := range command.Arguments {
-			arg := fmt.Sprint(v)
-			if arg == "${INPUT}" {
-				arg = fname
+		if command.Command == ":reload-config" {
+			config, err := LoadConfig(h.filename)
+			if err != nil {
+				return nil, err
 			}
-			args = append(args, arg)
+			h.commands = config.Commands
+			h.configs = config.Languages
 		}
-		cmd = exec.Command("sh", args...)
-	}
-	b, err := cmd.CombinedOutput()
-	if err != nil {
-		return nil, err
+		h.logMessage(LogInfo, "Reloaded configuration file")
+		output = "OK"
 	}
 
-	return string(b), nil
+	return output, nil
 }
 
 func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Command, error) {

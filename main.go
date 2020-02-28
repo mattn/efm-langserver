@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,39 +13,6 @@ import (
 	"github.com/mattn/efm-langserver/langserver"
 	"github.com/sourcegraph/jsonrpc2"
 )
-
-func loadConfig(yamlfile string) (*langserver.Config, error) {
-	f, err := os.Open(yamlfile)
-	if err != nil {
-		return nil, err
-	}
-	defer f.Close()
-
-	var config langserver.Config
-	var config1 langserver.Config1
-	err = yaml.NewDecoder(f).Decode(&config1)
-	if err != nil || config1.Version == 2 {
-		f, err = os.Open(yamlfile)
-		if err != nil {
-			return nil, err
-		}
-		defer f.Close()
-		err = yaml.NewDecoder(f).Decode(&config)
-		if err != nil {
-			return nil, fmt.Errorf("can not read configuration: %v", err)
-		}
-	} else {
-		config.Version = config1.Version
-		config.Commands = config1.Commands
-		config.LogWriter = config1.LogWriter
-		languages := make(map[string][]langserver.Language)
-		for k, v := range config1.Languages {
-			languages[k] = []langserver.Language{v}
-		}
-		config.Languages = languages
-	}
-	return &config, nil
-}
 
 func main() {
 	var yamlfile string
@@ -70,7 +36,7 @@ func main() {
 		yamlfile = filepath.Join(dir, "config.yaml")
 	}
 
-	config, err := loadConfig(yamlfile)
+	config, err := langserver.LoadConfig(yamlfile)
 	if err != nil {
 		log.Fatal(err)
 	}

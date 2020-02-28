@@ -23,6 +23,7 @@ type Config struct {
 	Commands  []Command             `yaml:"commands"`
 	Languages map[string][]Language `yaml:"languages"`
 
+	Filename  string    `yaml:"-"`
 	LogWriter io.Writer `yaml:"-"`
 }
 
@@ -65,6 +66,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		files:    make(map[string]*File),
 		request:  make(chan string),
 		conn:     nil,
+		filename: config.Filename,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -78,6 +80,7 @@ type langHandler struct {
 	request  chan string
 	conn     *jsonrpc2.Conn
 	rootPath string
+	filename string
 }
 
 // File is

@@ -79,6 +79,7 @@ func (h *langHandler) formatting(uri string) ([]TextEdit, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
+		cmd.Dir = h.rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.FormatStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

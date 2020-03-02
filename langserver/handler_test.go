@@ -2,7 +2,8 @@ package langserver
 
 import (
 	"log"
-	"runtime"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -38,14 +39,9 @@ func TestLintNoFileMatched(t *testing.T) {
 }
 
 func TestLintFileMatched(t *testing.T) {
-	base := "/base"
-	file := "/base/foo"
-	uri := "file:///base/foo"
-	if runtime.GOOS == "windows" {
-		base = "C:/base"
-		file = "C:/base/foo"
-		uri = "file:///C:/base/foo"
-	}
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file).String()
 
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
@@ -72,7 +68,7 @@ func TestLintFileMatched(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(d) != 1 {
-		t.Fatal("diagnostics should be only one")
+		t.Fatal("diagnostics should be only one", d)
 	}
 	if d[0].Range.Start.Line != 1 {
 		t.Fatalf("range.start.line should be %v but got: %v", 1, d[0].Range.Start.Line)
@@ -89,14 +85,9 @@ func TestLintFileMatched(t *testing.T) {
 }
 
 func TestLintFileMatchedForce(t *testing.T) {
-	base := "/base"
-	file := "/base/foo"
-	uri := "file:///base/foo"
-	if runtime.GOOS == "windows" {
-		base = "C:/base"
-		file = "C:/base/foo"
-		uri = "file:///C:/base/foo"
-	}
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file).String()
 
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),

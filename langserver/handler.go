@@ -223,6 +223,7 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
+		cmd.Dir = h.rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.LintStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

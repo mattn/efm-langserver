@@ -86,6 +86,7 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
+		cmd.Dir = h.rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
 
 		b, err := cmd.CombinedOutput()

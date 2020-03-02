@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -83,6 +84,8 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			}
 			cmd = exec.Command("sh", args...)
 		}
+		cmd.Dir = h.rootPath
+		cmd.Env = os.Environ()
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			return nil, err

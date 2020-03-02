@@ -124,6 +124,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
+		cmd.Dir = h.rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.SymbolStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

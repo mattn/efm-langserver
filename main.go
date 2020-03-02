@@ -55,6 +55,10 @@ func main() {
 	}
 	log.Println("efm-langserver: reading on stdin, writing on stdout")
 
+	if logfile == "" {
+		logfile = config.LogFile
+	}
+
 	if logfile != "" {
 		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0660)
 		if err != nil {

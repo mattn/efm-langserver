@@ -20,6 +20,7 @@ import (
 // Config is
 type Config struct {
 	Version   int                   `yaml:"version"`
+	LogFile   string                `yaml:"logfile"`
 	Commands  []Command             `yaml:"commands"`
 	Languages map[string][]Language `yaml:"languages"`
 

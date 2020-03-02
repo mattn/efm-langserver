@@ -234,6 +234,7 @@ func (h *langHandler) lint(uri string) ([]Diagnostic, error) {
 		// with zero-value. So if you want to handle the command which exit
 		// with zero value, please specify lint-ignore-exit-code.
 		if err == nil && !config.LintIgnoreExitCode {
+			h.logMessage(LogError, "command exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
 			continue
 		}
 		for _, line := range strings.Split(string(b), "\n") {

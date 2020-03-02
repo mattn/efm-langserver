@@ -7,6 +7,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// LoadConfig load configuration from file
 func LoadConfig(yamlfile string) (*Config, error) {
 	f, err := os.Open(yamlfile)
 	if err != nil {

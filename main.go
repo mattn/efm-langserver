@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -14,14 +15,28 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
+const (
+	name     = "efm-langserver"
+	version  = "0.0.9"
+	revision = "HEAD"
+)
+
 func main() {
 	var yamlfile string
 	var logfile string
 	var dump bool
+	var showVersion bool
+
 	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
 	flag.StringVar(&logfile, "log", "", "logfile")
 	flag.BoolVar(&dump, "d", false, "dump configuration")
+	flag.BoolVar(&showVersion, "v", false, "Print the version")
 	flag.Parse()
+
+	if showVersion {
+		fmt.Printf("%s %s (rev: %s/%s)\n", name, version, revision, runtime.Version())
+		return
+	}
 
 	if yamlfile == "" {
 		dir := os.Getenv("HOME")

@@ -69,6 +69,12 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 			CompletionProvider:         completion,
 			HoverProvider:              hasHoverCommand,
 			CodeActionProvider:         hasCodeActionCommand,
+			Workspace: &ServerCapabilitiesWorkspace{
+				WorkspaceFolders: WorkspaceFoldersServerCapabilities{
+					Supported:           true,
+					ChangeNotifications: true,
+				},
+			},
 		},
 	}, nil
 }

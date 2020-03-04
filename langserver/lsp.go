@@ -53,15 +53,27 @@ type CompletionProvider struct {
 	TriggerCharacters []string `json:"triggerCharacters"`
 }
 
+// WorkspaceFoldersServerCapabilities is
+type WorkspaceFoldersServerCapabilities struct {
+	Supported           bool `json:"supported"`
+	ChangeNotifications bool `json:"changeNotifications"`
+}
+
+// ServerCapabilitiesWorkspace is
+type ServerCapabilitiesWorkspace struct {
+	WorkspaceFolders WorkspaceFoldersServerCapabilities `json:"workspaceFolders"`
+}
+
 // ServerCapabilities is
 type ServerCapabilities struct {
-	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
-	DocumentSymbolProvider     bool                 `json:"documentSymbolProvider,omitempty"`
-	CompletionProvider         *CompletionProvider  `json:"completionProvider,omitempty"`
-	DefinitionProvider         bool                 `json:"definitionProvider,omitempty"`
-	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitempty"`
-	HoverProvider              bool                 `json:"hoverProvider,omitempty"`
-	CodeActionProvider         bool                 `json:"codeActionProvider,omitempty"`
+	TextDocumentSync           TextDocumentSyncKind         `json:"textDocumentSync,omitempty"`
+	DocumentSymbolProvider     bool                         `json:"documentSymbolProvider,omitempty"`
+	CompletionProvider         *CompletionProvider          `json:"completionProvider,omitempty"`
+	DefinitionProvider         bool                         `json:"definitionProvider,omitempty"`
+	DocumentFormattingProvider bool                         `json:"documentFormattingProvider,omitempty"`
+	HoverProvider              bool                         `json:"hoverProvider,omitempty"`
+	CodeActionProvider         bool                         `json:"codeActionProvider,omitempty"`
+	Workspace                  *ServerCapabilitiesWorkspace `json:"workspace,omitempty"`
 }
 
 // TextDocumentItem is

@@ -26,6 +26,7 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 		return nil, err
 	}
 	h.rootPath = filepath.Clean(rootPath)
+	h.addFolder(rootPath)
 
 	var completion *CompletionProvider
 	var hasHoverCommand bool
@@ -68,6 +69,12 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 			CompletionProvider:         completion,
 			HoverProvider:              hasHoverCommand,
 			CodeActionProvider:         hasCodeActionCommand,
+			Workspace: &ServerCapabilitiesWorkspace{
+				WorkspaceFolders: WorkspaceFoldersServerCapabilities{
+					Supported:           true,
+					ChangeNotifications: true,
+				},
+			},
 		},
 	}, nil
 }

@@ -52,7 +52,6 @@ type Language struct {
 	HoverCommand       string   `yaml:"hover-command"`
 	HoverStdin         bool     `yaml:"hover-stdin"`
 	HoverType          string   `yaml:"hover-type"`
-	RootPattern        []string `yaml:"root-pattern"`
 	Env                []string `yaml:"env"`
 }
 
@@ -65,8 +64,8 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		logger:   log.New(config.LogWriter, "", log.LstdFlags),
 		commands: config.Commands,
 		configs:  config.Languages,
-		files:    make(map[DocumentUri]*File),
-		request:  make(chan DocumentUri),
+		files:    make(map[DocumentURI]*File),
+		request:  make(chan DocumentURI),
 		conn:     nil,
 		filename: config.Filename,
 	}
@@ -75,15 +74,15 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 }
 
 type langHandler struct {
-	logger     *log.Logger
-	commands   []Command
-	configs    map[string][]Language
-	files      map[DocumentUri]*File
-	request    chan DocumentUri
-	conn       *jsonrpc2.Conn
-	rootPath   string
-	filename   string
-	workspaces []string
+	logger   *log.Logger
+	commands []Command
+	configs  map[string][]Language
+	files    map[DocumentURI]*File
+	request  chan DocumentURI
+	conn     *jsonrpc2.Conn
+	rootPath string
+	filename string
+	folders  []string
 }
 
 // File is
@@ -106,7 +105,7 @@ func isWindowsDriveURI(uri string) bool {
 	return uri[0] == '/' && unicode.IsLetter(rune(uri[1])) && uri[2] == ':'
 }
 
-func fromURI(uri DocumentUri) (string, error) {
+func fromURI(uri DocumentURI) (string, error) {
 	u, err := url.ParseRequestURI(string(uri))
 	if err != nil {
 		return "", err
@@ -120,11 +119,11 @@ func fromURI(uri DocumentUri) (string, error) {
 	return u.Path, nil
 }
 
-func toURI(path string) DocumentUri {
+func toURI(path string) DocumentURI {
 	if isWindowsDrivePath(path) {
 		path = "/" + path
 	}
-	return DocumentUri((&url.URL{
+	return DocumentURI((&url.URL{
 		Scheme: "file",
 		Path:   filepath.ToSlash(path),
 	}).String())
@@ -161,53 +160,17 @@ func (h *langHandler) linter() {
 	}
 }
 
-func (h *langHandler) findRootPath(patterns []string, fname string) string {
-	base := filepath.Dir(fname)
-	for _, pattern := range patterns {
-		for {
-			_, err := os.Stat(filepath.Join(base, pattern))
-			if err == nil {
-				return base
-			}
-			if base == h.rootPath {
-				base = ""
-				break
-			}
-			tmp := filepath.Dir(base)
-			if tmp == "" || tmp == base {
-				base = ""
-				break
-			}
-			base = tmp
+func (h *langHandler) findRootPath(fname string) string {
+	for _, folder := range h.folders {
+		if len(fname) > len(folder) && strings.EqualFold(fname[:len(folder)], folder) {
+			return folder
 		}
 	}
 
-	if cfgs, ok := h.configs[wildcard]; ok {
-		for _, cfg := range cfgs {
-			for _, pattern := range cfg.RootPattern {
-				for {
-					_, err := os.Stat(filepath.Join(base, pattern))
-					if err == nil {
-						return base
-					}
-					if base == h.rootPath {
-						base = ""
-						break
-					}
-					tmp := filepath.Dir(base)
-					if tmp == "" || tmp == base {
-						base = ""
-						break
-					}
-					base = tmp
-				}
-			}
-		}
-	}
 	return h.rootPath
 }
 
-func (h *langHandler) lint(uri DocumentUri) ([]Diagnostic, error) {
+func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -271,7 +234,7 @@ func (h *langHandler) lint(uri DocumentUri) ([]Diagnostic, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(config.RootPattern, fname)
+		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.LintStdin {
 			cmd.Stdin = strings.NewReader(f.Text)
@@ -337,17 +300,17 @@ func (h *langHandler) lint(uri DocumentUri) ([]Diagnostic, error) {
 	return diagnostics, nil
 }
 
-func (h *langHandler) closeFile(uri DocumentUri) error {
+func (h *langHandler) closeFile(uri DocumentURI) error {
 	delete(h.files, uri)
 	return nil
 }
 
-func (h *langHandler) saveFile(uri DocumentUri) error {
+func (h *langHandler) saveFile(uri DocumentURI) error {
 	h.request <- uri
 	return nil
 }
 
-func (h *langHandler) openFile(uri DocumentUri, languageID string) error {
+func (h *langHandler) openFile(uri DocumentURI, languageID string) error {
 	f := &File{
 		Text:       "",
 		LanguageID: languageID,
@@ -356,7 +319,7 @@ func (h *langHandler) openFile(uri DocumentUri, languageID string) error {
 	return nil
 }
 
-func (h *langHandler) updateFile(uri DocumentUri, text string) error {
+func (h *langHandler) updateFile(uri DocumentURI, text string) error {
 	f, ok := h.files[uri]
 	if !ok {
 		return fmt.Errorf("document not found: %v", uri)
@@ -367,7 +330,7 @@ func (h *langHandler) updateFile(uri DocumentUri, text string) error {
 	return nil
 }
 
-func (h *langHandler) configFor(uri DocumentUri) []Language {
+func (h *langHandler) configFor(uri DocumentURI) []Language {
 	f, ok := h.files[uri]
 	if !ok {
 		return []Language{}
@@ -379,8 +342,18 @@ func (h *langHandler) configFor(uri DocumentUri) []Language {
 	return c
 }
 
-func (h *langHandler) didChangeConfiguration(params *DidChangeConfigurationParams) (interface{}, error) {
-	return nil, nil
+func (h *langHandler) addFolder(folder string) {
+	folder = filepath.Clean(folder)
+	found := false
+	for _, cur := range h.folders {
+		if cur == folder {
+			found = true
+			break
+		}
+	}
+	if !found {
+		h.folders = append(h.folders, folder)
+	}
 }
 
 func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {

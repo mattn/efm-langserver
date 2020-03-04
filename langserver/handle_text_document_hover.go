@@ -28,7 +28,7 @@ func (h *langHandler) handleTextDocumentHover(ctx context.Context, conn *jsonrpc
 	return h.hover(params.TextDocument.URI, &params)
 }
 
-func (h *langHandler) hover(uri DocumentUri, params *HoverParams) (*Hover, error) {
+func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -113,7 +113,7 @@ func (h *langHandler) hover(uri DocumentUri, params *HoverParams) (*Hover, error
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(config.RootPattern, fname)
+		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.HoverStdin {
 			cmd.Stdin = strings.NewReader(word)

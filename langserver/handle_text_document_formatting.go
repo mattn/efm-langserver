@@ -26,7 +26,7 @@ func (h *langHandler) handleTextDocumentFormatting(ctx context.Context, conn *js
 	return h.formatting(params.TextDocument.URI)
 }
 
-func (h *langHandler) formatting(uri DocumentUri) ([]TextEdit, error) {
+func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -79,7 +79,7 @@ func (h *langHandler) formatting(uri DocumentUri) ([]TextEdit, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(config.RootPattern, fname)
+		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.FormatStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

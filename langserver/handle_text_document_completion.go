@@ -86,7 +86,7 @@ func (h *langHandler) completion(uri DocumentUri, params *CompletionParams) ([]C
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(config.RootPattern, fname)
+		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 
 		b, err := cmd.CombinedOutput()

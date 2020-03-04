@@ -124,7 +124,7 @@ func (h *langHandler) symbol(uri DocumentUri) ([]SymbolInformation, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(config.RootPattern, fname)
+		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.SymbolStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

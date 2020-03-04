@@ -77,7 +77,7 @@ func (h *langHandler) findTag(fname string, tag string) ([]Location, error) {
 					}
 					if match {
 						locations = append(locations, Location{
-							URI: toURI(fullpath).String(),
+							URI: toURI(fullpath),
 							Range: Range{
 								Start: Position{Line: i, Character: 0},
 								End:   Position{Line: i, Character: 0},
@@ -91,7 +91,7 @@ func (h *langHandler) findTag(fname string, tag string) ([]Location, error) {
 					continue
 				}
 				locations = append(locations, Location{
-					URI: toURI(fullpath).String(),
+					URI: toURI(fullpath),
 					Range: Range{
 						Start: Position{Line: i - 1, Character: 0},
 						End:   Position{Line: i - 1, Character: 0},
@@ -124,7 +124,7 @@ func (h *langHandler) findTagsFile(fname string) string {
 	return base
 }
 
-func (h *langHandler) definition(uri string, params *DocumentDefinitionParams) ([]Location, error) {
+func (h *langHandler) definition(uri DocumentUri, params *DocumentDefinitionParams) ([]Location, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)

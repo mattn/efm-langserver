@@ -58,7 +58,7 @@ var symbolKindMap = map[string]int{
 	"typeparameter": 26,
 }
 
-func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
+func (h *langHandler) symbol(uri DocumentUri) ([]SymbolInformation, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -124,7 +124,7 @@ func (h *langHandler) symbol(uri string) ([]SymbolInformation, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.rootPath
+		cmd.Dir = h.findRootPath(config.RootPattern, fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.SymbolStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

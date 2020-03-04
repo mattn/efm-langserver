@@ -12,8 +12,8 @@ func TestLintNoLinter(t *testing.T) {
 	h := &langHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),
 		configs: map[string][]Language{},
-		files: map[string]*File{
-			"file:///foo": &File{},
+		files: map[DocumentUri]*File{
+			DocumentUri("file:///foo"): &File{},
 		},
 	}
 
@@ -27,8 +27,8 @@ func TestLintNoFileMatched(t *testing.T) {
 	h := &langHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),
 		configs: map[string][]Language{},
-		files: map[string]*File{
-			"file:///foo": &File{},
+		files: map[DocumentUri]*File{
+			DocumentUri("file:///foo"): &File{},
 		},
 	}
 
@@ -41,7 +41,7 @@ func TestLintNoFileMatched(t *testing.T) {
 func TestLintFileMatched(t *testing.T) {
 	base, _ := os.Getwd()
 	file := filepath.Join(base, "foo")
-	uri := toURI(file).String()
+	uri := toURI(file)
 
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
@@ -55,7 +55,7 @@ func TestLintFileMatched(t *testing.T) {
 				},
 			},
 		},
-		files: map[string]*File{
+		files: map[DocumentUri]*File{
 			uri: &File{
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -87,7 +87,7 @@ func TestLintFileMatched(t *testing.T) {
 func TestLintFileMatchedForce(t *testing.T) {
 	base, _ := os.Getwd()
 	file := filepath.Join(base, "foo")
-	uri := toURI(file).String()
+	uri := toURI(file)
 
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
@@ -101,7 +101,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 				},
 			},
 		},
-		files: map[string]*File{
+		files: map[DocumentUri]*File{
 			uri: &File{
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",

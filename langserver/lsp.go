@@ -2,10 +2,12 @@ package langserver
 
 const wildcard = "="
 
+type DocumentUri string
+
 // InitializeParams is
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`
-	RootURI               string             `json:"rootUri,omitempty"`
+	RootURI               DocumentUri        `json:"rootUri,omitempty"`
 	InitializationOptions InitializeOptions  `json:"initializationOptions,omitempty"`
 	Capabilities          ClientCapabilities `json:"capabilities,omitempty"`
 	Trace                 string             `json:"trace,omitempty"`
@@ -64,10 +66,10 @@ type ServerCapabilities struct {
 
 // TextDocumentItem is
 type TextDocumentItem struct {
-	URI        string `json:"uri"`
-	LanguageID string `json:"languageId"`
-	Version    int    `json:"version"`
-	Text       string `json:"text"`
+	URI        DocumentUri `json:"uri"`
+	LanguageID string      `json:"languageId"`
+	Version    int         `json:"version"`
+	Text       string      `json:"text"`
 }
 
 // VersionedTextDocumentIdentifier is
@@ -78,7 +80,7 @@ type VersionedTextDocumentIdentifier struct {
 
 // TextDocumentIdentifier is
 type TextDocumentIdentifier struct {
-	URI string `json:"uri"`
+	URI DocumentUri `json:"uri"`
 }
 
 // DidOpenTextDocumentParams is
@@ -135,8 +137,8 @@ type HoverParams struct {
 
 // Location is
 type Location struct {
-	URI   string `json:"uri"`
-	Range Range  `json:"range"`
+	URI   DocumentUri `json:"uri"`
+	Range Range       `json:"range"`
 }
 
 // Range is
@@ -169,7 +171,7 @@ type Diagnostic struct {
 
 // PublishDiagnosticsParams is
 type PublishDiagnosticsParams struct {
-	URI         string       `json:"uri"`
+	URI         DocumentUri  `json:"uri"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
 }
 
@@ -396,4 +398,19 @@ type ShowMessageParams struct {
 type LogMessageParams struct {
 	Type    MessageType `json:"type"`
 	Message string      `json:"message"`
+}
+
+// DidChangeWorkspaceFoldersParams is
+type DidChangeWorkspaceFoldersParams struct {
+	Event WorkspaceFoldersChangeEvent `json:"event"`
+}
+
+type WorkspaceFoldersChangeEvent struct {
+	Added   []WorkspaceFolder `json:"added,omitempty"`
+	Removed []WorkspaceFolder `json:"removed,omitempty"`
+}
+
+type WorkspaceFolder struct {
+	URI  DocumentUri `json:"uri"`
+	Name string      `json:"name"`
 }

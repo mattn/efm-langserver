@@ -23,7 +23,7 @@ func (h *langHandler) handleTextDocumentCodeAction(ctx context.Context, conn *js
 		return nil, err
 	}
 
-	return h.codeAction(params.TextDocument.URI, &params)
+	return h.codeAction(string(params.TextDocument.URI), &params)
 }
 
 func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{}, error) {
@@ -31,7 +31,10 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 		return nil, fmt.Errorf("invalid command")
 	}
 
-	uri := fmt.Sprint(params.Arguments[0])
+	uri, ok := params.Arguments[0].(DocumentUri)
+	if !ok {
+		return nil, fmt.Errorf("invalid argument")
+	}
 	fname, _ := fromURI(uri)
 	if fname != "" {
 		fname = filepath.ToSlash(fname)
@@ -39,6 +42,10 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			fname = strings.ToLower(fname)
 		}
 	}
+	if !strings.HasPrefix(params.Command, "efm-langserver.") {
+		return nil, fmt.Errorf("invalid command")
+	}
+	params.Command = params.Command[16:]
 
 	var command *Command
 	for i, v := range h.commands {
@@ -123,7 +130,7 @@ func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Comman
 		}
 		commands = append(commands, Command{
 			Title:     v.Title,
-			Command:   v.Command,
+			Command:   fmt.Sprintf("efm-langserver.%s", v.Command),
 			Arguments: []interface{}{uri},
 		})
 	}

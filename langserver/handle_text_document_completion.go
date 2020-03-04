@@ -28,7 +28,7 @@ func (h *langHandler) handleTextDocumentCompletion(ctx context.Context, conn *js
 	return h.completion(params.TextDocument.URI, &params)
 }
 
-func (h *langHandler) completion(uri string, params *CompletionParams) ([]CompletionItem, error) {
+func (h *langHandler) completion(uri DocumentUri, params *CompletionParams) ([]CompletionItem, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -86,7 +86,7 @@ func (h *langHandler) completion(uri string, params *CompletionParams) ([]Comple
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.rootPath
+		cmd.Dir = h.findRootPath(config.RootPattern, fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 
 		b, err := cmd.CombinedOutput()

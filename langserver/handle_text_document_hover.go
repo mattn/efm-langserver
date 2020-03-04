@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"runtime"
 	"strings"
 	"unicode/utf16"
@@ -27,10 +28,20 @@ func (h *langHandler) handleTextDocumentHover(ctx context.Context, conn *jsonrpc
 	return h.hover(params.TextDocument.URI, &params)
 }
 
-func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
+func (h *langHandler) hover(uri DocumentUri, params *HoverParams) (*Hover, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
+	}
+
+	fname, err := fromURI(uri)
+	if err != nil {
+		h.logger.Println("invalid uri")
+		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
+	}
+	fname = filepath.ToSlash(fname)
+	if runtime.GOOS == "windows" {
+		fname = strings.ToLower(fname)
 	}
 
 	lines := strings.Split(f.Text, "\n")
@@ -102,7 +113,7 @@ func (h *langHandler) hover(uri string, params *HoverParams) (*Hover, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.rootPath
+		cmd.Dir = h.findRootPath(config.RootPattern, fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.HoverStdin {
 			cmd.Stdin = strings.NewReader(word)

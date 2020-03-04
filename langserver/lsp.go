@@ -2,12 +2,13 @@ package langserver
 
 const wildcard = "="
 
-type DocumentUri string
+// DocumentURI is
+type DocumentURI string
 
 // InitializeParams is
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`
-	RootURI               DocumentUri        `json:"rootUri,omitempty"`
+	RootURI               DocumentURI        `json:"rootUri,omitempty"`
 	InitializationOptions InitializeOptions  `json:"initializationOptions,omitempty"`
 	Capabilities          ClientCapabilities `json:"capabilities,omitempty"`
 	Trace                 string             `json:"trace,omitempty"`
@@ -78,7 +79,7 @@ type ServerCapabilities struct {
 
 // TextDocumentItem is
 type TextDocumentItem struct {
-	URI        DocumentUri `json:"uri"`
+	URI        DocumentURI `json:"uri"`
 	LanguageID string      `json:"languageId"`
 	Version    int         `json:"version"`
 	Text       string      `json:"text"`
@@ -92,7 +93,7 @@ type VersionedTextDocumentIdentifier struct {
 
 // TextDocumentIdentifier is
 type TextDocumentIdentifier struct {
-	URI DocumentUri `json:"uri"`
+	URI DocumentURI `json:"uri"`
 }
 
 // DidOpenTextDocumentParams is
@@ -149,7 +150,7 @@ type HoverParams struct {
 
 // Location is
 type Location struct {
-	URI   DocumentUri `json:"uri"`
+	URI   DocumentURI `json:"uri"`
 	Range Range       `json:"range"`
 }
 
@@ -183,7 +184,7 @@ type Diagnostic struct {
 
 // PublishDiagnosticsParams is
 type PublishDiagnosticsParams struct {
-	URI         DocumentUri  `json:"uri"`
+	URI         DocumentURI  `json:"uri"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
 }
 
@@ -417,12 +418,14 @@ type DidChangeWorkspaceFoldersParams struct {
 	Event WorkspaceFoldersChangeEvent `json:"event"`
 }
 
+// WorkspaceFoldersChangeEvent is
 type WorkspaceFoldersChangeEvent struct {
 	Added   []WorkspaceFolder `json:"added,omitempty"`
 	Removed []WorkspaceFolder `json:"removed,omitempty"`
 }
 
+// WorkspaceFolder is
 type WorkspaceFolder struct {
-	URI  DocumentUri `json:"uri"`
+	URI  DocumentURI `json:"uri"`
 	Name string      `json:"name"`
 }

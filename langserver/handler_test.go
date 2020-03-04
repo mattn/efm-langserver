@@ -12,8 +12,8 @@ func TestLintNoLinter(t *testing.T) {
 	h := &langHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),
 		configs: map[string][]Language{},
-		files: map[DocumentUri]*File{
-			DocumentUri("file:///foo"): &File{},
+		files: map[DocumentURI]*File{
+			DocumentURI("file:///foo"): &File{},
 		},
 	}
 
@@ -27,8 +27,8 @@ func TestLintNoFileMatched(t *testing.T) {
 	h := &langHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),
 		configs: map[string][]Language{},
-		files: map[DocumentUri]*File{
-			DocumentUri("file:///foo"): &File{},
+		files: map[DocumentURI]*File{
+			DocumentURI("file:///foo"): &File{},
 		},
 	}
 
@@ -55,7 +55,7 @@ func TestLintFileMatched(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentUri]*File{
+		files: map[DocumentURI]*File{
 			uri: &File{
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -101,7 +101,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentUri]*File{
+		files: map[DocumentURI]*File{
 			uri: &File{
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",

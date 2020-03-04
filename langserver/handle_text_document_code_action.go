@@ -31,7 +31,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 		return nil, fmt.Errorf("invalid command")
 	}
 
-	uri, ok := params.Arguments[0].(DocumentUri)
+	uri, ok := params.Arguments[0].(DocumentURI)
 	if !ok {
 		return nil, fmt.Errorf("invalid argument")
 	}

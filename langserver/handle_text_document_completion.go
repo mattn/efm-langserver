@@ -28,7 +28,7 @@ func (h *langHandler) handleTextDocumentCompletion(ctx context.Context, conn *js
 	return h.completion(params.TextDocument.URI, &params)
 }
 
-func (h *langHandler) completion(uri DocumentUri, params *CompletionParams) ([]CompletionItem, error) {
+func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]CompletionItem, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)

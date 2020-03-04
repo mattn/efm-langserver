@@ -124,7 +124,7 @@ func (h *langHandler) findTagsFile(fname string) string {
 	return base
 }
 
-func (h *langHandler) definition(uri DocumentUri, params *DocumentDefinitionParams) ([]Location, error) {
+func (h *langHandler) definition(uri DocumentURI, params *DocumentDefinitionParams) ([]Location, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)

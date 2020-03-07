@@ -44,6 +44,8 @@ tools:
   vim-vint: &vim-vint
     lint-command: 'vint -'
     lint-stdin: true
+    lint-formats:
+      - '%f:%l:%c: %m'
 
   make-checkmake: &make-checkmake
     lint-command: 'checkmake'

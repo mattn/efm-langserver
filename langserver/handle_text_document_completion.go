@@ -94,6 +94,9 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 			h.logger.Printf("completion command failed: %v", err)
 			return nil, fmt.Errorf("completion command failed: %v: %v", err, string(b))
 		}
+		if h.loglevel >= 1 {
+			h.logger.Println(command+":", string(b))
+		}
 
 		result := []CompletionItem{}
 		scanner := bufio.NewScanner(bytes.NewReader(b))

@@ -88,6 +88,9 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		if err != nil {
 			continue
 		}
+		if h.loglevel >= 1 {
+			h.logger.Println(command+":", string(b))
+		}
 		h.logger.Println("format succeeded")
 		text := strings.Replace(string(b), "\r", "", -1)
 		flines := strings.Split(f.Text, "\n")

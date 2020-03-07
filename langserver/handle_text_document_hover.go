@@ -122,6 +122,9 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 		if err != nil {
 			return nil, err
 		}
+		if h.loglevel >= 1 {
+			h.logger.Println(command+":", string(b))
+		}
 
 		var content MarkupContent
 		if config.HoverType == "markdown" {

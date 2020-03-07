@@ -3,7 +3,6 @@ package langserver
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/url"
 	"os"
@@ -21,17 +20,18 @@ import (
 type Config struct {
 	Version   int                   `yaml:"version"`
 	LogFile   string                `yaml:"logfile"`
+	LogLevel  int                   `yaml:"loglevel"`
 	Commands  []Command             `yaml:"commands"`
 	Languages map[string][]Language `yaml:"languages"`
 
-	Filename  string    `yaml:"-"`
-	LogWriter io.Writer `yaml:"-"`
+	Filename string      `yaml:"-"`
+	Logger   *log.Logger `yaml:"-"`
 }
 
 // Config1 is
 type Config1 struct {
 	Version   int                 `yaml:"version"`
-	LogWriter io.Writer           `yaml:"-"`
+	Logger    *log.Logger         `yaml:"-"`
 	Commands  []Command           `yaml:"commands"`
 	Languages map[string]Language `yaml:"languages"`
 }
@@ -57,11 +57,12 @@ type Language struct {
 
 // NewHandler create JSON-RPC handler for this language server.
 func NewHandler(config *Config) jsonrpc2.Handler {
-	if config.LogWriter == nil {
-		config.LogWriter = os.Stderr
+	if config.Logger == nil {
+		config.Logger = log.New(os.Stderr, "", log.LstdFlags)
 	}
 	var handler = &langHandler{
-		logger:   log.New(config.LogWriter, "", log.LstdFlags),
+		loglevel: config.LogLevel,
+		logger:   config.Logger,
 		commands: config.Commands,
 		configs:  config.Languages,
 		files:    make(map[DocumentURI]*File),
@@ -74,6 +75,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 }
 
 type langHandler struct {
+	loglevel int
 	logger   *log.Logger
 	commands []Command
 	configs  map[string][]Language

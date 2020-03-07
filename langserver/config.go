@@ -31,7 +31,7 @@ func LoadConfig(yamlfile string) (*Config, error) {
 	} else {
 		config.Version = config1.Version
 		config.Commands = config1.Commands
-		config.LogWriter = config1.LogWriter
+		config.Logger = config1.Logger
 		languages := make(map[string][]Language)
 		for k, v := range config1.Languages {
 			languages[k] = []Language{v}

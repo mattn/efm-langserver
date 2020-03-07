@@ -24,11 +24,13 @@ const (
 func main() {
 	var yamlfile string
 	var logfile string
+	var loglevel int
 	var dump bool
 	var showVersion bool
 
 	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
 	flag.StringVar(&logfile, "log", "", "logfile")
+	flag.IntVar(&loglevel, "loglevel", 1, "loglevel")
 	flag.BoolVar(&dump, "d", false, "dump configuration")
 	flag.BoolVar(&showVersion, "v", false, "Print the version")
 	flag.Parse()
@@ -74,17 +76,21 @@ func main() {
 		logfile = config.LogFile
 	}
 
+	var connOpt []jsonrpc2.ConnOpt
+
 	if logfile != "" {
 		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0660)
 		if err != nil {
 			log.Fatal(err)
 		}
 		defer f.Close()
-		config.LogWriter = f
+		config.Logger = log.New(f, "", log.LstdFlags)
+		if loglevel >= 5 {
+			connOpt = append(connOpt, jsonrpc2.LogMessages(config.Logger))
+		}
 	}
 
 	handler := langserver.NewHandler(config)
-	var connOpt []jsonrpc2.ConnOpt
 	<-jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),
@@ -98,11 +104,11 @@ func (stdrwc) Read(p []byte) (int, error) {
 	return os.Stdin.Read(p)
 }
 
-func (stdrwc) Write(p []byte) (int, error) {
+func (c stdrwc) Write(p []byte) (int, error) {
 	return os.Stdout.Write(p)
 }
 
-func (stdrwc) Close() error {
+func (c stdrwc) Close() error {
 	if err := os.Stdin.Close(); err != nil {
 		return err
 	}

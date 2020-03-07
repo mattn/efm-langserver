@@ -133,6 +133,9 @@ func (h *langHandler) symbol(uri DocumentURI) ([]SymbolInformation, error) {
 		if err != nil {
 			continue
 		}
+		if h.loglevel >= 1 {
+			h.logger.Println(command+":", string(b))
+		}
 
 		scanner := bufio.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {

@@ -97,6 +97,9 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 		if err != nil {
 			return nil, err
 		}
+		if h.loglevel >= 1 {
+			h.logger.Println(cmd.String()+":", string(b))
+		}
 		output = string(b)
 	} else {
 		if command.Command == ":reload-config" {

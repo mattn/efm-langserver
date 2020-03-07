@@ -55,6 +55,7 @@ tools:
     lint-command: 'markdownlint -s -c %USERPROFILE%\.markdownlintrc'
     lint-stdin: true
     lint-formats:
+      - '%f:%l %m'
       - '%f: %l: %m'
 
   yaml-yamllint: &yaml-yamllint
@@ -146,6 +147,14 @@ languages:
 
   _:
     - <<: *any-excitetranslate
+```
+
+If you want to debug output of commands:
+
+```yaml
+version: 2
+log: /path/to/output.log
+loglevel: 1
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)

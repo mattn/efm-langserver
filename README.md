@@ -64,6 +64,14 @@ tools:
   rst-pandoc: &rst-pandoc
     format-command: 'pandoc -f rst -t rst -s --columns=79'
 
+  rst-lint: &rst-lint
+    lint-command: 'rst-lint'
+    lint-formats:
+      - '%tNFO %f:%l %m'
+      - '%tARNING %f:%l %m'
+      - '%tRROR %f:%l %m'
+      - '%tEVERE %f:%l %m'
+
   yaml-yamllint: &yaml-yamllint
     lint-command: 'yamllint -f parsable -'
     lint-stdin: true
@@ -136,6 +144,7 @@ languages:
     - <<: *markdown-pandoc
 
   rst:
+    - <<: *rst-lint
     - <<: *rst-pandoc
 
   yaml:

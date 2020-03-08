@@ -72,10 +72,10 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 
 		command := config.CompletionCommand
 
-		if strings.Index(command, "${POSITION}") != -1 {
+		if strings.Contains(command, "${POSITION}") {
 			command = strings.Replace(command, "${POSITION}", fmt.Sprintf("%d:%d", params.TextDocumentPositionParams.Position.Line, params.Position.Character), -1)
 		}
-		if strings.Index(command, "${INPUT}") != -1 {
+		if strings.Contains(command, "${INPUT}") {
 			command = strings.Replace(command, "${INPUT}", fname, -1)
 		} else {
 			command = command + " " + "" + " " + fname

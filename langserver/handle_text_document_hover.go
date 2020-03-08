@@ -102,7 +102,7 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 		}
 
 		command := config.HoverCommand
-		if !config.HoverStdin && strings.Index(command, "${INPUT}") == -1 {
+		if !config.HoverStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
 		command = strings.Replace(command, "${INPUT}", word, -1)

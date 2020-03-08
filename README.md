@@ -58,6 +58,12 @@ tools:
       - '%f:%l %m'
       - '%f: %l: %m'
 
+  markdown-pandoc: &markdown-pandoc
+    format-command: 'pandoc -f markdown -t gfm -sp --tab-stop=2'
+
+  rst-pandoc: &rst-pandoc
+    format-command: 'pandoc -f rst -t rst -s --columns=79'
+
   yaml-yamllint: &yaml-yamllint
     lint-command: 'yamllint -f parsable -'
     lint-stdin: true
@@ -127,6 +133,10 @@ languages:
 
   markdown:
     - <<: *markdown-markdownlint
+    - <<: *markdown-pandoc
+
+  rst:
+    - <<: *rst-pandoc
 
   yaml:
     - <<: *yaml-yamllint

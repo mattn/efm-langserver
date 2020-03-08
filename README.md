@@ -75,6 +75,16 @@ tools:
       - '%f:%l:%c: %tarning: %m'
       - '%f:%l:%c: %tote: %m'
 
+  sh-shellcheck: &sh-shellcheck
+    lint-command: 'shellcheck -f gcc -x'
+    lint-formats:
+      - '%f:%l:%c: %trror: %m'
+      - '%f:%l:%c: %tarning: %m'
+      - '%f:%l:%c: %tote: %m'
+
+  sh-shfmt: &sh-shfmt
+    format-command: 'shfmt -ci -s -bn'
+
   javascript-eslint: &javascript-eslint
     lint-command: 'eslint -f unix --stdin'
     lint-ignore-exit-code: true
@@ -124,6 +134,10 @@ languages:
   python:
     - <<: *python-flake8
     - <<: *python-mypy
+
+  sh:
+    - <<: *sh-shellcheck
+    - <<: *sh-shfmt
 
   javascript:
     - <<: *javascript-eslint

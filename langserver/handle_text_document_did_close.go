@@ -17,6 +17,8 @@ func (h *langHandler) handleTextDocumentDidClose(ctx context.Context, conn *json
 		return nil, err
 	}
 
-	h.closeFile(params.TextDocument.URI)
+	if err := h.closeFile(params.TextDocument.URI); err != nil {
+		return nil, err
+	}
 	return nil, nil
 }

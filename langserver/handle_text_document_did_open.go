@@ -17,7 +17,9 @@ func (h *langHandler) handleTextDocumentDidOpen(ctx context.Context, conn *jsonr
 		return nil, err
 	}
 
-	h.openFile(params.TextDocument.URI, params.TextDocument.LanguageID)
+	if err := h.openFile(params.TextDocument.URI, params.TextDocument.LanguageID); err != nil {
+		return nil, err
+	}
 	if err := h.updateFile(params.TextDocument.URI, params.TextDocument.Text); err != nil {
 		return nil, err
 	}

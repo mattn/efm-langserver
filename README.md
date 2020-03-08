@@ -89,6 +89,11 @@ tools:
       - '%f:%l:%c: %tarning: %m'
       - '%f:%l:%c: %tote: %m'
 
+  dockerfile-hadolint: &dockerfile-hadolint
+    lint-command: 'hadolint'
+    lint-formats:
+      - '%f:%l %m'
+
   sh-shellcheck: &sh-shellcheck
     lint-command: 'shellcheck -f gcc -x'
     lint-formats:
@@ -153,6 +158,9 @@ languages:
   python:
     - <<: *python-flake8
     - <<: *python-mypy
+
+  dockerfile:
+    - <<: *dockerfile-hadolint
 
   sh:
     - <<: *sh-shellcheck

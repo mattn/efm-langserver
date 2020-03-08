@@ -103,6 +103,7 @@ tools:
 
   sh-shfmt: &sh-shfmt
     format-command: 'shfmt -ci -s -bn'
+    format-stdin: true
 
   javascript-eslint: &javascript-eslint
     lint-command: 'eslint -f unix --stdin'

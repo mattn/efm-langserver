@@ -58,6 +58,20 @@ tools:
       - '%f:%l %m'
       - '%f: %l: %m'
 
+  markdown-pandoc: &markdown-pandoc
+    format-command: 'pandoc -f markdown -t gfm -sp --tab-stop=2'
+
+  rst-pandoc: &rst-pandoc
+    format-command: 'pandoc -f rst -t rst -s --columns=79'
+
+  rst-lint: &rst-lint
+    lint-command: 'rst-lint'
+    lint-formats:
+      - '%tNFO %f:%l %m'
+      - '%tARNING %f:%l %m'
+      - '%tRROR %f:%l %m'
+      - '%tEVERE %f:%l %m'
+
   yaml-yamllint: &yaml-yamllint
     lint-command: 'yamllint -f parsable -'
     lint-stdin: true
@@ -74,6 +88,21 @@ tools:
       - '%f:%l:%c: %trror: %m'
       - '%f:%l:%c: %tarning: %m'
       - '%f:%l:%c: %tote: %m'
+
+  dockerfile-hadolint: &dockerfile-hadolint
+    lint-command: 'hadolint'
+    lint-formats:
+      - '%f:%l %m'
+
+  sh-shellcheck: &sh-shellcheck
+    lint-command: 'shellcheck -f gcc -x'
+    lint-formats:
+      - '%f:%l:%c: %trror: %m'
+      - '%f:%l:%c: %tarning: %m'
+      - '%f:%l:%c: %tote: %m'
+
+  sh-shfmt: &sh-shfmt
+    format-command: 'shfmt -ci -s -bn'
 
   javascript-eslint: &javascript-eslint
     lint-command: 'eslint -f unix --stdin'
@@ -117,6 +146,11 @@ languages:
 
   markdown:
     - <<: *markdown-markdownlint
+    - <<: *markdown-pandoc
+
+  rst:
+    - <<: *rst-lint
+    - <<: *rst-pandoc
 
   yaml:
     - <<: *yaml-yamllint
@@ -124,6 +158,13 @@ languages:
   python:
     - <<: *python-flake8
     - <<: *python-mypy
+
+  dockerfile:
+    - <<: *dockerfile-hadolint
+
+  sh:
+    - <<: *sh-shellcheck
+    - <<: *sh-shfmt
 
   javascript:
     - <<: *javascript-eslint

@@ -102,7 +102,7 @@ func (h *langHandler) symbol(uri DocumentURI) ([]SymbolInformation, error) {
 	symbols := []SymbolInformation{}
 	for _, config := range configs {
 		command := config.SymbolCommand
-		if !config.SymbolStdin && strings.Index(command, "${INPUT}") == -1 {
+		if !config.SymbolStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
 		command = strings.Replace(command, "${INPUT}", fname, -1)

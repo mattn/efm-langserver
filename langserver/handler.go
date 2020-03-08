@@ -215,7 +215,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 		}
 
 		command := config.LintCommand
-		if !config.LintStdin && strings.Index(command, "${INPUT}") == -1 {
+		if !config.LintStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
 		command = strings.Replace(command, "${INPUT}", fname, -1)

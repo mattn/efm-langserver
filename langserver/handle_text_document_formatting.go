@@ -68,7 +68,7 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		}
 
 		command := config.FormatCommand
-		if !config.FormatStdin && strings.Index(command, "${INPUT}") == -1 {
+		if !config.FormatStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
 		command = strings.Replace(command, "${INPUT}", fname, -1)

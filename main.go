@@ -29,7 +29,7 @@ func main() {
 	var showVersion bool
 
 	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
-	flag.StringVar(&logfile, "log", "", "logfile")
+	flag.StringVar(&logfile, "logfile", "", "logfile")
 	flag.IntVar(&loglevel, "loglevel", 1, "loglevel")
 	flag.BoolVar(&dump, "d", false, "dump configuration")
 	flag.BoolVar(&showVersion, "v", false, "Print the version")
@@ -74,6 +74,9 @@ func main() {
 
 	if logfile == "" {
 		logfile = config.LogFile
+	}
+	if config.LogLevel > 0 {
+		loglevel = config.LogLevel
 	}
 
 	var connOpt []jsonrpc2.ConnOpt

@@ -251,30 +251,34 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			h.logMessage(LogError, "command exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
 			continue
 		}
+		if h.loglevel >= 1 {
+			h.logger.Println(command+":", string(b))
+		}
 		for _, line := range strings.Split(string(b), "\n") {
 			for _, ef := range efms.Efms {
 				m := ef.Match(string(line))
 				if m == nil {
 					continue
 				}
+				h.logger.Println("**********************:", m.F)
 				if config.LintStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
 					m.F = fname
+					path, err := filepath.Abs(m.F)
+					if err != nil {
+						continue
+					}
+					path = filepath.ToSlash(path)
+					if runtime.GOOS == "windows" {
+						path = strings.ToLower(path)
+					}
+					if path != fname {
+						continue
+					}
 				} else {
 					m.F = filepath.ToSlash(m.F)
 				}
 				if m.C == 0 {
 					m.C = 1
-				}
-				path, err := filepath.Abs(m.F)
-				if err != nil {
-					continue
-				}
-				path = filepath.ToSlash(path)
-				if runtime.GOOS == "windows" {
-					path = strings.ToLower(path)
-				}
-				if path != fname {
-					continue
 				}
 				severity := 1
 				switch {

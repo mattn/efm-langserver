@@ -56,6 +56,7 @@ tools:
     lint-stdin: true
     lint-formats:
       - '%f:%l %m'
+      - '%f:%l:%c %m'
       - '%f: %l: %m'
 
   markdown-pandoc: &markdown-pandoc

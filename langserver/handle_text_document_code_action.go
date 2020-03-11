@@ -31,11 +31,11 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 		return nil, fmt.Errorf("invalid command")
 	}
 
-	uri, ok := params.Arguments[0].(DocumentURI)
+	uri, ok := params.Arguments[0].(string)
 	if !ok {
 		return nil, fmt.Errorf("invalid argument")
 	}
-	fname, _ := fromURI(uri)
+	fname, _ := fromURI(DocumentURI(uri))
 	if fname != "" {
 		fname = filepath.ToSlash(fname)
 		if runtime.GOOS == "windows" {
@@ -45,7 +45,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	if !strings.HasPrefix(params.Command, "efm-langserver.") {
 		return nil, fmt.Errorf("invalid command")
 	}
-	params.Command = params.Command[16:]
+	params.Command = params.Command[15:]
 
 	var command *Command
 	for i, v := range h.commands {

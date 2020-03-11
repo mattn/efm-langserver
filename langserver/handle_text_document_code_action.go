@@ -66,12 +66,12 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			args = []string{"/c", command.Command}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
-				if arg == "${INPUT}" {
+				if strings.Contains(arg, "${INPUT}") {
 					if fname == "" {
 						h.logger.Println("invalid uri")
 						return nil, fmt.Errorf("invalid uri: %v", uri)
 					}
-					arg = fname
+					arg = strings.Replace(arg, "${INPUT}", fname, -1)
 				}
 				args = append(args, arg)
 			}
@@ -80,12 +80,12 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			args = []string{"-c", command.Command}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
-				if arg == "${INPUT}" {
+				if strings.Contains(arg, "${INPUT}") {
 					if fname == "" {
 						h.logger.Println("invalid uri")
 						return nil, fmt.Errorf("invalid uri: %v", uri)
 					}
-					arg = fname
+					arg = strings.Replace(arg, "${INPUT}", fname, -1)
 				}
 				args = append(args, arg)
 			}

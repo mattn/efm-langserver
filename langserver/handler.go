@@ -260,7 +260,6 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 				if m == nil {
 					continue
 				}
-				h.logger.Println("**********************:", m.F)
 				if config.LintStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
 					m.F = fname
 					path, err := filepath.Abs(m.F)

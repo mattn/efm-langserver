@@ -71,7 +71,7 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		if !config.FormatStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = strings.Replace(command, "${INPUT}", fname, -1)
+		command = replaceCommandInputFilename(command, fname)
 
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {

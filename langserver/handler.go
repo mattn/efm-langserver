@@ -218,7 +218,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 		if !config.LintStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = strings.Replace(command, "${INPUT}", fname, -1)
+		command = replaceCommandInputFilename(command, fname)
 
 		formats := config.LintFormats
 		if len(formats) == 0 {
@@ -398,4 +398,10 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
+}
+
+func replaceCommandInputFilename(command string, fname string) string {
+	command = strings.Replace(command, "${INPUT}", fname, -1)
+	command = strings.Replace(command, "${FILENAME}", filepath.FromSlash(fname), -1)
+	return command
 }

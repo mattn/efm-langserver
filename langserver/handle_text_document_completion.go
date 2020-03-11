@@ -76,7 +76,7 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 			command = strings.Replace(command, "${POSITION}", fmt.Sprintf("%d:%d", params.TextDocumentPositionParams.Position.Line, params.Position.Character), -1)
 		}
 		if strings.Contains(command, "${INPUT}") {
-			command = strings.Replace(command, "${INPUT}", fname, -1)
+			command = replaceCommandInputFilename(command, fname)
 		} else {
 			command = command + " " + "" + " " + fname
 		}

@@ -66,13 +66,12 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			args = []string{"/c", command.Command}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
-				if strings.Contains(arg, "${INPUT}") {
-					if fname == "" {
-						h.logger.Println("invalid uri")
-						return nil, fmt.Errorf("invalid uri: %v", uri)
-					}
-					arg = strings.Replace(arg, "${INPUT}", fname, -1)
+				tmp := replaceCommandInputFilename(arg, fname)
+				if tmp != arg && fname == "" {
+					h.logger.Println("invalid uri")
+					return nil, fmt.Errorf("invalid uri: %v", uri)
 				}
+				arg = tmp
 				args = append(args, arg)
 			}
 			cmd = exec.Command("cmd", args...)
@@ -80,13 +79,13 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			args = []string{"-c", command.Command}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
-				if strings.Contains(arg, "${INPUT}") {
-					if fname == "" {
-						h.logger.Println("invalid uri")
-						return nil, fmt.Errorf("invalid uri: %v", uri)
-					}
-					arg = strings.Replace(arg, "${INPUT}", fname, -1)
+				tmp := replaceCommandInputFilename(arg, fname)
+				if tmp != arg && fname == "" {
+					h.logger.Println("invalid uri")
+					return nil, fmt.Errorf("invalid uri: %v", uri)
 				}
+				arg = tmp
+				args = append(args, arg)
 				args = append(args, arg)
 			}
 			cmd = exec.Command("sh", args...)

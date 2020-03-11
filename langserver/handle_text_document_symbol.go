@@ -105,7 +105,7 @@ func (h *langHandler) symbol(uri DocumentURI) ([]SymbolInformation, error) {
 		if !config.SymbolStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = strings.Replace(command, "${INPUT}", fname, -1)
+		command = replaceCommandInputFilename(command, fname)
 
 		formats := config.LintFormats
 		if len(formats) == 0 {

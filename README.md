@@ -13,8 +13,12 @@ generated from specified command. This is useful for editing code with linter.
 Usage of efm-langserver:
   -c string
         path to config.yaml
-  -log string
+  -d    dump configuration
+  -logfile string
         logfile
+  -loglevel int
+        loglevel (default 1)
+  -v    Print the version
 ```
 
 ### Example for config.yaml

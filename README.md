@@ -118,6 +118,12 @@ tools:
   php-phpstan: &php-phpstan
     lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
 
+  php-psalm: &php-psalm
+    lint-command: './vendor/bin/psalm --output-format=emacs --no-progress'
+    lint-formats:
+      - '%f:%l:%c:%trror - %m'
+      - '%f:%l:%c:%tarning - %m'
+
   html-prettier: &html-prettier
     format-command: './node_modules/.bin/prettier --parser html'
 
@@ -177,6 +183,7 @@ languages:
 
   php:
     - <<: *php-phpstan
+    - <<: *php-psalm
 
   html:
     - <<: *html-prettier

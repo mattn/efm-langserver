@@ -71,6 +71,15 @@
           "default": true,
           "description": "use stdin for the lint",
           "type": "boolean"
+        },
+        "completion-command": {
+          "description": "completion command",
+          "type": "string"
+        },
+        "completion-stdin": {
+          "default": true,
+          "description": "use stdin for the completion",
+          "type": "boolean"
         }
       },
       "type": "object"

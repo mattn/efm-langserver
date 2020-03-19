@@ -75,11 +75,11 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 		if strings.Contains(command, "${POSITION}") {
 			command = strings.Replace(command, "${POSITION}", fmt.Sprintf("%d:%d", params.TextDocumentPositionParams.Position.Line, params.Position.Character), -1)
 		}
-		if strings.Contains(command, "${INPUT}") {
-			command = replaceCommandInputFilename(command, fname)
-		} else {
-			command = command + " " + "" + " " + fname
+		if !config.CompletionStdin && !strings.Contains(command, "${INPUT}") {
+			command = command + " ${INPUT}"
 		}
+		command = replaceCommandInputFilename(command, fname)
+
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {
 			cmd = exec.Command("cmd", "/c", command)
@@ -88,7 +88,9 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 		}
 		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
-
+		if config.CompletionStdin {
+			cmd.Stdin = strings.NewReader(f.Text)
+		}
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			h.logger.Printf("completion command failed: %v", err)

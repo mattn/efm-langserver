@@ -49,6 +49,7 @@ type Language struct {
 	SymbolStdin        bool     `yaml:"symbol-stdin"`
 	SymbolFormats      []string `yaml:"symbol-formats"`
 	CompletionCommand  string   `yaml:"completion-command"`
+	CompletionStdin    bool     `yaml:"completion-stdin"`
 	HoverCommand       string   `yaml:"hover-command"`
 	HoverStdin         bool     `yaml:"hover-stdin"`
 	HoverType          string   `yaml:"hover-type"`

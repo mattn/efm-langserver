@@ -15,8 +15,11 @@ func LoadConfig(yamlfile string) (*Config, error) {
 	}
 	defer f.Close()
 
-	var config Config
+	var config = Config{
+		ProvideDefinition: true, // Enabled by default.
+	}
 	var config1 Config1
+
 	err = yaml.NewDecoder(f).Decode(&config1)
 	if err != nil || config1.Version == 2 {
 		f, err = os.Open(yamlfile)

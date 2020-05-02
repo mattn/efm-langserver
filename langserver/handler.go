@@ -24,6 +24,9 @@ type Config struct {
 	Commands  []Command             `yaml:"commands"`
 	Languages map[string][]Language `yaml:"languages"`
 
+	// Toggle support for "go to definition" requests.
+	ProvideDefinition bool `yaml:"provide-definition"`
+
 	Filename string      `yaml:"-"`
 	Logger   *log.Logger `yaml:"-"`
 }
@@ -66,6 +69,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		logger:   config.Logger,
 		commands: config.Commands,
 		configs:  config.Languages,
+		provideDefinition: config.ProvideDefinition,
 		files:    make(map[DocumentURI]*File),
 		request:  make(chan DocumentURI),
 		conn:     nil,
@@ -76,16 +80,17 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 }
 
 type langHandler struct {
-	loglevel int
-	logger   *log.Logger
-	commands []Command
-	configs  map[string][]Language
-	files    map[DocumentURI]*File
-	request  chan DocumentURI
-	conn     *jsonrpc2.Conn
-	rootPath string
-	filename string
-	folders  []string
+	loglevel          int
+	logger            *log.Logger
+	commands          []Command
+	configs           map[string][]Language
+	provideDefinition bool
+	files             map[DocumentURI]*File
+	request           chan DocumentURI
+	conn              *jsonrpc2.Conn
+	rootPath          string
+	filename          string
+	folders           []string
 }
 
 // File is

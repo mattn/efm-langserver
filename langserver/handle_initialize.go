@@ -38,8 +38,10 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 	if len(h.commands) > 0 {
 		hasCodeActionCommand = true
 	}
-	if _, err = exec.LookPath("ctags"); err == nil {
-		hasDefinitionCommand = true
+	if h.provideDefinition {
+		if _, err = exec.LookPath("ctags"); err == nil {
+			hasDefinitionCommand = true
+		}
 	}
 	for _, config := range h.configs {
 		for _, v := range config {

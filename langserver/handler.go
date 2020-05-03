@@ -99,6 +99,7 @@ type langHandler struct {
 type File struct {
 	LanguageID string
 	Text       string
+	Version    int
 }
 
 func isWindowsDrivePath(path string) bool {
@@ -166,6 +167,7 @@ func (h *langHandler) linter() {
 			&PublishDiagnosticsParams{
 				URI:         uri,
 				Diagnostics: diagnostics,
+				Version:     h.files[uri].Version,
 			})
 	}
 }
@@ -331,21 +333,25 @@ func (h *langHandler) saveFile(uri DocumentURI) error {
 	return nil
 }
 
-func (h *langHandler) openFile(uri DocumentURI, languageID string) error {
+func (h *langHandler) openFile(uri DocumentURI, languageID string, version int) error {
 	f := &File{
 		Text:       "",
 		LanguageID: languageID,
+		Version:    version,
 	}
 	h.files[uri] = f
 	return nil
 }
 
-func (h *langHandler) updateFile(uri DocumentURI, text string) error {
+func (h *langHandler) updateFile(uri DocumentURI, text string, version *int) error {
 	f, ok := h.files[uri]
 	if !ok {
 		return fmt.Errorf("document not found: %v", uri)
 	}
 	f.Text = text
+	if version != nil {
+		f.Version = *version
+	}
 
 	h.request <- uri
 	return nil

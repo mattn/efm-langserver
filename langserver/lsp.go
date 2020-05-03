@@ -186,6 +186,7 @@ type Diagnostic struct {
 type PublishDiagnosticsParams struct {
 	URI         DocumentURI  `json:"uri"`
 	Diagnostics []Diagnostic `json:"diagnostics"`
+	Version     int          `json:"version"`
 }
 
 // FormattingOptions is

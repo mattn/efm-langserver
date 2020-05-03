@@ -18,7 +18,7 @@ func (h *langHandler) handleTextDocumentDidChange(ctx context.Context, conn *jso
 	}
 
 	if len(params.ContentChanges) == 1 {
-		if err := h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text); err != nil {
+		if err := h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text, &params.TextDocument.Version); err != nil {
 			return nil, err
 		}
 	}

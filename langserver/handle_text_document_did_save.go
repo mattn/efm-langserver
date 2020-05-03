@@ -18,7 +18,7 @@ func (h *langHandler) handleTextDocumentDidSave(ctx context.Context, conn *jsonr
 	}
 
 	if params.Text != nil {
-		err = h.updateFile(params.TextDocument.URI, *params.Text)
+		err = h.updateFile(params.TextDocument.URI, *params.Text, nil)
 	} else {
 		err = h.saveFile(params.TextDocument.URI)
 	}

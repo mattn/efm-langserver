@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"log"
@@ -9,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"unicode"
 
@@ -255,55 +257,63 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 		if h.loglevel >= 1 {
 			h.logger.Println(command+":", string(b))
 		}
-		for _, line := range strings.Split(string(b), "\n") {
-			for _, ef := range efms.Efms {
-				m := ef.Match(string(line))
-				if m == nil {
+		scanner := efms.NewScanner(bytes.NewReader(b))
+		for scanner.Scan() {
+			entry := scanner.Entry()
+			if !entry.Valid {
+				continue
+			}
+			if config.LintStdin && (entry.Filename == "stdin" || entry.Filename == "-" || entry.Filename == "<text>") {
+				entry.Filename = fname
+				path, err := filepath.Abs(entry.Filename)
+				if err != nil {
 					continue
 				}
-				if config.LintStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
-					m.F = fname
-					path, err := filepath.Abs(m.F)
-					if err != nil {
-						continue
-					}
-					path = filepath.ToSlash(path)
-					if runtime.GOOS == "windows" {
-						path = strings.ToLower(path)
-					}
-					if path != fname {
-						continue
-					}
-				} else {
-					m.F = filepath.ToSlash(m.F)
+				path = filepath.ToSlash(path)
+				if runtime.GOOS == "windows" {
+					path = strings.ToLower(path)
 				}
-				if m.C == 0 {
-					m.C = 1
+				if path != fname {
+					continue
 				}
-				severity := 1
-				switch {
-				case m.T == 'E' || m.T == 'e':
-					severity = 1
-				case m.T == 'W' || m.T == 'w':
-					severity = 2
-				case m.T == 'I' || m.T == 'i':
-					severity = 3
-				case m.T == 'H' || m.T == 'h':
-					severity = 4
-				}
-				diagnostics = append(diagnostics, Diagnostic{
-					Range: Range{
-						Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-						End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-					},
-					Message:  m.M,
-					Severity: severity,
-				})
+			} else {
+				entry.Filename = filepath.ToSlash(entry.Filename)
 			}
+			if entry.Col == 0 {
+				entry.Col = 1
+			}
+			severity := 1
+			switch {
+			case entry.Type == 'E' || entry.Type == 'e':
+				severity = 1
+			case entry.Type == 'W' || entry.Type == 'w':
+				severity = 2
+			case entry.Type == 'I' || entry.Type == 'i':
+				severity = 3
+			case entry.Type == 'H' || entry.Type == 'h':
+				severity = 4
+			}
+			diagnostics = append(diagnostics, Diagnostic{
+				Range: Range{
+					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
+					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
+				},
+				Code:     itoaPtrIfNotZero(entry.Nr),
+				Message:  entry.Text,
+				Severity: severity,
+			})
 		}
 	}
 
 	return diagnostics, nil
+}
+
+func itoaPtrIfNotZero(n int) *string {
+	if n == 0 {
+		return nil
+	}
+	s := strconv.Itoa(n)
+	return &s
 }
 
 func (h *langHandler) closeFile(uri DocumentURI) error {

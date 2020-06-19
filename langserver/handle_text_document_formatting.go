@@ -62,6 +62,8 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		return nil, nil
 	}
 
+	text := f.Text
+	formated := false
 	for _, config := range configs {
 		if config.FormatCommand == "" {
 			continue
@@ -82,17 +84,23 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		cmd.Dir = h.findRootPath(fname)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.FormatStdin {
-			cmd.Stdin = strings.NewReader(f.Text)
+			cmd.Stdin = strings.NewReader(text)
 		}
 		b, err := cmd.CombinedOutput()
 		if err != nil {
 			continue
 		}
+
+		formated = true
+
 		if h.loglevel >= 1 {
 			h.logger.Println(command+":", string(b))
 		}
+		text = strings.Replace(string(b), "\r", "", -1)
+	}
+
+	if formated {
 		h.logger.Println("format succeeded")
-		text := strings.Replace(string(b), "\r", "", -1)
 		flines := strings.Split(f.Text, "\n")
 		return []TextEdit{
 			{

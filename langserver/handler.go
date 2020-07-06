@@ -333,8 +333,11 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			} else {
 				entry.Filename = filepath.ToSlash(entry.Filename)
 			}
+			word := ""
 			if entry.Col == 0 {
 				entry.Col = 1
+			} else {
+				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
 			severity := 1
 			switch {
@@ -347,7 +350,6 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			case entry.Type == 'H' || entry.Type == 'h':
 				severity = 4
 			}
-			word := f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
 					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},

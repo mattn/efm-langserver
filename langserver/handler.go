@@ -13,7 +13,9 @@ import (
 	"strconv"
 	"strings"
 	"unicode"
+	"unicode/utf16"
 
+	"github.com/mattn/go-unicodeclass"
 	"github.com/reviewdog/errorformat"
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -100,6 +102,36 @@ type File struct {
 	LanguageID string
 	Text       string
 	Version    int
+}
+
+func (f *File) WordAt(pos Position) string {
+	lines := strings.Split(f.Text, "\n")
+	if pos.Line < 0 || pos.Line > len(lines) {
+		return ""
+	}
+	chars := utf16.Encode([]rune(lines[pos.Line]))
+	if pos.Character < 0 || pos.Character > len(chars) {
+		return ""
+	}
+	prevPos := 0
+	currPos := -1
+	prevCls := unicodeclass.Invalid
+	for i, char := range chars {
+		currCls := unicodeclass.Is(rune(char))
+		if currCls != prevCls {
+			if i <= pos.Character {
+				prevPos = i
+			} else {
+				if char == '_' {
+					continue
+				}
+				currPos = i
+				break
+			}
+		}
+		prevCls = currCls
+	}
+	return string(utf16.Decode(chars[prevPos:currPos]))
 }
 
 func isWindowsDrivePath(path string) bool {
@@ -315,10 +347,11 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			case entry.Type == 'H' || entry.Type == 'h':
 				severity = 4
 			}
+			word := f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
 					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
-					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
+					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len(word)},
 				},
 				Code:     itoaPtrIfNotZero(entry.Nr),
 				Message:  entry.Text,

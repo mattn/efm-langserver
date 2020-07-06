@@ -67,15 +67,15 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		config.Logger = log.New(os.Stderr, "", log.LstdFlags)
 	}
 	var handler = &langHandler{
-		loglevel: config.LogLevel,
-		logger:   config.Logger,
-		commands: config.Commands,
-		configs:  config.Languages,
+		loglevel:          config.LogLevel,
+		logger:            config.Logger,
+		commands:          config.Commands,
+		configs:           config.Languages,
 		provideDefinition: config.ProvideDefinition,
-		files:    make(map[DocumentURI]*File),
-		request:  make(chan DocumentURI),
-		conn:     nil,
-		filename: config.Filename,
+		files:             make(map[DocumentURI]*File),
+		request:           make(chan DocumentURI),
+		conn:              nil,
+		filename:          config.Filename,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -182,6 +182,21 @@ func (h *langHandler) findRootPath(fname string) string {
 	return h.rootPath
 }
 
+func isFilename(s string) bool {
+	for _, f := range []string{
+		"stdin",
+		"-",
+		"<text>",
+		"<stdin>",
+	} {
+		if s == f {
+			return true
+		}
+	}
+	return false
+
+}
+
 func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
@@ -270,7 +285,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			if !entry.Valid {
 				continue
 			}
-			if config.LintStdin && (entry.Filename == "stdin" || entry.Filename == "-" || entry.Filename == "<text>") {
+			if config.LintStdin && isFilename(entry.Filename) {
 				entry.Filename = fname
 				path, err := filepath.Abs(entry.Filename)
 				if err != nil {

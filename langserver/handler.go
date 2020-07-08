@@ -104,6 +104,8 @@ type File struct {
 	Version    int
 }
 
+// WordAt returns the word at the given position, or an empty string if the
+// position is not valid.
 func (f *File) WordAt(pos Position) string {
 	lines := strings.Split(f.Text, "\n")
 	if pos.Line < 0 || pos.Line > len(lines) {

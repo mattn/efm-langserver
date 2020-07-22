@@ -104,6 +104,7 @@ type File struct {
 	Version    int
 }
 
+// WordAt is
 func (f *File) WordAt(pos Position) string {
 	lines := strings.Split(f.Text, "\n")
 	if pos.Line < 0 || pos.Line > len(lines) {

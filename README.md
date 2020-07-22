@@ -142,6 +142,10 @@ tools:
   csv-csvlint: &csv-csvlint
     lint-command: 'csvlint'
 
+  lua-lua-format: &lua-lua-format
+    format-command: 'lua-format -i'
+    format-stdin: true
+
   any-excitetranslate: &any-excitetranslate
     hover-command: 'excitetranslate'
     hover-stdin: true
@@ -198,6 +202,9 @@ languages:
 
   csv:
     - <<: *csv-csvlint
+
+  lua:
+    - <<: *lua-lua-format
 
   _:
     - <<: *any-excitetranslate

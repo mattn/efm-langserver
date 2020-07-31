@@ -132,6 +132,9 @@ func (f *File) WordAt(pos Position) string {
 		}
 		prevCls = currCls
 	}
+	if currPos == -1 {
+		currPos = len(chars)
+	}
 	return string(utf16.Decode(chars[prevPos:currPos]))
 }
 

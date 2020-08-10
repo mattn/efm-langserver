@@ -146,6 +146,10 @@ tools:
     format-command: 'lua-format -i'
     format-stdin: true
 
+  blade-blade-formatter: &blade-blade-formatter
+    format-command: 'blade-formatter --stdin'
+    format-stdin: true
+
   any-excitetranslate: &any-excitetranslate
     hover-command: 'excitetranslate'
     hover-stdin: true
@@ -205,6 +209,9 @@ languages:
 
   lua:
     - <<: *lua-lua-format
+
+  blade:
+    - <<: *blade-blade-formatter
 
   _:
     - <<: *any-excitetranslate

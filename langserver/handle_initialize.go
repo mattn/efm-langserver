@@ -3,6 +3,7 @@ package langserver
 import (
 	"context"
 	"encoding/json"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -27,6 +28,10 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 	}
 	h.rootPath = filepath.Clean(rootPath)
 	h.addFolder(rootPath)
+
+	if h.autoChdir {
+		os.Chdir(h.rootPath)
+	}
 
 	var completion *CompletionProvider
 	var hasHoverCommand bool

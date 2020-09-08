@@ -80,6 +80,13 @@
           "default": true,
           "description": "use stdin for the completion",
           "type": "boolean"
+        },
+        "root-markers": {
+          "description": "use stdin for the completion",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         }
       },
       "type": "object"

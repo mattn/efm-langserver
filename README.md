@@ -32,6 +32,8 @@ Below is example for `config.yaml` for Windows.
 
 ```yaml
 version: 2
+root-markers:
+  - .git/
 commands:
   - command: notepad
     arguments:

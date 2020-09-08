@@ -26,7 +26,6 @@ type Config struct {
 	LogFile   string                `yaml:"logfile"`
 	LogLevel  int                   `yaml:"loglevel"`
 	Commands  []Command             `yaml:"commands"`
-	AutoChdir bool                  `yaml:"autochdir"`
 	Languages map[string][]Language `yaml:"languages"`
 
 	// Toggle support for "go to definition" requests.
@@ -79,7 +78,6 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		request:           make(chan DocumentURI),
 		conn:              nil,
 		filename:          config.Filename,
-		autoChdir:         config.AutoChdir,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -97,7 +95,6 @@ type langHandler struct {
 	rootPath          string
 	filename          string
 	folders           []string
-	autoChdir         bool
 }
 
 // File is

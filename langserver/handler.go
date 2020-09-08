@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -22,11 +23,12 @@ import (
 
 // Config is
 type Config struct {
-	Version   int                   `yaml:"version"`
-	LogFile   string                `yaml:"logfile"`
-	LogLevel  int                   `yaml:"loglevel"`
-	Commands  []Command             `yaml:"commands"`
-	Languages map[string][]Language `yaml:"languages"`
+	Version     int                   `yaml:"version"`
+	LogFile     string                `yaml:"logfile"`
+	LogLevel    int                   `yaml:"loglevel"`
+	Commands    []Command             `yaml:"commands"`
+	Languages   map[string][]Language `yaml:"languages"`
+	RootMarkers []string              `yaml:"root-markers"`
 
 	// Toggle support for "go to definition" requests.
 	ProvideDefinition bool `yaml:"provide-definition"`
@@ -61,6 +63,7 @@ type Language struct {
 	HoverStdin         bool     `yaml:"hover-stdin"`
 	HoverType          string   `yaml:"hover-type"`
 	Env                []string `yaml:"env"`
+	RootMarkers        []string `yaml:"root-markers"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -78,6 +81,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		request:           make(chan DocumentURI),
 		conn:              nil,
 		filename:          config.Filename,
+		rootMarkers:       config.RootMarkers,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -95,6 +99,7 @@ type langHandler struct {
 	rootPath          string
 	filename          string
 	folders           []string
+	rootMarkers       []string
 }
 
 // File is
@@ -208,7 +213,51 @@ func (h *langHandler) linter() {
 	}
 }
 
-func (h *langHandler) findRootPath(fname string) string {
+func matchRootPath(fname string, markers []string) string {
+	dir := filepath.Dir(filepath.Clean(fname))
+	var prev string
+	for dir != prev {
+		files, err := ioutil.ReadDir(dir)
+		if err != nil {
+			continue
+		}
+		for _, file := range files {
+			name := file.Name()
+			isDir := file.IsDir()
+			for _, marker := range markers {
+				if strings.HasSuffix(marker, "/") {
+					if !isDir {
+						continue
+					}
+					marker = strings.TrimRight(marker, "/")
+					if ok, _ := filepath.Match(marker, name); ok {
+						return dir
+					}
+				} else {
+					if isDir {
+						continue
+					}
+					if ok, _ := filepath.Match(marker, name); ok {
+						return dir
+					}
+				}
+			}
+		}
+		prev = dir
+		dir = filepath.Dir(dir)
+	}
+
+	return ""
+}
+
+func (h *langHandler) findRootPath(fname string, lang Language) string {
+	if dir := matchRootPath(fname, lang.RootMarkers); dir != "" {
+		return dir
+	}
+	if dir := matchRootPath(fname, h.rootMarkers); dir != "" {
+		return dir
+	}
+
 	for _, folder := range h.folders {
 		if len(fname) > len(folder) && strings.EqualFold(fname[:len(folder)], folder) {
 			return folder
@@ -297,7 +346,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(fname)
+		cmd.Dir = h.findRootPath(fname, config)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.LintStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

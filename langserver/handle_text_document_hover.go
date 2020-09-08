@@ -113,7 +113,7 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(fname)
+		cmd.Dir = h.findRootPath(fname, config)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.HoverStdin {
 			cmd.Stdin = strings.NewReader(word)

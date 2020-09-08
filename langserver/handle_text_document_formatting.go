@@ -81,7 +81,7 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(fname)
+		cmd.Dir = h.findRootPath(fname, config)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.FormatStdin {
 			cmd.Stdin = strings.NewReader(text)

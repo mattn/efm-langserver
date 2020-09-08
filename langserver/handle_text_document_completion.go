@@ -86,7 +86,7 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 		} else {
 			cmd = exec.Command("sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(fname)
+		cmd.Dir = h.findRootPath(fname, config)
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.CompletionStdin {
 			cmd.Stdin = strings.NewReader(f.Text)

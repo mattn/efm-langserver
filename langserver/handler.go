@@ -406,7 +406,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
 					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
-					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len(word)},
+					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len([]rune(word))},
 				},
 				Code:     itoaPtrIfNotZero(entry.Nr),
 				Message:  entry.Text,

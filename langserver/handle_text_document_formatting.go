@@ -106,7 +106,7 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 			{
 				Range: Range{
 					Start: Position{Line: 0, Character: 0},
-					End:   Position{Line: len(flines), Character: len(flines[len(flines)-1])},
+					End:   Position{Line: len(flines), Character: len([]rune(flines[len(flines)-1]))},
 				},
 				NewText: text,
 			},

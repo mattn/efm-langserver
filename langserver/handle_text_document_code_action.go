@@ -42,20 +42,53 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			fname = strings.ToLower(fname)
 		}
 	}
-	if !strings.HasPrefix(params.Command, "efm-langserver.") {
+	tok := strings.Split(params.Command, "\t")
+	if len(tok) != 3 || tok[0] != "efm-langserver" {
 		return nil, fmt.Errorf("invalid command")
 	}
-	params.Command = params.Command[15:]
+	params.Command = tok[1]
 
 	var command *Command
-	for i, v := range h.commands {
-		if params.Command == v.Command {
-			command = &h.commands[i]
-			break
+	f, ok := h.files[DocumentURI(tok[2])]
+	if !ok {
+		return nil, fmt.Errorf("document not found: %v", uri)
+	}
+	if cfgs, ok := h.configs[f.LanguageID]; ok {
+	loop_lang:
+		for _, cfg := range cfgs {
+			for _, v := range cfg.Commands {
+				if tok[1] == v.Command {
+					command = &v
+					break loop_lang
+				}
+			}
 		}
 	}
 	if command == nil {
-		return nil, fmt.Errorf("command not found: %v", params.Command)
+		if command == nil {
+			if cfgs, ok := h.configs[wildcard]; ok {
+			loop_wild:
+				for _, cfg := range cfgs {
+					for _, v := range cfg.Commands {
+						if tok[1] == v.Command {
+							command = &v
+							break loop_wild
+						}
+					}
+				}
+			}
+		}
+		if command == nil {
+			for _, v := range h.commands {
+				if tok[1] == v.Command {
+					command = &v
+					break
+				}
+			}
+			if command == nil {
+				return nil, fmt.Errorf("command not found: %v", params.Command)
+			}
+		}
 	}
 
 	var cmd *exec.Cmd
@@ -63,7 +96,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	var output string
 	if !strings.HasPrefix(command.Command, ":") {
 		if runtime.GOOS == "windows" {
-			args = []string{"/c", command.Command}
+			args = []string{"/c", replaceCommandInputFilename(command.Command, fname)}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
 				tmp := replaceCommandInputFilename(arg, fname)
@@ -76,7 +109,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			}
 			cmd = exec.Command("cmd", args...)
 		} else {
-			args = []string{"-c", command.Command}
+			args = []string{"-c", replaceCommandInputFilename(command.Command, fname)}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
 				tmp := replaceCommandInputFilename(arg, fname)
@@ -132,7 +165,7 @@ func filterCommands(uri DocumentURI, commands []Command) []Command {
 		}
 		results = append(results, Command{
 			Title:     v.Title,
-			Command:   fmt.Sprintf("efm-langserver.%s", v.Command),
+			Command:   fmt.Sprintf("efm-langserver\t%s\t%s", v.Command, string(uri)),
 			Arguments: []interface{}{string(uri)},
 		})
 	}

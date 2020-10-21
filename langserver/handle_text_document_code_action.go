@@ -23,7 +23,7 @@ func (h *langHandler) handleTextDocumentCodeAction(ctx context.Context, conn *js
 		return nil, err
 	}
 
-	return h.codeAction(string(params.TextDocument.URI), &params)
+	return h.codeAction(params.TextDocument.URI, &params)
 }
 
 func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{}, error) {
@@ -116,9 +116,9 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	return output, nil
 }
 
-func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Command, error) {
-	commands := []Command{}
-	for _, v := range h.commands {
+func filterCommands(uri DocumentURI, commands []Command) []Command {
+	results := []Command{}
+	for _, v := range commands {
 		if v.OS != "" {
 			found := false
 			for _, os := range strings.FieldsFunc(v.OS, func(r rune) bool { return r == ',' }) {
@@ -130,11 +130,33 @@ func (h *langHandler) codeAction(uri string, params *CodeActionParams) ([]Comman
 				continue
 			}
 		}
-		commands = append(commands, Command{
+		results = append(results, Command{
 			Title:     v.Title,
 			Command:   fmt.Sprintf("efm-langserver.%s", v.Command),
-			Arguments: []interface{}{uri},
+			Arguments: []interface{}{string(uri)},
 		})
+	}
+	return results
+}
+
+func (h *langHandler) codeAction(uri DocumentURI, params *CodeActionParams) ([]Command, error) {
+	f, ok := h.files[uri]
+	if !ok {
+		return nil, fmt.Errorf("document not found: %v", uri)
+	}
+
+	commands := []Command{}
+	commands = append(commands, filterCommands(uri, h.commands)...)
+
+	if cfgs, ok := h.configs[f.LanguageID]; ok {
+		for _, cfg := range cfgs {
+			commands = append(commands, filterCommands(uri, cfg.Commands)...)
+		}
+	}
+	if cfgs, ok := h.configs[wildcard]; ok {
+		for _, cfg := range cfgs {
+			commands = append(commands, filterCommands(uri, cfg.Commands)...)
+		}
 	}
 	return commands, nil
 }

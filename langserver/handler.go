@@ -47,23 +47,24 @@ type Config1 struct {
 
 // Language is
 type Language struct {
-	LintFormats        []string `yaml:"lint-formats"`
-	LintStdin          bool     `yaml:"lint-stdin"`
-	LintOffset         int      `yaml:"lint-offset"`
-	LintCommand        string   `yaml:"lint-command"`
-	LintIgnoreExitCode bool     `yaml:"lint-ignore-exit-code"`
-	FormatCommand      string   `yaml:"format-command"`
-	FormatStdin        bool     `yaml:"format-stdin"`
-	SymbolCommand      string   `yaml:"symbol-command"`
-	SymbolStdin        bool     `yaml:"symbol-stdin"`
-	SymbolFormats      []string `yaml:"symbol-formats"`
-	CompletionCommand  string   `yaml:"completion-command"`
-	CompletionStdin    bool     `yaml:"completion-stdin"`
-	HoverCommand       string   `yaml:"hover-command"`
-	HoverStdin         bool     `yaml:"hover-stdin"`
-	HoverType          string   `yaml:"hover-type"`
-	Env                []string `yaml:"env"`
-	RootMarkers        []string `yaml:"root-markers"`
+	LintFormats        []string  `yaml:"lint-formats"`
+	LintStdin          bool      `yaml:"lint-stdin"`
+	LintOffset         int       `yaml:"lint-offset"`
+	LintCommand        string    `yaml:"lint-command"`
+	LintIgnoreExitCode bool      `yaml:"lint-ignore-exit-code"`
+	FormatCommand      string    `yaml:"format-command"`
+	FormatStdin        bool      `yaml:"format-stdin"`
+	SymbolCommand      string    `yaml:"symbol-command"`
+	SymbolStdin        bool      `yaml:"symbol-stdin"`
+	SymbolFormats      []string  `yaml:"symbol-formats"`
+	CompletionCommand  string    `yaml:"completion-command"`
+	CompletionStdin    bool      `yaml:"completion-stdin"`
+	HoverCommand       string    `yaml:"hover-command"`
+	HoverStdin         bool      `yaml:"hover-stdin"`
+	HoverType          string    `yaml:"hover-type"`
+	Env                []string  `yaml:"env"`
+	RootMarkers        []string  `yaml:"root-markers"`
+	Commands           []Command `yaml:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.

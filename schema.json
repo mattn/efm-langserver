@@ -82,7 +82,7 @@
           "type": "boolean"
         },
         "root-markers": {
-          "description": "use stdin for the completion",
+          "description": "markers to find root directory",
           "items": {
             "type": "string"
           },
@@ -122,6 +122,17 @@
     "version": {
       "description": "version of this yaml format",
       "type": "number"
+    },
+    "root-markers": {
+      "description": "markers to find root directory",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "logfile": {
+      "description": "path to log file",
+      "type": "string"
     }
   },
   "title": "efm-langserver",

@@ -133,6 +133,10 @@
     "logfile": {
       "description": "path to log file",
       "type": "string"
+    },
+    "loglevel": {
+      "description": "log level",
+      "type": "numbe"
     }
   },
   "title": "efm-langserver",

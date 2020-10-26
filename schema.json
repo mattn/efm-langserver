@@ -87,6 +87,9 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "commands": {
+          "$ref": "#/definitions/command-definition"
         }
       },
       "type": "object"
@@ -136,7 +139,7 @@
     },
     "loglevel": {
       "description": "log level",
-      "type": "numbe"
+      "type": "number"
     }
   },
   "title": "efm-langserver",

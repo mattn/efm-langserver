@@ -18,6 +18,10 @@
             "description": "command to execute",
             "type": "string"
           },
+          "os": {
+            "description": "command executable OS environment",
+            "type": "string"
+          },
           "title": {
             "description": "title for clients",
             "type": "string"

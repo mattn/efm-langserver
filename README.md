@@ -223,7 +223,7 @@ If you want to debug output of commands:
 
 ```yaml
 version: 2
-log: /path/to/output.log
+logfile: /path/to/output.log
 loglevel: 1
 ```
 

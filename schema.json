@@ -137,11 +137,11 @@
       },
       "type": "array"
     },
-    "logfile": {
+    "log-file": {
       "description": "path to log file",
       "type": "string"
     },
-    "loglevel": {
+    "log-level": {
       "description": "log level",
       "type": "number"
     },

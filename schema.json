@@ -144,6 +144,10 @@
     "loglevel": {
       "description": "log level",
       "type": "number"
+    },
+    "lint-debounce": {
+      "description": "debounce for lints",
+      "type": "string"
     }
   },
   "title": "efm-langserver",

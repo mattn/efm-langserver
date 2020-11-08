@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf16"
 
@@ -80,6 +81,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		provideDefinition: config.ProvideDefinition,
 		files:             make(map[DocumentURI]*File),
 		request:           make(chan DocumentURI),
+		lintTimer:         nil,
 		conn:              nil,
 		filename:          config.Filename,
 		rootMarkers:       config.RootMarkers,
@@ -96,6 +98,8 @@ type langHandler struct {
 	provideDefinition bool
 	files             map[DocumentURI]*File
 	request           chan DocumentURI
+	lintDebounce      time.Duration
+	lintTimer         *time.Timer
 	conn              *jsonrpc2.Conn
 	rootPath          string
 	filename          string
@@ -180,6 +184,17 @@ func toURI(path string) DocumentURI {
 		Scheme: "file",
 		Path:   filepath.ToSlash(path),
 	}).String())
+}
+
+func (h *langHandler) lintRequest(uri DocumentURI) {
+	if h.lintTimer != nil {
+		h.lintTimer.Reset(h.lintDebounce)
+		return
+	}
+	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
+		h.lintTimer = nil
+		h.request <- uri
+	})
 }
 
 func (h *langHandler) logMessage(typ MessageType, message string) {
@@ -433,7 +448,7 @@ func (h *langHandler) closeFile(uri DocumentURI) error {
 }
 
 func (h *langHandler) saveFile(uri DocumentURI) error {
-	h.request <- uri
+	h.lintRequest(uri)
 	return nil
 }
 
@@ -457,7 +472,7 @@ func (h *langHandler) updateFile(uri DocumentURI, text string, version *int) err
 		f.Version = *version
 	}
 
-	h.request <- uri
+	h.lintRequest(uri)
 	return nil
 }
 

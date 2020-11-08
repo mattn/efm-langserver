@@ -15,11 +15,10 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-const (
-	name     = "efm-langserver"
-	version  = "0.0.22"
-	revision = "HEAD"
-)
+const name = "efm-langserver"
+const version = "0.0.23"
+
+var revision = "HEAD"
 
 func main() {
 	var yamlfile string

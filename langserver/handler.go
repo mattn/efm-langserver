@@ -25,8 +25,8 @@ import (
 // Config is
 type Config struct {
 	Version     int                   `yaml:"version"`
-	LogFile     string                `yaml:"logfile"`
-	LogLevel    int                   `yaml:"loglevel"`
+	LogFile     string                `yaml:"log-file"`
+	LogLevel    int                   `yaml:"log-level"`
 	Commands    []Command             `yaml:"commands"`
 	Languages   map[string][]Language `yaml:"languages"`
 	RootMarkers []string              `yaml:"root-markers"`

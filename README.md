@@ -223,8 +223,8 @@ If you want to debug output of commands:
 
 ```yaml
 version: 2
-logfile: /path/to/output.log
-loglevel: 1
+log-file: /path/to/output.log
+log-level: 1
 ```
 
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)

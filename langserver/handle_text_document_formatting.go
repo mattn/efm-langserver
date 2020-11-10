@@ -86,7 +86,7 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		if config.FormatStdin {
 			cmd.Stdin = strings.NewReader(text)
 		}
-		b, err := cmd.CombinedOutput()
+		b, err := cmd.Output()
 		if err != nil {
 			continue
 		}

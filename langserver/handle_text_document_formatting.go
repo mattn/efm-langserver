@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -87,8 +88,11 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		if config.FormatStdin {
 			cmd.Stdin = strings.NewReader(text)
 		}
+		var buf bytes.Buffer
+		cmd.Stderr = &buf
 		b, err := cmd.Output()
 		if err != nil {
+			h.logger.Println(command+":", buf.String())
 			continue
 		}
 

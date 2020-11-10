@@ -62,7 +62,8 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 		return nil, nil
 	}
 
-	text := f.Text
+	originalText := f.Text
+	text := originalText
 	formated := false
 	for _, config := range configs {
 		if config.FormatCommand == "" {
@@ -101,16 +102,7 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 
 	if formated {
 		h.logger.Println("format succeeded")
-		flines := strings.Split(f.Text, "\n")
-		return []TextEdit{
-			{
-				Range: Range{
-					Start: Position{Line: 0, Character: 0},
-					End:   Position{Line: len(flines), Character: len([]rune(flines[len(flines)-1]))},
-				},
-				NewText: text,
-			},
-		}, nil
+		return ComputeEdits(uri, originalText, text), nil
 	}
 
 	return nil, fmt.Errorf("format for LanguageID not supported: %v", f.LanguageID)

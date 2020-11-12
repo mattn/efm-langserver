@@ -24,12 +24,13 @@ import (
 
 // Config is
 type Config struct {
-	Version     int                   `yaml:"version"`
-	LogFile     string                `yaml:"log-file"`
-	LogLevel    int                   `yaml:"log-level"`
-	Commands    []Command             `yaml:"commands"`
-	Languages   map[string][]Language `yaml:"languages"`
-	RootMarkers []string              `yaml:"root-markers"`
+	Version      int                   `yaml:"version"`
+	LogFile      string                `yaml:"log-file"`
+	LogLevel     int                   `yaml:"log-level"`
+	Commands     []Command             `yaml:"commands"`
+	Languages    map[string][]Language `yaml:"languages"`
+	RootMarkers  []string              `yaml:"root-markers"`
+	LintDebounce time.Duration         `yaml:"lint-debounce"`
 
 	// Toggle support for "go to definition" requests.
 	ProvideDefinition bool `yaml:"provide-definition"`
@@ -81,6 +82,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		provideDefinition: config.ProvideDefinition,
 		files:             make(map[DocumentURI]*File),
 		request:           make(chan DocumentURI),
+		lintDebounce:      config.LintDebounce,
 		lintTimer:         nil,
 		conn:              nil,
 		filename:          config.Filename,

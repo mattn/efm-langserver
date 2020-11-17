@@ -127,13 +127,13 @@ tools:
       - '%f:%l:%c:%tarning - %m'
 
   html-prettier: &html-prettier
-    format-command: './node_modules/.bin/prettier --parser html'
+    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
 
   css-prettier: &css-prettier
-    format-command: './node_modules/.bin/prettier --parser css'
+    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser css'
 
   json-prettier: &json-prettier
-    format-command: './node_modules/.bin/prettier --parser json'
+    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} --parser json'
 
   json-jq: &json-jq
     lint-command: 'jq .'

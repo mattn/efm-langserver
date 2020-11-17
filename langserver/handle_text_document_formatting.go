@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"strings"
 
@@ -24,10 +25,10 @@ func (h *langHandler) handleTextDocumentFormatting(ctx context.Context, conn *js
 		return nil, err
 	}
 
-	return h.formatting(params.TextDocument.URI)
+	return h.formatting(params.TextDocument.URI, params.Options)
 }
 
-func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
+func (h *langHandler) formatting(uri DocumentURI, options FormattingOptions) ([]TextEdit, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -66,6 +67,8 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 	originalText := f.Text
 	text := originalText
 	formated := false
+
+Configs:
 	for _, config := range configs {
 		if config.FormatCommand == "" {
 			continue
@@ -76,6 +79,23 @@ func (h *langHandler) formatting(uri DocumentURI) ([]TextEdit, error) {
 			command = command + " ${INPUT}"
 		}
 		command = replaceCommandInputFilename(command, fname)
+
+		for placeholder, value := range options {
+			re, err := regexp.Compile(fmt.Sprintf(`\${([^:|^}]+):%s}`, placeholder))
+			if err != nil {
+				h.logger.Println(command+":", err)
+				continue Configs
+			}
+
+			switch v := value.(type) {
+			default:
+				command = re.ReplaceAllString(command, fmt.Sprintf("$1 %v", v))
+			case bool:
+				command = re.ReplaceAllString(command, "$1")
+			}
+		}
+		re := regexp.MustCompile(`\${[^}]*}`)
+		command = re.ReplaceAllString(command, "")
 
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {

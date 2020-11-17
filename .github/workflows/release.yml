@@ -17,7 +17,7 @@ jobs:
       with:
         go-version: 1.x
     - name: Add $GOPATH/bin to $PATH
-      run: echo "::add-path::$(go env GOPATH)/bin"
+      run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
     - name: Cross build
       run: make cross
     - name: Create Release

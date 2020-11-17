@@ -190,10 +190,7 @@ type PublishDiagnosticsParams struct {
 }
 
 // FormattingOptions is
-type FormattingOptions struct {
-	TabSize      int64 `json:"tabSize"`
-	InsertSpaces bool  `json:"insertSpaces"`
-}
+type FormattingOptions map[string]interface{}
 
 // DocumentFormattingParams is
 type DocumentFormattingParams struct {

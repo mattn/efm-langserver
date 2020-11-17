@@ -418,7 +418,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 				severity = 2
 			case entry.Type == 'I' || entry.Type == 'i':
 				severity = 3
-			case entry.Type == 'H' || entry.Type == 'h':
+			case entry.Type == 'N' || entry.Type == 'n':
 				severity = 4
 			}
 			diagnostics = append(diagnostics, Diagnostic{

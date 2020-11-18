@@ -153,6 +153,16 @@ tools:
     format-command: 'blade-formatter --stdin'
     format-stdin: true
 
+  mix_credo: &mix_credo
+    lint-command: "mix credo suggest --format=flycheck --read-from-stdin ${INPUT}"
+    lint-stdin: true
+    lint-ignore-exit-code: true
+    lint-formats:
+      - '%f:%l:%c: %m'
+    root-markers:
+      - mix.lock
+      - mix.exs
+
   any-excitetranslate: &any-excitetranslate
     hover-command: 'excitetranslate'
     hover-stdin: true
@@ -215,6 +225,9 @@ languages:
 
   blade:
     - <<: *blade-blade-formatter
+
+  elixir:
+    - <<: *mix_credo
 
   _:
     - <<: *any-excitetranslate

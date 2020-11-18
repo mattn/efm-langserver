@@ -73,9 +73,11 @@ func main() {
 		os.Exit(1)
 	}
 
-	if !quiet {
-		log.Println("efm-langserver: reading on stdin, writing on stdout")
+	if quiet {
+		log.SetOutput(ioutil.Discard)
 	}
+
+	log.Println("efm-langserver: reading on stdin, writing on stdout")
 
 	if logfile == "" {
 		logfile = config.LogFile
@@ -108,9 +110,7 @@ func main() {
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),
 		handler, connOpt...).DisconnectNotify()
 
-	if !quiet {
-		log.Println("efm-langserver: connections closed")
-	}
+	log.Println("efm-langserver: connections closed")
 }
 
 type stdrwc struct{}

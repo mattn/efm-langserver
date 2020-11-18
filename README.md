@@ -18,6 +18,7 @@ Usage of efm-langserver:
         logfile
   -loglevel int
         loglevel (default 1)
+  -q    Run quieter
   -v    Print the version
 ```
 

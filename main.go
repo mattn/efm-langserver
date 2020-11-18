@@ -26,12 +26,14 @@ func main() {
 	var loglevel int
 	var dump bool
 	var showVersion bool
+	var quiet bool
 
 	flag.StringVar(&yamlfile, "c", "", "path to config.yaml")
 	flag.StringVar(&logfile, "logfile", "", "logfile")
 	flag.IntVar(&loglevel, "loglevel", 1, "loglevel")
 	flag.BoolVar(&dump, "d", false, "dump configuration")
 	flag.BoolVar(&showVersion, "v", false, "Print the version")
+	flag.BoolVar(&quiet, "q", false, "Run quieter")
 	flag.Parse()
 
 	if showVersion {
@@ -69,7 +71,10 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	log.Println("efm-langserver: reading on stdin, writing on stdout")
+
+	if !quiet {
+		log.Println("efm-langserver: reading on stdin, writing on stdout")
+	}
 
 	if logfile == "" {
 		logfile = config.LogFile
@@ -97,7 +102,10 @@ func main() {
 		context.Background(),
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),
 		handler, connOpt...).DisconnectNotify()
-	log.Println("efm-langserver: connections closed")
+
+	if !quiet {
+		log.Println("efm-langserver: connections closed")
+	}
 }
 
 type stdrwc struct{}

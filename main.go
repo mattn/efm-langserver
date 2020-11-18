@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -95,6 +96,10 @@ func main() {
 		if loglevel >= 5 {
 			connOpt = append(connOpt, jsonrpc2.LogMessages(config.Logger))
 		}
+	}
+
+	if quiet && (logfile == "" || loglevel < 5) {
+		connOpt = append(connOpt, jsonrpc2.LogMessages(log.New(ioutil.Discard, "", 0)))
 	}
 
 	handler := langserver.NewHandler(config)

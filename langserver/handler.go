@@ -24,13 +24,13 @@ import (
 
 // Config is
 type Config struct {
-	Version      int                   `yaml:"version"`
-	LogFile      string                `yaml:"log-file"`
-	LogLevel     int                   `yaml:"log-level"`
-	Commands     []Command             `yaml:"commands"`
-	Languages    map[string][]Language `yaml:"languages"`
-	RootMarkers  []string              `yaml:"root-markers"`
-	LintDebounce time.Duration         `yaml:"lint-debounce"`
+	Version      int                    `yaml:"version"`
+	LogFile      string                 `yaml:"log-file"`
+	LogLevel     int                    `yaml:"log-level" json:"logLevel"`
+	Commands     *[]Command             `yaml:"commands" json:"commands"`
+	Languages    *map[string][]Language `yaml:"languages" json:"languages"`
+	RootMarkers  *[]string              `yaml:"root-markers" json:"rootMarkers"`
+	LintDebounce time.Duration          `yaml:"lint-debounce" json:"lintDebounce"`
 
 	// Toggle support for "go to definition" requests.
 	ProvideDefinition bool `yaml:"provide-definition"`
@@ -49,24 +49,24 @@ type Config1 struct {
 
 // Language is
 type Language struct {
-	LintFormats        []string  `yaml:"lint-formats"`
-	LintStdin          bool      `yaml:"lint-stdin"`
-	LintOffset         int       `yaml:"lint-offset"`
-	LintCommand        string    `yaml:"lint-command"`
-	LintIgnoreExitCode bool      `yaml:"lint-ignore-exit-code"`
-	FormatCommand      string    `yaml:"format-command"`
-	FormatStdin        bool      `yaml:"format-stdin"`
-	SymbolCommand      string    `yaml:"symbol-command"`
-	SymbolStdin        bool      `yaml:"symbol-stdin"`
-	SymbolFormats      []string  `yaml:"symbol-formats"`
-	CompletionCommand  string    `yaml:"completion-command"`
-	CompletionStdin    bool      `yaml:"completion-stdin"`
-	HoverCommand       string    `yaml:"hover-command"`
-	HoverStdin         bool      `yaml:"hover-stdin"`
-	HoverType          string    `yaml:"hover-type"`
-	Env                []string  `yaml:"env"`
-	RootMarkers        []string  `yaml:"root-markers"`
-	Commands           []Command `yaml:"commands"`
+	LintFormats        []string  `yaml:"lint-formats" json:"lintFormats"`
+	LintStdin          bool      `yaml:"lint-stdin" json:"lintStdin"`
+	LintOffset         int       `yaml:"lint-offset" json:"lintOffset"`
+	LintCommand        string    `yaml:"lint-command" json:"lintCommand"`
+	LintIgnoreExitCode bool      `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
+	FormatCommand      string    `yaml:"format-command" json:"formatCommand"`
+	FormatStdin        bool      `yaml:"format-stdin" json:"formatStdin"`
+	SymbolCommand      string    `yaml:"symbol-command" json:"symbolCommand"`
+	SymbolStdin        bool      `yaml:"symbol-stdin" json:"symbolStdin"`
+	SymbolFormats      []string  `yaml:"symbol-formats" json:"symbolFormats"`
+	CompletionCommand  string    `yaml:"completion-command" json:"completionCommand"`
+	CompletionStdin    bool      `yaml:"completion-stdin" json:"completionStdin"`
+	HoverCommand       string    `yaml:"hover-command" json:"hoverCommand"`
+	HoverStdin         bool      `yaml:"hover-stdin" json:"hoverStdin"`
+	HoverType          string    `yaml:"hover-type" json:"hoverType"`
+	Env                []string  `yaml:"env" json:"env"`
+	RootMarkers        []string  `yaml:"root-markers" json:"rootMarkers"`
+	Commands           []Command `yaml:"commands" json:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -74,11 +74,12 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 	if config.Logger == nil {
 		config.Logger = log.New(os.Stderr, "", log.LstdFlags)
 	}
+
 	var handler = &langHandler{
 		loglevel:          config.LogLevel,
 		logger:            config.Logger,
-		commands:          config.Commands,
-		configs:           config.Languages,
+		commands:          *config.Commands,
+		configs:           *config.Languages,
 		provideDefinition: config.ProvideDefinition,
 		files:             make(map[DocumentURI]*File),
 		request:           make(chan DocumentURI),
@@ -86,7 +87,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		lintTimer:         nil,
 		conn:              nil,
 		filename:          config.Filename,
-		rootMarkers:       config.RootMarkers,
+		rootMarkers:       *config.RootMarkers,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)

@@ -17,9 +17,25 @@ func (h *langHandler) handleWorkspaceDidChangeConfiguration(ctx context.Context,
 		return nil, err
 	}
 
-	return h.didChangeConfiguration(&params)
+	return h.didChangeConfiguration(&params.Settings)
 }
 
-func (h *langHandler) didChangeConfiguration(params *DidChangeConfigurationParams) (interface{}, error) {
+func (h *langHandler) didChangeConfiguration(config *Config) (interface{}, error) {
+	if config.Languages != nil {
+		h.configs = *config.Languages
+	}
+	if config.RootMarkers != nil {
+		h.rootMarkers = *config.RootMarkers
+	}
+	if config.Commands != nil {
+		h.commands = *config.Commands
+	}
+	if config.LogLevel > 0 {
+		h.loglevel = config.LogLevel
+	}
+	if config.LintDebounce > 0 {
+		h.lintDebounce = config.LintDebounce
+	}
+
 	return nil, nil
 }

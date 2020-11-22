@@ -22,6 +22,36 @@ Usage of efm-langserver:
   -v    Print the version
 ```
 
+### Configuration
+
+Configuration can be done with either a `config.yaml` file, or through
+a [DidChangeConfiguration](https://microsoft.github.io/language-server-protocol/specification.html#workspace_didChangeConfiguration)
+notification from the client.
+`DidChangeConfiguration` can be called any time and will overwrite only provided
+properties.
+
+`DidChangeConfiguration` only supports V2 configuration and cannot set `LogFile`.
+
+
+#### InitializeParams
+
+Because the configuration can be updated on the fly, capabilities might change
+throughout the lifetime of the server. To enable support for capabilities that will
+be available later, set them in the [InitializeParams](https://microsoft.github.io/language-server-protocol/specification.html#initialize)
+
+Example
+```json
+{
+    "initializationOptions": {
+        "documentFormatting": true,
+        "hover": true,
+        "documentSymbol": true,
+        "codeAction": true,
+        "completion": true
+    }
+}
+```
+
 ### Example for config.yaml
 
 Location of config.yaml is:
@@ -228,6 +258,22 @@ log-file: /path/to/output.log
 log-level: 1
 ```
 
+### Example for DidChangeConfiguration notification
+
+```json
+{
+    "settings": {
+        "rootMarkers": [".git/"],
+        "languages": {
+            "lua": {
+                "formatCommand": "lua-format -i",
+                "formatStdin": true
+            }
+        }
+    }
+}
+```
+
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
 
 ```vim
@@ -268,6 +314,26 @@ Add to eglot-server-programs with major mode you want.
 (with-eval-after-load 'eglot
   (add-to-list 'eglot-server-programs
     `(markdown-mode . ("efm-langserver"))))
+```
+
+### Configuration for [neovim buildin LSP](https://neovim.io/doc/user/lsp.html) with [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+
+init.vim
+
+```vim
+lua << EOF
+require "lspconfig".efm.setup {
+    init_options = {documentFormatting = true},
+    settings = {
+        rootMarkers = {".git/"},
+        languages = {
+            lua = {
+                {formatCommand = "lua-format -i", formatStdin = true}
+            }
+        }
+    }
+}
+EOF
 ```
 
 ## Supported Lint tools

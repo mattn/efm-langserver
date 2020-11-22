@@ -139,8 +139,11 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			if err != nil {
 				return nil, err
 			}
-			h.commands = config.Commands
-			h.configs = config.Languages
+			h.commands = *config.Commands
+			h.configs = *config.Languages
+			h.rootMarkers = *config.RootMarkers
+			h.loglevel = config.LogLevel
+			h.lintDebounce = config.LintDebounce
 		}
 		h.logMessage(LogInfo, "Reloaded configuration file")
 		output = "OK"

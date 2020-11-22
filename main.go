@@ -53,6 +53,11 @@ func main() {
 			log.Fatal(err)
 		}
 		yamlfile = filepath.Join(dir, "config.yaml")
+	} else {
+		_, err := os.Stat(yamlfile)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	config, err := langserver.LoadConfig(yamlfile)

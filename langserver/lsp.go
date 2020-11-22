@@ -16,6 +16,11 @@ type InitializeParams struct {
 
 // InitializeOptions is
 type InitializeOptions struct {
+	DocumentFormatting bool `json:"documentFormatting"`
+	Hover              bool `json:"hover"`
+	DocumentSymbol     bool `json:"documentSymbol"`
+	CodeAction         bool `json:"codeAction"`
+	Completion         bool `json:"completion"`
 }
 
 // ClientCapabilities is
@@ -383,7 +388,7 @@ type CodeActionParams struct {
 
 // DidChangeConfigurationParams is
 type DidChangeConfigurationParams struct {
-	Settings interface{} `json:"settings"`
+	Settings Config `json:"settings"`
 }
 
 // NotificationMessage is

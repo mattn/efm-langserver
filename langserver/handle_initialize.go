@@ -29,10 +29,11 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 	h.addFolder(rootPath)
 
 	var completion *CompletionProvider
-	var hasHoverCommand bool
-	var hasCodeActionCommand bool
-	var hasSymbolCommand bool
-	var hasFormatCommand bool
+	var hasCompletionCommand bool = params.InitializationOptions.Completion
+	var hasHoverCommand bool = params.InitializationOptions.Hover
+	var hasCodeActionCommand bool = params.InitializationOptions.CodeAction
+	var hasSymbolCommand bool = params.InitializationOptions.DocumentSymbol
+	var hasFormatCommand bool = params.InitializationOptions.DocumentFormatting
 	var hasDefinitionCommand bool
 
 	if len(h.commands) > 0 {
@@ -46,9 +47,7 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 	for _, config := range h.configs {
 		for _, v := range config {
 			if v.CompletionCommand != "" {
-				completion = &CompletionProvider{
-					TriggerCharacters: []string{"*"},
-				}
+				hasCompletionCommand = true
 			}
 			if v.HoverCommand != "" {
 				hasHoverCommand = true
@@ -59,6 +58,12 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 			if v.FormatCommand != "" {
 				hasFormatCommand = true
 			}
+		}
+	}
+
+	if hasCompletionCommand {
+		completion = &CompletionProvider{
+			TriggerCharacters: []string{"*"},
 		}
 	}
 

@@ -91,7 +91,9 @@ Configs:
 			default:
 				command = re.ReplaceAllString(command, fmt.Sprintf("$1 %v", v))
 			case bool:
-				command = re.ReplaceAllString(command, "$1")
+				if v {
+					command = re.ReplaceAllString(command, "$1")
+				}
 			}
 		}
 		re := regexp.MustCompile(`\${[^}]*}`)

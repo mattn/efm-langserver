@@ -51,6 +51,22 @@
           "description": "use stdin for the hover",
           "type": "boolean"
         },
+        "hover-type": {
+          "description": "hover result type",
+          "type": "string",
+          "enum": [
+            "markdown",
+            "plaintext"
+          ]
+        },
+        "env": {
+          "description": "command environment variables and values",
+          "items": {
+            "type": "string",
+            "pattern": "^.+=.+$"
+          },
+          "type": "array"
+        },
         "lint-command": {
           "description": "lint command",
           "type": "string"

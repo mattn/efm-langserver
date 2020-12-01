@@ -61,10 +61,11 @@
         },
         "env": {
           "description": "command environment variables and values",
-          "type": "string",
-          "patternProperties": {
-            "^[a-zA-Z0-9._-]+=[a-zA-Z0-9._-]+$": {}
-          }
+          "items": {
+            "type": "string",
+            "pattern": "^.+=.+$"
+          },
+          "type": "array"
         },
         "lint-command": {
           "description": "lint command",

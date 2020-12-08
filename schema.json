@@ -159,6 +159,7 @@
     },
     "log-level": {
       "description": "log level",
+      "minimum": 1,
       "type": "number"
     },
     "lint-debounce": {

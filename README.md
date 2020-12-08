@@ -134,6 +134,7 @@ tools:
 
   sh-shellcheck: &sh-shellcheck
     lint-command: 'shellcheck -f gcc -x'
+    lint-source: 'shellcheck'
     lint-formats:
       - '%f:%l:%c: %trror: %m'
       - '%f:%l:%c: %tarning: %m'

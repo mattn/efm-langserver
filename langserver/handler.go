@@ -54,6 +54,7 @@ type Language struct {
 	LintOffset         int       `yaml:"lint-offset" json:"lintOffset"`
 	LintCommand        string    `yaml:"lint-command" json:"lintCommand"`
 	LintIgnoreExitCode bool      `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
+	LintSource         string    `yaml:"lint-source" json:"lintSource"`
 	FormatCommand      string    `yaml:"format-command" json:"formatCommand"`
 	FormatStdin        bool      `yaml:"format-stdin" json:"formatStdin"`
 	SymbolCommand      string    `yaml:"symbol-command" json:"symbolCommand"`
@@ -383,6 +384,10 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 		if h.loglevel >= 1 {
 			h.logger.Println(command+":", string(b))
 		}
+		var source *string
+		if config.LintSource != "" {
+			source = &config.LintSource
+		}
 		scanner := efms.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {
 			entry := scanner.Entry()
@@ -430,6 +435,7 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 				Code:     itoaPtrIfNotZero(entry.Nr),
 				Message:  entry.Text,
 				Severity: severity,
+				Source:   source,
 			})
 		}
 	}

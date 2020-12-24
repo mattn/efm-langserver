@@ -1,6 +1,7 @@
 package langserver
 
 import (
+	"context"
 	"log"
 	"os"
 	"path/filepath"
@@ -17,7 +18,7 @@ func TestLintNoLinter(t *testing.T) {
 		},
 	}
 
-	_, err := h.lint("file:///foo")
+	_, err := h.lint(context.Background(), "file:///foo")
 	if err != nil {
 		t.Fatal("Should not be an error if no linters")
 	}
@@ -32,7 +33,7 @@ func TestLintNoFileMatched(t *testing.T) {
 		},
 	}
 
-	_, err := h.lint("file:///bar")
+	_, err := h.lint(context.Background(), "file:///bar")
 	if err == nil {
 		t.Fatal("Should be an error if no linters")
 	}
@@ -63,7 +64,7 @@ func TestLintFileMatched(t *testing.T) {
 		},
 	}
 
-	d, err := h.lint(uri)
+	d, err := h.lint(context.Background(), uri)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -109,7 +110,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 		},
 	}
 
-	d, err := h.lint(uri)
+	d, err := h.lint(context.Background(), uri)
 	if err != nil {
 		t.Fatal(err)
 	}

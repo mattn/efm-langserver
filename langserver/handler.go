@@ -212,24 +212,42 @@ func (h *langHandler) logMessage(typ MessageType, message string) {
 }
 
 func (h *langHandler) linter() {
+	running := make(map[DocumentURI]context.CancelFunc)
+
 	for {
 		uri, ok := <-h.request
 		if !ok {
 			break
 		}
-		diagnostics, err := h.lint(uri)
-		if err != nil {
-			h.logger.Println(err)
-			continue
+
+		cancel, ok := running[uri]
+		if ok {
+			cancel()
 		}
-		h.conn.Notify(
-			context.Background(),
-			"textDocument/publishDiagnostics",
-			&PublishDiagnosticsParams{
-				URI:         uri,
-				Diagnostics: diagnostics,
-				Version:     h.files[uri].Version,
-			})
+
+		ctx, cancel := context.WithCancel(context.Background())
+		running[uri] = cancel
+
+		go func() {
+			diagnostics, err := h.lint(ctx, uri)
+			if err != nil {
+				h.logger.Println(err)
+				return
+			}
+
+			if diagnostics == nil {
+				return
+			}
+
+			h.conn.Notify(
+				context.Background(),
+				"textDocument/publishDiagnostics",
+				&PublishDiagnosticsParams{
+					URI:         uri,
+					Diagnostics: diagnostics,
+					Version:     h.files[uri].Version,
+				})
+		}()
 	}
 }
 
@@ -302,7 +320,7 @@ func isFilename(s string) bool {
 
 }
 
-func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
+func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -362,9 +380,9 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {
-			cmd = exec.Command("cmd", "/c", command)
+			cmd = exec.CommandContext(ctx, "cmd", "/c", command)
 		} else {
-			cmd = exec.Command("sh", "-c", command)
+			cmd = exec.CommandContext(ctx, "sh", "-c", command)
 		}
 		cmd.Dir = h.findRootPath(fname, config)
 		cmd.Env = append(os.Environ(), config.Env...)
@@ -372,6 +390,14 @@ func (h *langHandler) lint(uri DocumentURI) ([]Diagnostic, error) {
 			cmd.Stdin = strings.NewReader(f.Text)
 		}
 		b, err := cmd.CombinedOutput()
+		if err != nil {
+			exitErr, ok := err.(*exec.ExitError)
+			// When the context is canceled, the process is killed,
+			// and the exit code is -1
+			if ok && exitErr.ExitCode() < 0 {
+				return nil, nil
+			}
+		}
 		// Most of lint tools exit with non-zero value. But some commands
 		// return with zero value. We can not handle the output is real result
 		// or output of usage. So efm-langserver ignore that command exiting

@@ -361,6 +361,11 @@ EOF
 go get github.com/mattn/efm-langserver
 ```
 
+Homebrew
+```console
+brew install efm-langserver
+```
+
 ## License
 
 MIT

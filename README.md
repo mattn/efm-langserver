@@ -127,6 +127,22 @@ tools:
       - '%f:%l:%c: %tarning: %m'
       - '%f:%l:%c: %tote: %m'
 
+  python-black: &python-black
+    format-command: 'black --quiet -'
+    format-stdin: true
+
+  python-autopep8: &python-autopep8
+    format-command: 'autopep8 -'
+    format-stdin: true
+
+  python-yapf: &python-yapf
+    format-command: 'yapf --quiet'
+    format-stdin: true
+
+  python-isort: &python-isort
+    format-command: 'isort --quiet -'
+    format-stdin: true
+
   dockerfile-hadolint: &dockerfile-hadolint
     lint-command: 'hadolint'
     lint-formats:
@@ -222,6 +238,10 @@ languages:
   python:
     - <<: *python-flake8
     - <<: *python-mypy
+    # - <<: *python-autopep8
+    # - <<: *python-yapf
+    - <<: *python-black
+    - <<: *python-isort
 
   dockerfile:
     - <<: *dockerfile-hadolint

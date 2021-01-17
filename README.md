@@ -316,7 +316,7 @@ augroup LspEFM
   autocmd User lsp_setup call lsp#register_server({
       \ 'name': 'efm-langserver',
       \ 'cmd': {server_info->['efm-langserver', '-c=/path/to/your/config.yaml']},
-      \ 'whitelist': ['vim', 'eruby', 'markdown', 'yaml'],
+      \ 'allowlist': ['vim', 'eruby', 'markdown', 'yaml'],
       \ })
 augroup END
 ```

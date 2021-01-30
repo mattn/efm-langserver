@@ -175,7 +175,7 @@ func TestLintOffsetColumns(t *testing.T) {
 	}
 }
 
-func TestLintSeverityMap(t *testing.T) {
+func TestLintCategoryMap(t *testing.T) {
 	base, _ := os.Getwd()
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
@@ -192,7 +192,7 @@ func TestLintSeverityMap(t *testing.T) {
 					LintCommand:        `echo ` + file + `:2:1:R:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
-					LintSeverityMap:    mapping,
+					LintCategoryMap:    mapping,
 				},
 			},
 		},

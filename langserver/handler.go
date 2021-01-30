@@ -49,25 +49,27 @@ type Config1 struct {
 
 // Language is
 type Language struct {
-	LintFormats        []string  `yaml:"lint-formats" json:"lintFormats"`
-	LintStdin          bool      `yaml:"lint-stdin" json:"lintStdin"`
-	LintOffset         int       `yaml:"lint-offset" json:"lintOffset"`
-	LintCommand        string    `yaml:"lint-command" json:"lintCommand"`
-	LintIgnoreExitCode bool      `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintSource         string    `yaml:"lint-source" json:"lintSource"`
-	FormatCommand      string    `yaml:"format-command" json:"formatCommand"`
-	FormatStdin        bool      `yaml:"format-stdin" json:"formatStdin"`
-	SymbolCommand      string    `yaml:"symbol-command" json:"symbolCommand"`
-	SymbolStdin        bool      `yaml:"symbol-stdin" json:"symbolStdin"`
-	SymbolFormats      []string  `yaml:"symbol-formats" json:"symbolFormats"`
-	CompletionCommand  string    `yaml:"completion-command" json:"completionCommand"`
-	CompletionStdin    bool      `yaml:"completion-stdin" json:"completionStdin"`
-	HoverCommand       string    `yaml:"hover-command" json:"hoverCommand"`
-	HoverStdin         bool      `yaml:"hover-stdin" json:"hoverStdin"`
-	HoverType          string    `yaml:"hover-type" json:"hoverType"`
-	Env                []string  `yaml:"env" json:"env"`
-	RootMarkers        []string  `yaml:"root-markers" json:"rootMarkers"`
-	Commands           []Command `yaml:"commands" json:"commands"`
+	LintFormats        []string      `yaml:"lint-formats" json:"lintFormats"`
+	LintStdin          bool          `yaml:"lint-stdin" json:"lintStdin"`
+	LintOffset         int           `yaml:"lint-offset" json:"lintOffset"`
+	LintOffsetColumns  int           `yaml:"lint-offset-columns" json:"LintOffsetColumns"`
+	LintCommand        string        `yaml:"lint-command" json:"lintCommand"`
+	LintIgnoreExitCode bool          `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
+	LintCategoryMap    map[rune]rune `yaml:"lint-map-categories json:"LintCategoryMap"`
+	LintSource         string        `yaml:"lint-source" json:"lintSource"`
+	FormatCommand      string        `yaml:"format-command" json:"formatCommand"`
+	FormatStdin        bool          `yaml:"format-stdin" json:"formatStdin"`
+	SymbolCommand      string        `yaml:"symbol-command" json:"symbolCommand"`
+	SymbolStdin        bool          `yaml:"symbol-stdin" json:"symbolStdin"`
+	SymbolFormats      []string      `yaml:"symbol-formats" json:"symbolFormats"`
+	CompletionCommand  string        `yaml:"completion-command" json:"completionCommand"`
+	CompletionStdin    bool          `yaml:"completion-stdin" json:"completionStdin"`
+	HoverCommand       string        `yaml:"hover-command" json:"hoverCommand"`
+	HoverStdin         bool          `yaml:"hover-stdin" json:"hoverStdin"`
+	HoverType          string        `yaml:"hover-type" json:"hoverType"`
+	Env                []string      `yaml:"env" json:"env"`
+	RootMarkers        []string      `yaml:"root-markers" json:"rootMarkers"`
+	Commands           []Command     `yaml:"commands" json:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -440,8 +442,17 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			if entry.Col == 0 {
 				entry.Col = 1
 			} else {
+				// if the linter returns 0 based columns we get a probleme here without the offset
+				if config.LintOffsetColumns > 0 {
+					entry.Col = entry.Col + config.LintOffsetColumns
+				}
 				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
+			// if the linter has more than EWIN we use a mapping
+			if len(config.LintCategoryMap) > 0 {
+				entry.Type = config.LintCategoryMap[entry.Type]
+			}
+
 			severity := 1
 			switch {
 			case entry.Type == 'E' || entry.Type == 'e':

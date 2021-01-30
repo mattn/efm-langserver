@@ -164,14 +164,8 @@ func TestLintOffsetColumns(t *testing.T) {
 	if len(d) != 1 {
 		t.Fatal("diagnostics should be only one")
 	}
-	if d[0].Range.Start.Line != 2 {
-		t.Fatalf("range.start.line should be %v but got: %v", 1, d[0].Range.Start.Line)
-	}
-	if d[0].Range.Start.Character != 0 {
-		t.Fatalf("range.start.character should be %v but got: %v", 0, d[0].Range.Start.Character)
-	}
-	if d[0].Range.Start.Character != 'b' {
-		t.Fatalf("range.start.character should be %v but got: %v", 'b', d[0].Range.Start.Character)
+	if d[0].Range.Start.Character != 1 {
+		t.Fatalf("range.start.character should be %v but got: %v", 1, d[0].Range.Start.Character)
 	}
 }
 
@@ -183,6 +177,8 @@ func TestLintCategoryMap(t *testing.T) {
 	mapping := make(map[rune]rune)
 	mapping['R'] = 'I' // pylint refactoring to info
 
+	formats := []string{"%f:%l:%c:%t:%m"}
+
 	h := &langHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
 		rootPath: base,
@@ -192,6 +188,7 @@ func TestLintCategoryMap(t *testing.T) {
 					LintCommand:        `echo ` + file + `:2:1:R:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
+					LintFormats:        formats,
 					LintCategoryMap:    mapping,
 				},
 			},

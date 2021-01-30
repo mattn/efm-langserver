@@ -439,15 +439,19 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 				entry.Filename = filepath.ToSlash(entry.Filename)
 			}
 			word := ""
+
+			// if the linter returns 0 based columns we get a probleme here without the offset
+			// plus, as we subtract one later we add one extra to the offse// plus, as we subtract one later we add one extra to the offsett
+			if config.LintOffsetColumns > 0 {
+				entry.Col = entry.Col + config.LintOffsetColumns + 1
+			}
+
 			if entry.Col == 0 {
 				entry.Col = 1
 			} else {
-				// if the linter returns 0 based columns we get a probleme here without the offset
-				if config.LintOffsetColumns > 0 {
-					entry.Col = entry.Col + config.LintOffsetColumns
-				}
 				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
+
 			// if the linter has more than EWIN we use a mapping
 			if len(config.LintCategoryMap) > 0 {
 				entry.Type = config.LintCategoryMap[entry.Type]

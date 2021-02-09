@@ -55,7 +55,7 @@ type Language struct {
 	LintOffsetColumns  int           `yaml:"lint-offset-columns" json:"LintOffsetColumns"`
 	LintCommand        string        `yaml:"lint-command" json:"lintCommand"`
 	LintIgnoreExitCode bool          `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintCategoryMap    map[rune]rune `yaml:"lint-map-categories json:"LintCategoryMap"`
+	LintCategoryMap    map[string]string `yaml:"lint-category-map json:"LintCategoryMap"`
 	LintSource         string        `yaml:"lint-source" json:"lintSource"`
 	FormatCommand      string        `yaml:"format-command" json:"formatCommand"`
 	FormatStdin        bool          `yaml:"format-stdin" json:"formatStdin"`
@@ -454,7 +454,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 
 			// if the linter has more than EWIN we use a mapping
 			if len(config.LintCategoryMap) > 0 {
-				entry.Type = config.LintCategoryMap[entry.Type]
+				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
 			}
 
 			severity := 1

@@ -219,7 +219,7 @@ func TestLintCategoryMapNonRune(t *testing.T) {
 	uri := toURI(file)
 
 	mapping := make(map[string]string)
-	mapping["Refactoring"] = "Info" // pylint refactoring to info
+	mapping["Refactoring"] = "Nonexisting" // pylint refactoring to Nonexisting
 
 	formats := []string{"%f:%l:%c:%t:%m"}
 

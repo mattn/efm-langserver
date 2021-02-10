@@ -454,7 +454,13 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 
 			// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
 			if len(config.LintCategoryMap) > 0 {
-				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
+				runeMap := []rune(config.LintCategoryMap[string(entry.Type)])
+				entry.Type = runeMap[0]
+				// If the map of linter categories to LSP Types is like Refactoring: Info instead of Refactoring: I
+				// we default to I instead of the first character
+				if len(runeMap) > 1 {
+					entry.Type = 'I'
+				}
 			}
 
 			severity := 1

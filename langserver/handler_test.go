@@ -174,8 +174,8 @@ func TestLintCategoryMap(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	mapping := make(map[rune]rune)
-	mapping['R'] = 'I' // pylint refactoring to info
+	mapping := make(map[string]string)
+	mapping["R"] = "I" // pylint refactoring to info
 
 	formats := []string{"%f:%l:%c:%t:%m"}
 
@@ -186,6 +186,50 @@ func TestLintCategoryMap(t *testing.T) {
 			wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:1:R:No it is normal!`,
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+					LintFormats:        formats,
+					LintCategoryMap:    mapping,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: &File{
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	d, err := h.lint(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d) != 1 {
+		t.Fatal("diagnostics should be only one")
+	}
+	if d[0].Severity != 3 {
+		t.Fatalf("Severity should be %v but is: %v", 3, d[0].Severity)
+	}
+}
+
+func TestLintCategoryMapNonRune(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	mapping := make(map[string]string)
+	mapping["Refactoring"] = "Info" // pylint refactoring to info
+
+	formats := []string{"%f:%l:%c:%t:%m"}
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			wildcard: {
+				{
+					LintCommand:        `echo ` + file + `:2:1:Refactoring:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
 					LintFormats:        formats,

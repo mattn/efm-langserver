@@ -49,27 +49,27 @@ type Config1 struct {
 
 // Language is
 type Language struct {
-	LintFormats        []string      `yaml:"lint-formats" json:"lintFormats"`
-	LintStdin          bool          `yaml:"lint-stdin" json:"lintStdin"`
-	LintOffset         int           `yaml:"lint-offset" json:"lintOffset"`
-	LintOffsetColumns  int           `yaml:"lint-offset-columns" json:"LintOffsetColumns"`
-	LintCommand        string        `yaml:"lint-command" json:"lintCommand"`
-	LintIgnoreExitCode bool          `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintCategoryMap    map[string]string `yaml:"lint-category-map json:"LintCategoryMap"`
-	LintSource         string        `yaml:"lint-source" json:"lintSource"`
-	FormatCommand      string        `yaml:"format-command" json:"formatCommand"`
-	FormatStdin        bool          `yaml:"format-stdin" json:"formatStdin"`
-	SymbolCommand      string        `yaml:"symbol-command" json:"symbolCommand"`
-	SymbolStdin        bool          `yaml:"symbol-stdin" json:"symbolStdin"`
-	SymbolFormats      []string      `yaml:"symbol-formats" json:"symbolFormats"`
-	CompletionCommand  string        `yaml:"completion-command" json:"completionCommand"`
-	CompletionStdin    bool          `yaml:"completion-stdin" json:"completionStdin"`
-	HoverCommand       string        `yaml:"hover-command" json:"hoverCommand"`
-	HoverStdin         bool          `yaml:"hover-stdin" json:"hoverStdin"`
-	HoverType          string        `yaml:"hover-type" json:"hoverType"`
-	Env                []string      `yaml:"env" json:"env"`
-	RootMarkers        []string      `yaml:"root-markers" json:"rootMarkers"`
-	Commands           []Command     `yaml:"commands" json:"commands"`
+	LintFormats        []string          `yaml:"lint-formats" json:"lintFormats"`
+	LintStdin          bool              `yaml:"lint-stdin" json:"lintStdin"`
+	LintOffset         int               `yaml:"lint-offset" json:"lintOffset"`
+	LintOffsetColumns  int               `yaml:"lint-offset-columns" json:"LintOffsetColumns"`
+	LintCommand        string            `yaml:"lint-command" json:"lintCommand"`
+	LintIgnoreExitCode bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
+	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"LintCategoryMap"`
+	LintSource         string            `yaml:"lint-source" json:"lintSource"`
+	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
+	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
+	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
+	SymbolStdin        bool              `yaml:"symbol-stdin" json:"symbolStdin"`
+	SymbolFormats      []string          `yaml:"symbol-formats" json:"symbolFormats"`
+	CompletionCommand  string            `yaml:"completion-command" json:"completionCommand"`
+	CompletionStdin    bool              `yaml:"completion-stdin" json:"completionStdin"`
+	HoverCommand       string            `yaml:"hover-command" json:"hoverCommand"`
+	HoverStdin         bool              `yaml:"hover-stdin" json:"hoverStdin"`
+	HoverType          string            `yaml:"hover-type" json:"hoverType"`
+	Env                []string          `yaml:"env" json:"env"`
+	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
+	Commands           []Command         `yaml:"commands" json:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -441,7 +441,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			word := ""
 
 			// if the linter returns 0 based columns we get a probleme here without the offset
-			// plus, as we subtract one later we add one extra to the offse// plus, as we subtract one later we add one extra to the offsett
+			// as we subtract one later we add one extra to the offset
 			if config.LintOffsetColumns > 0 {
 				entry.Col = entry.Col + config.LintOffsetColumns + 1
 			}
@@ -452,7 +452,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
 
-			// if the linter has more than EWIN we use a mapping
+			// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
 			if len(config.LintCategoryMap) > 0 {
 				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
 			}

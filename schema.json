@@ -134,10 +134,7 @@
       "description": "definition of tools",
       "patternProperties": {
         "^([a-z0-9_-]+)+$": {
-          "items": {
-            "$ref": "#/definitions/tool-definition"
-          },
-          "type": "object"
+          "$ref": "#/definitions/tool-definition"
         }
       },
       "type": "object"

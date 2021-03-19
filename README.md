@@ -203,9 +203,9 @@ tools:
   mix_credo: &mix_credo
     lint-command: "mix credo suggest --format=flycheck --read-from-stdin ${INPUT}"
     lint-stdin: true
-    lint-ignore-exit-code: true
     lint-formats:
-      - '%f:%l:%c: %m'
+      - '%f:%l:%c: %t: %m'
+      - '%f:%l: %t: %m'
     root-markers:
       - mix.lock
       - mix.exs

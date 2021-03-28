@@ -161,9 +161,13 @@ tools:
     format-stdin: true
 
   javascript-eslint: &javascript-eslint
-    lint-command: 'eslint -f unix --stdin'
+    lint-command: 'eslint -f visualstudio --stdin --stdin-filename ${INPUT}'
     lint-ignore-exit-code: true
     lint-stdin: true
+    lint-formats:
+      - "%f(%l,%c): %tarning %m"
+      - "%f(%l,%c): %rror %m"
+
 
   php-phpstan: &php-phpstan
     lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'

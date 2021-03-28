@@ -71,6 +71,14 @@
           "description": "lint command",
           "type": "string"
         },
+        "lint-offset-columns": {
+          "description": "offset value to skip columns",
+          "type": "number"
+        },
+        "lint-map-categories": {
+          "description": "Map linter categories to LSP categories",
+          "type": "object"
+        },
         "lint-formats": {
           "description": "list of lint format",
           "items": {

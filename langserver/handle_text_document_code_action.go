@@ -130,7 +130,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			return nil, err
 		}
 		if h.loglevel >= 1 {
-			h.logger.Println(cmd.String()+":", string(b))
+			h.logger.Print(strings.Join(cmd.Args, " ")+":", string(b))
 		}
 		output = string(b)
 	} else {

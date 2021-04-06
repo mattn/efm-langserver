@@ -393,10 +393,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		}
 		b, err := cmd.CombinedOutput()
 		if err != nil {
-			exitErr, ok := err.(*exec.ExitError)
-			// When the context is canceled, the process is killed,
-			// and the exit code is -1
-			if ok && exitErr.ExitCode() < 0 {
+			if succeeded(err) {
 				return nil, nil
 			}
 		}

@@ -7,6 +7,7 @@ import (
 )
 
 func (h *langHandler) handleShutdown(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+    h.lintTimer.Stop()
 	close(h.request)
 	return nil, conn.Close()
 }

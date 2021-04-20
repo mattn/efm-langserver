@@ -96,10 +96,10 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 	var output string
 	if !strings.HasPrefix(command.Command, ":") {
 		if runtime.GOOS == "windows" {
-			args = []string{"/c", replaceCommandInputFilename(command.Command, fname)}
+			args = []string{"/c", replaceCommandInputFilename(command.Command, fname, h.rootPath)}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
-				tmp := replaceCommandInputFilename(arg, fname)
+				tmp := replaceCommandInputFilename(arg, fname, h.rootPath)
 				if tmp != arg && fname == "" {
 					h.logger.Println("invalid uri")
 					return nil, fmt.Errorf("invalid uri: %v", uri)
@@ -109,10 +109,10 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			}
 			cmd = exec.Command("cmd", args...)
 		} else {
-			args = []string{"-c", replaceCommandInputFilename(command.Command, fname)}
+			args = []string{"-c", replaceCommandInputFilename(command.Command, fname, h.rootPath)}
 			for _, v := range command.Arguments {
 				arg := fmt.Sprint(v)
-				tmp := replaceCommandInputFilename(arg, fname)
+				tmp := replaceCommandInputFilename(arg, fname, h.rootPath)
 				if tmp != arg && fname == "" {
 					h.logger.Println("invalid uri")
 					return nil, fmt.Errorf("invalid uri: %v", uri)

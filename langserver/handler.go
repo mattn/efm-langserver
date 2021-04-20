@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -589,7 +590,10 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 }
 
 func replaceCommandInputFilename(command string, fname string) string {
+	ext := path.Ext(fname)
+	ext = strings.TrimPrefix(ext, ".")
 	command = strings.Replace(command, "${INPUT}", fname, -1)
+	command = strings.Replace(command, "${FILEEXT}", ext, -1)
 	command = strings.Replace(command, "${FILENAME}", filepath.FromSlash(fname), -1)
 	return command
 }

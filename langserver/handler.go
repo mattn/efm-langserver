@@ -368,7 +368,8 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		if !config.LintStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = replaceCommandInputFilename(command, fname)
+		rootPath := h.findRootPath(fname, config)
+		command = replaceCommandInputFilename(command, fname, rootPath)
 
 		formats := config.LintFormats
 		if len(formats) == 0 {
@@ -386,7 +387,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		} else {
 			cmd = exec.CommandContext(ctx, "sh", "-c", command)
 		}
-		cmd.Dir = h.findRootPath(fname, config)
+		cmd.Dir = rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.LintStdin {
 			cmd.Stdin = strings.NewReader(f.Text)
@@ -588,8 +589,9 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
 }
 
-func replaceCommandInputFilename(command string, fname string) string {
+func replaceCommandInputFilename(command string, fname string, rootPath string) string {
 	command = strings.Replace(command, "${INPUT}", fname, -1)
 	command = strings.Replace(command, "${FILENAME}", filepath.FromSlash(fname), -1)
+	command = strings.Replace(command, "${ROOT}", rootPath, -1)
 	return command
 }

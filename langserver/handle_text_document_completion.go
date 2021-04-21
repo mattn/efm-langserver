@@ -78,7 +78,7 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 		if !config.CompletionStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = replaceCommandInputFilename(command, fname)
+		command = replaceCommandInputFilename(command, fname, h.rootPath)
 
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {

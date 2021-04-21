@@ -78,7 +78,7 @@ Configs:
 		if !config.FormatStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = replaceCommandInputFilename(command, fname)
+		command = replaceCommandInputFilename(command, fname, h.rootPath)
 
 		for placeholder, value := range options {
 			re, err := regexp.Compile(fmt.Sprintf(`\${([^:|^}]+):%s}`, placeholder))

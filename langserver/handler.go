@@ -359,7 +359,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 	}
 
 	diagnostics := []Diagnostic{}
-	for _, config := range configs {
+	for i, config := range configs {
 		if config.LintCommand == "" {
 			continue
 		}
@@ -412,7 +412,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		}
 		var source *string
 		if config.LintSource != "" {
-			source = &config.LintSource
+			source = &configs[i].LintSource
 		}
 		scanner := efms.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {

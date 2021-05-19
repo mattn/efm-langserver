@@ -60,7 +60,9 @@ func (h *langHandler) formatting(uri DocumentURI, options FormattingOptions) ([]
 	}
 
 	if len(configs) == 0 {
-		h.logger.Printf("format for LanguageID not supported: %v", f.LanguageID)
+		if h.loglevel >= 1 {
+			h.logger.Printf("format for LanguageID not supported: %v", f.LanguageID)
+		}
 		return nil, nil
 	}
 

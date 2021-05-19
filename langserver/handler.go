@@ -354,7 +354,9 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 	}
 
 	if len(configs) == 0 {
-		h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
+		if h.loglevel >= 1 {
+			h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
+		}
 		return []Diagnostic{}, nil
 	}
 

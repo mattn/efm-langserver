@@ -61,7 +61,9 @@ func (h *langHandler) completion(uri DocumentURI, params *CompletionParams) ([]C
 	}
 
 	if len(configs) == 0 {
-		h.logger.Printf("completion for LanguageID not supported: %v", f.LanguageID)
+		if h.loglevel >= 1 {
+			h.logger.Printf("completion for LanguageID not supported: %v", f.LanguageID)
+		}
 		return nil, nil
 	}
 

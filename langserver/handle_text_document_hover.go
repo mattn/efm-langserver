@@ -92,7 +92,9 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 	}
 
 	if len(configs) == 0 {
-		h.logger.Printf("hover for LanguageID not supported: %v", f.LanguageID)
+		if h.loglevel >= 1 {
+			h.logger.Printf("hover for LanguageID not supported: %v", f.LanguageID)
+		}
 		return nil, nil
 	}
 

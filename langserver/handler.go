@@ -417,10 +417,6 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			source = &configs[i].LintSource
 		}
 
-		severity := 1
-		if config.LintSeverity != 0 {
-			severity = config.LintSeverity
-		}
 		scanner := efms.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {
 			entry := scanner.Entry()
@@ -460,6 +456,10 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
 			if len(config.LintCategoryMap) > 0 {
 				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
+			}
+			severity := 1
+			if config.LintSeverity != 0 {
+				severity = config.LintSeverity
 			}
 			switch {
 			case entry.Type == 'E' || entry.Type == 'e':

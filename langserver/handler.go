@@ -57,6 +57,7 @@ type Language struct {
 	LintIgnoreExitCode bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
 	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"LintCategoryMap"`
 	LintSource         string            `yaml:"lint-source" json:"lintSource"`
+	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
 	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
 	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
@@ -78,7 +79,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		config.Logger = log.New(os.Stderr, "", log.LstdFlags)
 	}
 
-	var handler = &langHandler{
+	handler := &langHandler{
 		loglevel:          config.LogLevel,
 		logger:            config.Logger,
 		commands:          *config.Commands,
@@ -319,7 +320,6 @@ func isFilename(s string) bool {
 		}
 	}
 	return false
-
 }
 
 func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, error) {
@@ -416,6 +416,11 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		if config.LintSource != "" {
 			source = &configs[i].LintSource
 		}
+
+		severity := 1
+		if config.LintSeverity != 0 {
+			severity = config.LintSeverity
+		}
 		scanner := efms.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {
 			entry := scanner.Entry()
@@ -456,8 +461,6 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			if len(config.LintCategoryMap) > 0 {
 				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
 			}
-
-			severity := 1
 			switch {
 			case entry.Type == 'E' || entry.Type == 'e':
 				severity = 1

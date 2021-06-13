@@ -52,10 +52,10 @@ type Language struct {
 	LintFormats        []string          `yaml:"lint-formats" json:"lintFormats"`
 	LintStdin          bool              `yaml:"lint-stdin" json:"lintStdin"`
 	LintOffset         int               `yaml:"lint-offset" json:"lintOffset"`
-	LintOffsetColumns  int               `yaml:"lint-offset-columns" json:"LintOffsetColumns"`
+	LintOffsetColumns  int               `yaml:"lint-offset-columns" json:"lintOffsetColumns"`
 	LintCommand        string            `yaml:"lint-command" json:"lintCommand"`
 	LintIgnoreExitCode bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"LintCategoryMap"`
+	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"lintCategoryMap"`
 	LintSource         string            `yaml:"lint-source" json:"lintSource"`
 	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
@@ -441,14 +441,15 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			}
 			word := ""
 
-			// if the linter returns 0 based columns we get a probleme here without the offset
-			// as we subtract one later we add one extra to the offset
-			if config.LintOffsetColumns > 0 {
-				entry.Col = entry.Col + config.LintOffsetColumns + 1
+			// entry.Col is expected to be one based, if the linter returns zero based we
+			// have the ability to add an offset here.
+			// We only add the offset if the linter reports entry.Col > 0 because 0 means the whole line
+			if config.LintOffsetColumns > 0 && entry.Col > 0 {
+				entry.Col = entry.Col + config.LintOffsetColumns
 			}
 
 			if entry.Col == 0 {
-				entry.Col = 1
+				entry.Col = 1 // entry.Col == 0 indicates the whole line without column, set to 1 because it is subtracted later
 			} else {
 				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}

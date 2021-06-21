@@ -11,11 +11,16 @@ import (
 	"regexp"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleTextDocumentFormatting(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleTextDocumentFormatting(
+	ctx context.Context,
+	conn *jsonrpc2.Conn,
+	req *jsonrpc2.Request,
+) (result interface{}, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -25,7 +30,21 @@ func (h *langHandler) handleTextDocumentFormatting(ctx context.Context, conn *js
 		return nil, err
 	}
 
-	return h.formatting(params.TextDocument.URI, params.Options)
+	return h.formatRequest(params.TextDocument.URI, params.Options)
+}
+
+func (h *langHandler) formatRequest(uri DocumentURI, opt FormattingOptions) ([]TextEdit, error) {
+	if h.formatTimer != nil {
+		if h.loglevel >= 4 {
+			h.logger.Printf("format debounced: %v", h.formatDebounce)
+		}
+		return []TextEdit{}, nil
+	}
+
+	h.formatTimer = time.AfterFunc(h.formatDebounce, func() {
+		h.formatTimer = nil
+	})
+	return h.formatting(uri, opt)
 }
 
 func (h *langHandler) formatting(uri DocumentURI, options FormattingOptions) ([]TextEdit, error) {

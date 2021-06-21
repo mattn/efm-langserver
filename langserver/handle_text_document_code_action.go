@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -143,7 +144,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			h.configs = *config.Languages
 			h.rootMarkers = *config.RootMarkers
 			h.loglevel = config.LogLevel
-			h.lintDebounce = config.LintDebounce
+			h.lintDebounce = time.Duration(config.LintDebounce)
 		}
 		h.logMessage(LogInfo, "Reloaded configuration file")
 		output = "OK"

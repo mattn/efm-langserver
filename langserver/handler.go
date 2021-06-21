@@ -24,13 +24,14 @@ import (
 
 // Config is
 type Config struct {
-	Version      int                    `yaml:"version"`
-	LogFile      string                 `yaml:"log-file"`
-	LogLevel     int                    `yaml:"log-level" json:"logLevel"`
-	Commands     *[]Command             `yaml:"commands" json:"commands"`
-	Languages    *map[string][]Language `yaml:"languages" json:"languages"`
-	RootMarkers  *[]string              `yaml:"root-markers" json:"rootMarkers"`
-	LintDebounce time.Duration          `yaml:"lint-debounce" json:"lintDebounce"`
+	Version        int                    `yaml:"version"`
+	LogFile        string                 `yaml:"log-file"`
+	LogLevel       int                    `yaml:"log-level"       json:"logLevel"`
+	Commands       *[]Command             `yaml:"commands"        json:"commands"`
+	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
+	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
+	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
+	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
 
 	// Toggle support for "go to definition" requests.
 	ProvideDefinition bool `yaml:"provide-definition"`
@@ -49,28 +50,28 @@ type Config1 struct {
 
 // Language is
 type Language struct {
-	LintFormats        []string          `yaml:"lint-formats" json:"lintFormats"`
-	LintStdin          bool              `yaml:"lint-stdin" json:"lintStdin"`
-	LintOffset         int               `yaml:"lint-offset" json:"lintOffset"`
-	LintOffsetColumns  int               `yaml:"lint-offset-columns" json:"LintOffsetColumns"`
-	LintCommand        string            `yaml:"lint-command" json:"lintCommand"`
+	LintFormats        []string          `yaml:"lint-formats"          json:"lintFormats"`
+	LintStdin          bool              `yaml:"lint-stdin"            json:"lintStdin"`
+	LintOffset         int               `yaml:"lint-offset"           json:"lintOffset"`
+	LintOffsetColumns  int               `yaml:"lint-offset-columns"   json:"LintOffsetColumns"`
+	LintCommand        string            `yaml:"lint-command"          json:"lintCommand"`
 	LintIgnoreExitCode bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"LintCategoryMap"`
-	LintSource         string            `yaml:"lint-source" json:"lintSource"`
-	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
-	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
-	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
-	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
-	SymbolStdin        bool              `yaml:"symbol-stdin" json:"symbolStdin"`
-	SymbolFormats      []string          `yaml:"symbol-formats" json:"symbolFormats"`
-	CompletionCommand  string            `yaml:"completion-command" json:"completionCommand"`
-	CompletionStdin    bool              `yaml:"completion-stdin" json:"completionStdin"`
-	HoverCommand       string            `yaml:"hover-command" json:"hoverCommand"`
-	HoverStdin         bool              `yaml:"hover-stdin" json:"hoverStdin"`
-	HoverType          string            `yaml:"hover-type" json:"hoverType"`
-	Env                []string          `yaml:"env" json:"env"`
-	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
-	Commands           []Command         `yaml:"commands" json:"commands"`
+	LintCategoryMap    map[string]string `yaml:"lint-category-map"     json:"LintCategoryMap"`
+	LintSource         string            `yaml:"lint-source"           json:"lintSource"`
+	LintSeverity       int               `yaml:"lint-severity"         json:"lintSeverity"`
+	FormatCommand      string            `yaml:"format-command"        json:"formatCommand"`
+	FormatStdin        bool              `yaml:"format-stdin"          json:"formatStdin"`
+	SymbolCommand      string            `yaml:"symbol-command"        json:"symbolCommand"`
+	SymbolStdin        bool              `yaml:"symbol-stdin"          json:"symbolStdin"`
+	SymbolFormats      []string          `yaml:"symbol-formats"        json:"symbolFormats"`
+	CompletionCommand  string            `yaml:"completion-command"    json:"completionCommand"`
+	CompletionStdin    bool              `yaml:"completion-stdin"      json:"completionStdin"`
+	HoverCommand       string            `yaml:"hover-command"         json:"hoverCommand"`
+	HoverStdin         bool              `yaml:"hover-stdin"           json:"hoverStdin"`
+	HoverType          string            `yaml:"hover-type"            json:"hoverType"`
+	Env                []string          `yaml:"env"                   json:"env"`
+	RootMarkers        []string          `yaml:"root-markers"          json:"rootMarkers"`
+	Commands           []Command         `yaml:"commands"              json:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -87,11 +88,14 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		provideDefinition: config.ProvideDefinition,
 		files:             make(map[DocumentURI]*File),
 		request:           make(chan DocumentURI),
-		lintDebounce:      config.LintDebounce,
+		lintDebounce:      time.Duration(config.LintDebounce),
 		lintTimer:         nil,
-		conn:              nil,
-		filename:          config.Filename,
-		rootMarkers:       *config.RootMarkers,
+
+		formatDebounce: time.Duration(config.FormatDebounce),
+		formatTimer:    nil,
+		conn:           nil,
+		filename:       config.Filename,
+		rootMarkers:    *config.RootMarkers,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -107,6 +111,8 @@ type langHandler struct {
 	request           chan DocumentURI
 	lintDebounce      time.Duration
 	lintTimer         *time.Timer
+	formatDebounce    time.Duration
+	formatTimer       *time.Timer
 	conn              *jsonrpc2.Conn
 	rootPath          string
 	filename          string

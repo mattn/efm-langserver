@@ -3,6 +3,7 @@ package langserver
 import (
 	"context"
 	"encoding/json"
+	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -34,7 +35,10 @@ func (h *langHandler) didChangeConfiguration(config *Config) (interface{}, error
 		h.loglevel = config.LogLevel
 	}
 	if config.LintDebounce > 0 {
-		h.lintDebounce = config.LintDebounce
+		h.lintDebounce = time.Duration(config.LintDebounce)
+	}
+	if config.FormatDebounce > 0 {
+		h.formatDebounce = time.Duration(config.FormatDebounce)
 	}
 
 	return nil, nil

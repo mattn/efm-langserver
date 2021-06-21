@@ -6,12 +6,15 @@ import (
 	"time"
 )
 
+// Druation Wrapper for time.Duration
 type Duration time.Duration
 
+// MarshalJSON method  mash to json
 func (d Duration) MarshalJSON() ([]byte, error) {
 	return json.Marshal(time.Duration(d).String())
 }
 
+// UnmarshalJSON method Unmash duration from string or decimal
 func (d *Duration) UnmarshalJSON(b []byte) error {
 	var v interface{}
 	if err := json.Unmarshal(b, &v); err != nil {

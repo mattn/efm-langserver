@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Druation Wrapper for time.Duration
+// Duration time.Duration wrapper
 type Duration time.Duration
 
 // MarshalJSON method  mash to json

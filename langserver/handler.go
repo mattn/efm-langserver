@@ -124,7 +124,7 @@ type File struct {
 // WordAt is
 func (f *File) WordAt(pos Position) string {
 	lines := strings.Split(f.Text, "\n")
-	if pos.Line < 0 || pos.Line > len(lines) {
+	if pos.Line < 0 || pos.Line >= len(lines) {
 		return ""
 	}
 	chars := utf16.Encode([]rune(lines[pos.Line]))

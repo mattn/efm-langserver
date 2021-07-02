@@ -131,7 +131,9 @@ func TestLintFileMatchedForce(t *testing.T) {
 	}
 }
 
-func TestLintOffsetColumns(t *testing.T) {
+// column 0 remains unchanged, regardles of the configured offset
+// column 0 indicates a whole line (although for 0-based column linters we can not distinguish between word starting at 0 and the whole line)
+func TestLintOffsetColumnsZero(t *testing.T) {
 	base, _ := os.Getwd()
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
@@ -142,7 +144,89 @@ func TestLintOffsetColumns(t *testing.T) {
 		configs: map[string][]Language{
 			wildcard: {
 				{
-					LintCommand:        `echo ` + file + `:2:1:No it is normal!`,
+					LintCommand:        `echo ` + file + `:2:0:msg`,
+					LintFormats:        []string{"%f:%l:%c:%m"},
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+					LintOffsetColumns:  1,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: &File{
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	d, err := h.lint(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d) != 1 {
+		t.Fatal("diagnostics should be only one")
+	}
+	if d[0].Range.Start.Character != 0 {
+		t.Fatalf("range.start.character should be %v but got: %v", 0, d[0].Range.Start.Character)
+	}
+}
+
+// without column offset, 1-based columns are assumed, which means that we should get 0 for column 1
+// as LSP assumes 0-based columns
+func TestLintOffsetColumnsNoOffset(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			wildcard: {
+				{
+					LintCommand:        `echo ` + file + `:2:1:msg`,
+					LintFormats:        []string{"%f:%l:%c:%m"},
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: &File{
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	d, err := h.lint(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d) != 1 {
+		t.Fatal("diagnostics should be only one")
+	}
+	if d[0].Range.Start.Character != 0 {
+		t.Fatalf("range.start.character should be %v but got: %v", 0, d[0].Range.Start.Character)
+	}
+}
+
+// for column 1 with offset we should get column 1 back
+// without the offset efm would subtract 1 as it expects 1 based columns
+func TestLintOffsetColumnsNonZero(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			wildcard: {
+				{
+					LintCommand:        `echo ` + file + `:2:1:msg`,
+					LintFormats:        []string{"%f:%l:%c:%m"},
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
 					LintOffsetColumns:  1,

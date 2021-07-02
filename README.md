@@ -143,6 +143,20 @@ tools:
     format-command: 'isort --quiet -'
     format-stdin: true
 
+  python-pylint: &python-pylint
+    lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}'
+    lint-stdin: false
+    lint-formats:
+      - '%f:%l:%c:%t:%m'
+    lint-offset-columns: 1
+    lint-category-map:
+      I: H
+      R: I
+      C: I
+      W: W
+      E: E
+      F: E
+
   dockerfile-hadolint: &dockerfile-hadolint
     lint-command: 'hadolint'
     lint-formats:

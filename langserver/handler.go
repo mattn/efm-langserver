@@ -24,13 +24,14 @@ import (
 
 // Config is
 type Config struct {
-	Version      int                    `yaml:"version"`
-	LogFile      string                 `yaml:"log-file"`
-	LogLevel     int                    `yaml:"log-level" json:"logLevel"`
-	Commands     *[]Command             `yaml:"commands" json:"commands"`
-	Languages    *map[string][]Language `yaml:"languages" json:"languages"`
-	RootMarkers  *[]string              `yaml:"root-markers" json:"rootMarkers"`
-	LintDebounce time.Duration          `yaml:"lint-debounce" json:"lintDebounce"`
+	Version        int                    `yaml:"version"`
+	LogFile        string                 `yaml:"log-file"`
+	LogLevel       int                    `yaml:"log-level"       json:"logLevel"`
+	Commands       *[]Command             `yaml:"commands"        json:"commands"`
+	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
+	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
+	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
+	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
 
 	// Toggle support for "go to definition" requests.
 	ProvideDefinition bool `yaml:"provide-definition"`
@@ -87,11 +88,14 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		provideDefinition: config.ProvideDefinition,
 		files:             make(map[DocumentURI]*File),
 		request:           make(chan DocumentURI),
-		lintDebounce:      config.LintDebounce,
+		lintDebounce:      time.Duration(config.LintDebounce),
 		lintTimer:         nil,
-		conn:              nil,
-		filename:          config.Filename,
-		rootMarkers:       *config.RootMarkers,
+
+		formatDebounce: time.Duration(config.FormatDebounce),
+		formatTimer:    nil,
+		conn:           nil,
+		filename:       config.Filename,
+		rootMarkers:    *config.RootMarkers,
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -107,6 +111,8 @@ type langHandler struct {
 	request           chan DocumentURI
 	lintDebounce      time.Duration
 	lintTimer         *time.Timer
+	formatDebounce    time.Duration
+	formatTimer       *time.Timer
 	conn              *jsonrpc2.Conn
 	rootPath          string
 	filename          string

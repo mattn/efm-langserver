@@ -35,3 +35,18 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 		return errors.New("invalid duration")
 	}
 }
+
+func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+	var s string
+	if err := unmarshal(&s); err != nil {
+		return err
+	}
+
+	duration, err := time.ParseDuration(s)
+	if err != nil {
+		return err
+	}
+
+	*d = Duration(duration)
+	return nil
+}

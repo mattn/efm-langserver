@@ -36,6 +36,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 	}
 }
 
+// UnmarshalYAML method Unmash duration from string or decimal
 func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {

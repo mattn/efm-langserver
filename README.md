@@ -65,6 +65,7 @@ Below is example for `config.yaml` for Windows.
 version: 2
 root-markers:
   - .git/
+lint-debounce: 1s
 commands:
   - command: notepad
     arguments:
@@ -73,6 +74,7 @@ commands:
 
 tools:
   eruby-erb: &eruby-erb
+    lint-debounce: 2s
     lint-command: 'erb -x -T - | ruby -c'
     lint-stdin: true
     lint-offset: 1

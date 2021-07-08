@@ -35,6 +35,10 @@
       "additionalProperties": false,
       "description": "definition of the tool",
       "properties": {
+        "prefix": {
+          "description": "prefix",
+          "type": "string"
+        },
         "format-command": {
           "description": "format command",
           "type": "string"

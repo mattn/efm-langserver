@@ -50,6 +50,7 @@ type Config1 struct {
 
 // Language is
 type Language struct {
+	Prefix             string            `yaml:"prefix" json:"prefix"`
 	LintFormats        []string          `yaml:"lint-formats" json:"lintFormats"`
 	LintStdin          bool              `yaml:"lint-stdin" json:"lintStdin"`
 	LintOffset         int               `yaml:"lint-offset" json:"lintOffset"`
@@ -423,6 +424,11 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			source = &configs[i].LintSource
 		}
 
+		var prefix string
+		if config.Prefix != "" {
+			prefix = fmt.Sprintf("[%s] ", config.Prefix)
+		}
+
 		scanner := efms.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {
 			entry := scanner.Entry()
@@ -484,7 +490,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len([]rune(word))},
 				},
 				Code:     itoaPtrIfNotZero(entry.Nr),
-				Message:  entry.Text,
+				Message:  prefix + entry.Text,
 				Severity: severity,
 				Source:   source,
 			})

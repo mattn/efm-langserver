@@ -35,6 +35,10 @@
       "additionalProperties": false,
       "description": "definition of the tool",
       "properties": {
+        "prefix": {
+          "description": "prefix string to be able to see where an error comming from",
+          "type": "string"
+        },
         "format-command": {
           "description": "format command",
           "type": "string"

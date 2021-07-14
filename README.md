@@ -78,6 +78,7 @@ tools:
     lint-command: 'erb -x -T - | ruby -c'
     lint-stdin: true
     lint-offset: 1
+    format-stdin: true
     format-command: htmlbeautifier
 
   vim-vint: &vim-vint

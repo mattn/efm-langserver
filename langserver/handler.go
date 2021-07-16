@@ -316,17 +316,12 @@ func (h *langHandler) findRootPath(fname string, lang Language) string {
 }
 
 func isFilename(s string) bool {
-	for _, f := range []string{
-		"stdin",
-		"-",
-		"<text>",
-		"<stdin>",
-	} {
-		if s == f {
-			return true
-		}
+	switch s {
+	case "stdin", "-", "<text>", "<stdin>":
+		return true
+	default:
+		return false
 	}
-	return false
 }
 
 func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, error) {
@@ -470,20 +465,23 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 			if len(config.LintCategoryMap) > 0 {
 				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
 			}
+
 			severity := 1
 			if config.LintSeverity != 0 {
 				severity = config.LintSeverity
 			}
-			switch {
-			case entry.Type == 'E' || entry.Type == 'e':
+
+			switch entry.Type {
+			case 'E', 'e':
 				severity = 1
-			case entry.Type == 'W' || entry.Type == 'w':
+			case 'W', 'w':
 				severity = 2
-			case entry.Type == 'I' || entry.Type == 'i':
+			case 'I', 'i':
 				severity = 3
-			case entry.Type == 'N' || entry.Type == 'n':
+			case 'N', 'n':
 				severity = 4
 			}
+
 			diagnostics = append(diagnostics, Diagnostic{
 				Range: Range{
 					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
@@ -607,12 +605,14 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
 }
 
-func replaceCommandInputFilename(command string, fname string, rootPath string) string {
+func replaceCommandInputFilename(command, fname, rootPath string) string {
 	ext := filepath.Ext(fname)
 	ext = strings.TrimPrefix(ext, ".")
-	command = strings.Replace(command, "${INPUT}", fname, -1)
-	command = strings.Replace(command, "${FILEEXT}", ext, -1)
-	command = strings.Replace(command, "${FILENAME}", filepath.FromSlash(fname), -1)
-	command = strings.Replace(command, "${ROOT}", rootPath, -1)
+
+	command = strings.ReplaceAll(command, "${INPUT}", fname)
+	command = strings.ReplaceAll(command, "${FILEEXT}", ext)
+	command = strings.ReplaceAll(command, "${FILENAME}", filepath.FromSlash(fname))
+	command = strings.ReplaceAll(command, "${ROOT}", rootPath)
+
 	return command
 }

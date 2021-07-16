@@ -107,7 +107,7 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 		if !config.HoverStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = strings.Replace(command, "${INPUT}", word, -1)
+		command = strings.ReplaceAll(command, "${INPUT}", word)
 
 		var cmd *exec.Cmd
 		if runtime.GOOS == "windows" {

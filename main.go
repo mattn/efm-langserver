@@ -16,8 +16,10 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-const name = "efm-langserver"
-const version = "0.0.34"
+const (
+	name    = "efm-langserver"
+	version = "0.0.34"
+)
 
 var revision = "HEAD"
 

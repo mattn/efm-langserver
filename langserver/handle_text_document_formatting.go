@@ -140,7 +140,7 @@ Configs:
 		if h.loglevel >= 1 {
 			h.logger.Println(command+":", string(b))
 		}
-		text = strings.Replace(string(b), "\r", "", -1)
+		text = strings.ReplaceAll(string(b), "\r", "")
 	}
 
 	if formated {

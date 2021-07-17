@@ -24,8 +24,7 @@ type InitializeOptions struct {
 }
 
 // ClientCapabilities is
-type ClientCapabilities struct {
-}
+type ClientCapabilities struct{}
 
 // InitializeResult is
 type InitializeResult struct {
@@ -37,10 +36,11 @@ type MessageType int
 
 // LogError is
 const (
-	LogError   MessageType = 1
-	LogWarning             = 2
-	LogInfo                = 3
-	LogLog                 = 4
+	_ MessageType = iota
+	LogError
+	LogWarning
+	LogInfo
+	LogLog
 )
 
 // TextDocumentSyncKind is
@@ -48,9 +48,9 @@ type TextDocumentSyncKind int
 
 // TDSKNone is
 const (
-	TDSKNone        TextDocumentSyncKind = 0
-	TDSKFull                             = 1
-	TDSKIncremental                      = 2
+	TDSKNone TextDocumentSyncKind = iota
+	TDSKFull
+	TDSKIncremental
 )
 
 // CompletionProvider is
@@ -328,7 +328,7 @@ type MarkupKind string
 // PlainText is
 const (
 	PlainText MarkupKind = "plaintext"
-	Markdown             = "markdown"
+	Markdown  MarkupKind = "markdown"
 )
 
 // MarkupContent is
@@ -356,13 +356,13 @@ type CodeActionKind string
 // Empty is
 const (
 	Empty                 CodeActionKind = ""
-	QuickFix                             = "quickfix"
-	Refactor                             = "refactor"
-	RefactorExtract                      = "refactor.extract"
-	RefactorInline                       = "refactor.inline"
-	RefactorRewrite                      = "refactor.rewrite"
-	Source                               = "source"
-	SourceOrganizeImports                = "source.organizeImports"
+	QuickFix              CodeActionKind = "quickfix"
+	Refactor              CodeActionKind = "refactor"
+	RefactorExtract       CodeActionKind = "refactor.extract"
+	RefactorInline        CodeActionKind = "refactor.inline"
+	RefactorRewrite       CodeActionKind = "refactor.rewrite"
+	Source                CodeActionKind = "source"
+	SourceOrganizeImports CodeActionKind = "source.organizeImports"
 )
 
 // CodeActionContext is

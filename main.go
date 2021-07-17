@@ -18,7 +18,7 @@ import (
 
 const (
 	name    = "efm-langserver"
-	version = "0.0.34"
+	version = "0.0.35"
 )
 
 var revision = "HEAD"

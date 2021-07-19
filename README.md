@@ -371,7 +371,7 @@ Add to eglot-server-programs with major mode you want.
     `(markdown-mode . ("efm-langserver"))))
 ```
 
-### Configuration for [neovim buildin LSP](https://neovim.io/doc/user/lsp.html) with [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
+### Configuration for [neovim builtin LSP](https://neovim.io/doc/user/lsp.html) with [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig)
 
 init.vim
 

@@ -609,10 +609,10 @@ func replaceCommandInputFilename(command, fname, rootPath string) string {
 	ext := filepath.Ext(fname)
 	ext = strings.TrimPrefix(ext, ".")
 
-	command = strings.ReplaceAll(command, "${INPUT}", fname)
-	command = strings.ReplaceAll(command, "${FILEEXT}", ext)
-	command = strings.ReplaceAll(command, "${FILENAME}", filepath.FromSlash(fname))
-	command = strings.ReplaceAll(command, "${ROOT}", rootPath)
+	command = strings.Replace(command, "${INPUT}", fname, -1)
+	command = strings.Replace(command, "${FILEEXT}", ext, -1)
+	command = strings.Replace(command, "${FILENAME}", filepath.FromSlash(fname), -1)
+	command = strings.Replace(command, "${ROOT}", rootPath, -1)
 
 	return command
 }

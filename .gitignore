@@ -1,1 +1,4 @@
+config
 .vim-lsp-settings
+efm-langserver
+efm-langserver.exe

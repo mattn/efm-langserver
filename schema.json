@@ -79,7 +79,7 @@
           "description": "offset value to skip columns",
           "type": "number"
         },
-        "lint-map-categories": {
+        "lint-category-map": {
           "description": "Map linter categories to LSP categories",
           "type": "object"
         },

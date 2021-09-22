@@ -120,8 +120,8 @@
           },
           "type": "array"
         },
-        "require-markers": {
-          "description": "require markers to run linter",
+        "require-marker": {
+          "description": "require a marker to run linter",
           "type": "boolean"
         },
         "commands": {

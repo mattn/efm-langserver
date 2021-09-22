@@ -312,7 +312,7 @@ func TestLintRequireRootMarker(t *testing.T) {
 					LintCommand:        `echo ` + file + `:2:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintStdin:          true,
-					RequireMarkers:     true,
+					RequireMarker:      true,
 					RootMarkers:        []string{".vimlintrc"},
 				},
 			},

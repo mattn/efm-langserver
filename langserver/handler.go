@@ -265,10 +265,7 @@ func matchRootPath(fname string, markers []string) string {
 	dir := filepath.Dir(filepath.Clean(fname))
 	var prev string
 	for dir != prev {
-		files, err := ioutil.ReadDir(dir)
-		if err != nil {
-			continue
-		}
+		files, _ := ioutil.ReadDir(dir)
 		for _, file := range files {
 			name := file.Name()
 			isDir := file.IsDir()

@@ -72,6 +72,7 @@ type Language struct {
 	HoverType          string            `yaml:"hover-type" json:"hoverType"`
 	Env                []string          `yaml:"env" json:"env"`
 	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
+	RequireMarkers     bool              `yaml:"require-markers" json:"requireMarkers"`
 	Commands           []Command         `yaml:"commands" json:"commands"`
 }
 
@@ -119,6 +120,7 @@ type langHandler struct {
 	filename          string
 	folders           []string
 	rootMarkers       []string
+	requireMarkers    bool
 }
 
 // File is
@@ -325,6 +327,7 @@ func isFilename(s string) bool {
 }
 
 func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, error) {
+
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -342,6 +345,10 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 	var configs []Language
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
 		for _, cfg := range cfgs {
+			// if we require markers and find that they dont exist we do not add the configuration
+			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarkers == true {
+				continue
+			}
 			if cfg.LintCommand != "" {
 				configs = append(configs, cfg)
 			}

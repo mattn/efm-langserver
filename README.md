@@ -399,7 +399,7 @@ EOF
 ## Installation
 
 ```console
-go get github.com/mattn/efm-langserver
+go install github.com/mattn/efm-langserver@latest
 ```
 
 Homebrew

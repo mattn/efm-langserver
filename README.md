@@ -301,7 +301,7 @@ languages:
   elixir:
     - <<: *mix_credo
 
-  _:
+  =:
     - <<: *any-excitetranslate
 ```
 

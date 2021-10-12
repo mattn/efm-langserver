@@ -120,6 +120,10 @@
           },
           "type": "array"
         },
+        "require-marker": {
+          "description": "require a marker to run linter",
+          "type": "boolean"
+        },
         "commands": {
           "$ref": "#/definitions/command-definition"
         }

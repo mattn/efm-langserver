@@ -45,12 +45,19 @@ func main() {
 	}
 
 	if yamlfile == "" {
-		dir := os.Getenv("HOME")
-		if dir == "" && runtime.GOOS == "windows" {
-			dir = filepath.Join(os.Getenv("APPDATA"), "efm-langserver")
+		var config_home string
+
+		if runtime.GOOS == "windows" {
+			config_home = os.Getenv("APPDATA")
 		} else {
-			dir = filepath.Join(dir, ".config", "efm-langserver")
+			config_home = os.Getenv("XDG_CONFIG_HOME")
+			if config_home == "" {
+				config_home = filepath.Join(os.Getenv("HOME"), ".config")
+			}
 		}
+
+		dir := filepath.Join(config_home, "efm-langserver")
+
 		if err := os.MkdirAll(dir, 0700); err != nil {
 			log.Fatal(err)
 		}

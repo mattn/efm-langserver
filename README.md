@@ -390,15 +390,33 @@ require "lspconfig".efm.setup {
 }
 EOF
 ```
-- langague declare as a table
+
+- be sure to declare `languages` as a table:
+
 ```lua
-lua = {{fromatComamnd=...,formatStdin=...}} -- not lua = {fromatComamnd=...,formatStdin=...}
--- for multi-code formatter , used for one langue:
-lua = {{fromatComamnd=...,formatStdin=...},{fromatComamnd=...,formatStdin=...}}
+lua = {
+    {formatCommand = "lua-format -i", formatStdin = true}
+}
+-- NOT
+lua = {
+    formatCommand = "lua-format -i", formatStdin = true
+}
+
+-- and for multiple formatters, add to the table
+lua = {
+    {formatCommand = "lua-format -i", formatStdin = true},
+    {formatCommand = "lua-pretty -i"}
+}
 ```
-- install support formatter
-efm not include binary fromater for any laguages, you must install manually  
-binary formatter for lua:[LuaFormatter](https://github.com/Koihik/LuaFormatter), python:[yapf](https://github.com/google/yapf) [isort](https://github.com/PyCQA/isort)...
+
+- install supported formatters
+
+efm does not include formatters for any languages, you must install these manually,
+e.g.
+ - lua: [LuaFormatter](https://github.com/Koihik/LuaFormatter)
+ - python: [yapf](https://github.com/google/yapf) [isort](https://github.com/PyCQA/isort)
+ - etc...
+
 ## Supported Lint tools
 
 * [vint](https://github.com/Kuniwak/vint) for Vim script

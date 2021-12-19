@@ -254,25 +254,21 @@ func (h *langHandler) linter() {
 			}
 
 			for diagURI, diagnostics := range uriToDiagnostics {
-				copiedDiagnostics := diagnostics
-				copiedDiagURI := diagURI
 				if diagURI == "file:" {
-					copiedDiagURI = uri
+					diagURI = uri
 				}
-				go func() {
-					version := 0
-					if _, ok := h.files[uri]; ok {
-						version = h.files[uri].Version
-					}
-					h.conn.Notify(
-						ctx,
-						"textDocument/publishDiagnostics",
-						&PublishDiagnosticsParams{
-							URI:         copiedDiagURI,
-							Diagnostics: copiedDiagnostics,
-							Version:     version,
-						})
-				}()
+				version := 0
+				if _, ok := h.files[uri]; ok {
+					version = h.files[uri].Version
+				}
+				h.conn.Notify(
+					ctx,
+					"textDocument/publishDiagnostics",
+					&PublishDiagnosticsParams{
+						URI:         diagURI,
+						Diagnostics: diagnostics,
+						Version:     version,
+					})
 			}
 		}()
 	}

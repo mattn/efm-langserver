@@ -60,6 +60,7 @@ type Language struct {
 	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"lintCategoryMap"`
 	LintSource         string            `yaml:"lint-source" json:"lintSource"`
 	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
+	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
 	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
 	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
@@ -98,6 +99,8 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		conn:           nil,
 		filename:       config.Filename,
 		rootMarkers:    *config.RootMarkers,
+
+		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
 	}
 	go handler.linter()
 	return jsonrpc2.HandlerWithError(handler.handle)
@@ -120,6 +123,10 @@ type langHandler struct {
 	filename          string
 	folders           []string
 	rootMarkers       []string
+
+	// lastPublishedURIs is mapping from LanguageID string to mapping of
+	// whether diagnostics are published in a DocumentURI or not.
+	lastPublishedURIs map[string]map[DocumentURI]struct{}
 }
 
 // File is
@@ -240,24 +247,33 @@ func (h *langHandler) linter() {
 		running[uri] = cancel
 
 		go func() {
-			diagnostics, err := h.lint(ctx, uri)
+			uriToDiagnostics, err := h.lint(ctx, uri)
 			if err != nil {
 				h.logger.Println(err)
 				return
 			}
 
-			if diagnostics == nil {
-				return
+			for diagURI, diagnostics := range uriToDiagnostics {
+				copiedDiagnostics := diagnostics
+				copiedDiagURI := diagURI
+				if diagURI == "file:" {
+					copiedDiagURI = uri
+				}
+				go func() {
+					version := 0
+					if _, ok := h.files[uri]; ok {
+						version = h.files[uri].Version
+					}
+					h.conn.Notify(
+						ctx,
+						"textDocument/publishDiagnostics",
+						&PublishDiagnosticsParams{
+							URI:         copiedDiagURI,
+							Diagnostics: copiedDiagnostics,
+							Version:     version,
+						})
+				}()
 			}
-
-			h.conn.Notify(
-				context.Background(),
-				"textDocument/publishDiagnostics",
-				&PublishDiagnosticsParams{
-					URI:         uri,
-					Diagnostics: diagnostics,
-					Version:     h.files[uri].Version,
-				})
 		}()
 	}
 }
@@ -322,7 +338,7 @@ func isFilename(s string) bool {
 	}
 }
 
-func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, error) {
+func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentURI][]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -361,17 +377,26 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		if h.loglevel >= 1 {
 			h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
 		}
-		return []Diagnostic{}, nil
+		return map[DocumentURI][]Diagnostic{}, nil
 	}
 
-	diagnostics := []Diagnostic{}
+	uriToDiagnostics := map[DocumentURI][]Diagnostic{}
 	for i, config := range configs {
+		if config.LintWorkspace {
+			for lastPublishedURI := range h.lastPublishedURIs[f.LanguageID] {
+				if _, ok := uriToDiagnostics[lastPublishedURI]; !ok {
+					uriToDiagnostics[lastPublishedURI] = []Diagnostic{}
+				}
+			}
+			h.lastPublishedURIs[f.LanguageID] = make(map[DocumentURI]struct{})
+		}
+
 		if config.LintCommand == "" {
 			continue
 		}
 
 		command := config.LintCommand
-		if !config.LintStdin && !strings.Contains(command, "${INPUT}") {
+		if !config.LintStdin && !config.LintWorkspace && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
 		rootPath := h.findRootPath(fname, config)
@@ -484,7 +509,23 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 				severity = 4
 			}
 
-			diagnostics = append(diagnostics, Diagnostic{
+			diagURI := uri
+			h.logger.Println(entry.Filename)
+			if entry.Filename != "" {
+				if filepath.IsAbs(entry.Filename) {
+					diagURI = toURI(entry.Filename)
+				} else {
+					diagURI = toURI(filepath.Join(rootPath, entry.Filename))
+				}
+			}
+			if diagURI != uri && !config.LintWorkspace {
+				continue
+			}
+
+			if config.LintWorkspace {
+				h.lastPublishedURIs[f.LanguageID][diagURI] = struct{}{}
+			}
+			uriToDiagnostics[diagURI] = append(uriToDiagnostics[diagURI], Diagnostic{
 				Range: Range{
 					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
 					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len([]rune(word))},
@@ -497,7 +538,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) ([]Diagnostic, 
 		}
 	}
 
-	return diagnostics, nil
+	return uriToDiagnostics, nil
 }
 
 func itoaPtrIfNotZero(n int) *string {

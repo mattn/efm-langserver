@@ -412,3 +412,41 @@ func TestLintMultipleFiles(t *testing.T) {
 		t.Fatalf("second diagnostics should be empty but got: %v", d[uri2])
 	}
 }
+
+func TestLintNoDiagnostics(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			"vim": {
+				{
+					LintCommand:        "echo ",
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	uriToDiag, err := h.lint(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, ok := uriToDiag[uri]
+	if !ok {
+		t.Fatal("didn't get any diagnostics")
+	}
+	if len(d) != 0 {
+		t.Fatal("diagnostics should be an empty list", d)
+	}
+}

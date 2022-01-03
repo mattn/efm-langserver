@@ -376,7 +376,9 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 		return map[DocumentURI][]Diagnostic{}, nil
 	}
 
-	uriToDiagnostics := map[DocumentURI][]Diagnostic{}
+	uriToDiagnostics := map[DocumentURI][]Diagnostic{
+		uri: {},
+	}
 	for i, config := range configs {
 		if config.LintWorkspace {
 			for lastPublishedURI := range h.lastPublishedURIs[f.LanguageID] {

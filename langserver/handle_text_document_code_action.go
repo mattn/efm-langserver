@@ -120,7 +120,6 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 				}
 				arg = tmp
 				args = append(args, arg)
-				args = append(args, arg)
 			}
 			cmd = exec.Command("sh", args...)
 		}

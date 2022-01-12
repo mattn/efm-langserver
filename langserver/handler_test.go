@@ -2,6 +2,7 @@ package langserver
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
@@ -468,16 +469,23 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 		t.Fatalf("second range.start.line should be %v but got: %v", 0, d[uri2][0].Range.Start.Line)
 	}
 
-	h.configs["vim"][0].LintCommand = `sleep 100 && echo ` + file + `:2:1:First file only!`
+	startedFlagPath := "/tmp/already-started"
+	// Emulate heavy job
+	h.configs["vim"][0].LintCommand = `touch ` + startedFlagPath + ` && sleep 1000000 && echo ` + file + `:2:1:First file only!`
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-    h.lint(ctx, uri)
-  }()
-  time.Sleep(3 * time.Second)
-  // Cancel happens
-  cancel()
+		h.lint(ctx, uri)
+	}()
+	for true {
+		if _, err := os.Stat(startedFlagPath); errors.Is(err, os.ErrNotExist) {
+			time.Sleep(50 * time.Microsecond)
+			continue
+		}
+		break
+	}
+	cancel()
 	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
-  d, err = h.lint(context.Background(), uri)
+	d, err = h.lint(context.Background(), uri)
 	if err != nil {
 		t.Fatal(err)
 	}

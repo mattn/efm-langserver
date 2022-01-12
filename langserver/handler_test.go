@@ -2,11 +2,13 @@ package langserver
 
 import (
 	"context"
+	"errors"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestLintNoLinter(t *testing.T) {
@@ -394,6 +396,95 @@ func TestLintMultipleFiles(t *testing.T) {
 		t.Fatalf("second range.start.line should be %v but got: %v", 0, d[uri2][0].Range.Start.Line)
 	}
 
+	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
+	d, err = h.lint(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d) != 2 {
+		t.Fatalf("diagnostics should be two, but got %#v", d)
+	}
+	if d[uri][0].Range.Start.Character != 0 {
+		t.Fatalf("first range.start.character should be %v but got: %v", 0, d[uri][0].Range.Start.Character)
+	}
+	if d[uri][0].Range.Start.Line != 1 {
+		t.Fatalf("first range.start.line should be %v but got: %v", 1, d[uri][0].Range.Start.Line)
+	}
+	if len(d[uri2]) != 0 {
+		t.Fatalf("second diagnostics should be empty but got: %v", d[uri2])
+	}
+}
+
+// Test if lint can return diagnostics for multiple files even when cancelled
+func TestLintMultipleFilesWithCancel(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	file2 := filepath.Join(base, "bar")
+	uri := toURI(file)
+	uri2 := toURI(file2)
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			"vim": {
+				{
+					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file!`,
+					LintFormats:        []string{"%f:%l:%c:%m"},
+					LintIgnoreExitCode: true,
+					LintWorkspace:      true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+			uri2: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
+	}
+
+	d, err := h.lint(context.Background(), uri)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(d) != 2 {
+		t.Fatalf("diagnostics should be two, but got %#v", d)
+	}
+	if d[uri][0].Range.Start.Character != 0 {
+		t.Fatalf("first range.start.character should be %v but got: %v", 0, d[uri][0].Range.Start.Character)
+	}
+	if d[uri][0].Range.Start.Line != 1 {
+		t.Fatalf("first range.start.line should be %v but got: %v", 1, d[uri][0].Range.Start.Line)
+	}
+	if d[uri2][0].Range.Start.Character != 1 {
+		t.Fatalf("second range.start.character should be %v but got: %v", 1, d[uri2][0].Range.Start.Character)
+	}
+	if d[uri2][0].Range.Start.Line != 0 {
+		t.Fatalf("second range.start.line should be %v but got: %v", 0, d[uri2][0].Range.Start.Line)
+	}
+
+	startedFlagPath := "already-started"
+	defer os.Remove(startedFlagPath)
+	// Emulate heavy job
+	h.configs["vim"][0].LintCommand = `touch ` + startedFlagPath + ` && sleep 1000000 && echo ` + file + `:2:1:First file only!`
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		h.lint(ctx, uri)
+	}()
+	for true {
+		if _, err := os.Stat(startedFlagPath); errors.Is(err, os.ErrNotExist) {
+			time.Sleep(50 * time.Microsecond)
+			continue
+		}
+		break
+	}
+	cancel()
 	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
 	d, err = h.lint(context.Background(), uri)
 	if err != nil {

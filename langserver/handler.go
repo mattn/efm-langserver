@@ -345,9 +345,6 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 		return nil, fmt.Errorf("invalid uri: %v: %v", err, uri)
 	}
 	fname = filepath.ToSlash(fname)
-	if runtime.GOOS == "windows" {
-		fname = strings.ToLower(fname)
-	}
 
 	var configs []Language
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
@@ -433,7 +430,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 		// with zero-value. So if you want to handle the command which exit
 		// with zero value, please specify lint-ignore-exit-code.
 		if err == nil && !config.LintIgnoreExitCode {
-			h.logMessage(LogError, "command exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
+			h.logMessage(LogError, "command `"+command+"` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
 			continue
 		}
 		if h.loglevel >= 1 {
@@ -462,10 +459,9 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 					continue
 				}
 				path = filepath.ToSlash(path)
-				if runtime.GOOS == "windows" {
-					path = strings.ToLower(path)
-				}
-				if path != fname {
+				if runtime.GOOS == "windows" && strings.ToLower(path) != strings.ToLower(fname) {
+					continue
+				} else if path != fname {
 					continue
 				}
 			} else {
@@ -516,8 +512,14 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 					diagURI = toURI(filepath.Join(rootPath, entry.Filename))
 				}
 			}
-			if diagURI != uri && !config.LintWorkspace {
-				continue
+			if runtime.GOOS == "windows" {
+				if strings.ToLower(string(diagURI)) != strings.ToLower(string(uri)) && !config.LintWorkspace {
+					continue
+				}
+			} else {
+				if diagURI != uri && !config.LintWorkspace {
+					continue
+				}
 			}
 
 			if config.LintWorkspace {

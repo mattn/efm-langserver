@@ -379,14 +379,15 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 	uriToDiagnostics := map[DocumentURI][]Diagnostic{
 		uri: {},
 	}
+	publishedURIs := make(map[DocumentURI]struct{})
 	for i, config := range configs {
+		// To publish empty diagnostics when errors are fixed
 		if config.LintWorkspace {
 			for lastPublishedURI := range h.lastPublishedURIs[f.LanguageID] {
 				if _, ok := uriToDiagnostics[lastPublishedURI]; !ok {
 					uriToDiagnostics[lastPublishedURI] = []Diagnostic{}
 				}
 			}
-			h.lastPublishedURIs[f.LanguageID] = make(map[DocumentURI]struct{})
 		}
 
 		if config.LintCommand == "" {
@@ -521,7 +522,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 			}
 
 			if config.LintWorkspace {
-				h.lastPublishedURIs[f.LanguageID][diagURI] = struct{}{}
+				publishedURIs[diagURI] = struct{}{}
 			}
 			uriToDiagnostics[diagURI] = append(uriToDiagnostics[diagURI], Diagnostic{
 				Range: Range{
@@ -536,6 +537,13 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 		}
 	}
 
+	// Update state here as no possibility of cancelation
+	for _, config := range configs {
+		if config.LintWorkspace {
+			h.lastPublishedURIs[f.LanguageID] = publishedURIs
+			break
+		}
+	}
 	return uriToDiagnostics, nil
 }
 

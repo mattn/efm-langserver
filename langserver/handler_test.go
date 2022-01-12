@@ -469,7 +469,8 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 		t.Fatalf("second range.start.line should be %v but got: %v", 0, d[uri2][0].Range.Start.Line)
 	}
 
-	startedFlagPath := "/tmp/already-started"
+	startedFlagPath := "already-started"
+	defer os.Remove(startedFlagPath)
 	// Emulate heavy job
 	h.configs["vim"][0].LintCommand = `touch ` + startedFlagPath + ` && sleep 1000000 && echo ` + file + `:2:1:First file only!`
 	ctx, cancel := context.WithCancel(context.Background())

@@ -147,11 +147,11 @@ tools:
     format-stdin: true
 
   python-pylint: &python-pylint
-    lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}'
+    lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{msg_id}:{msg} ${INPUT}'
     lint-stdin: false
     lint-formats:
-      - '%f:%l:%c:%t:%m'
-    lint-offset-columns: 1
+      - '%f:%l:%c:%t%n:%m'
+    lint-offset: 1
     lint-category-map:
       I: H
       R: I

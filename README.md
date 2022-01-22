@@ -151,7 +151,6 @@ tools:
     lint-stdin: false
     lint-formats:
       - '%f:%l:%c:%t%n:%m'
-    lint-offset: 1
     lint-category-map:
       I: H
       R: I

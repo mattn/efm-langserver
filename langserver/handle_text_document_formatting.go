@@ -83,7 +83,7 @@ func (h *langHandler) formatting(uri DocumentURI, options FormattingOptions) ([]
 
 	originalText := f.Text
 	text := originalText
-	formated := false
+	formatted := false
 
 Configs:
 	for _, config := range configs {
@@ -135,16 +135,18 @@ Configs:
 			continue
 		}
 
-		formated = true
+		formatted = true
 
-		if h.loglevel >= 1 {
+		if h.loglevel >= 3 {
 			h.logger.Println(command+":", string(b))
 		}
 		text = strings.Replace(string(b), "\r", "", -1)
 	}
 
-	if formated {
-		h.logger.Println("format succeeded")
+	if formatted {
+		if h.loglevel >= 3 {
+			h.logger.Println("format succeeded")
+		}
 		return ComputeEdits(uri, originalText, text), nil
 	}
 

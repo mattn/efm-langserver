@@ -434,7 +434,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 			h.logMessage(LogError, "command `"+command+"` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
 			continue
 		}
-		if h.loglevel >= 1 {
+		if h.loglevel >= 3 {
 			h.logger.Println(command+":", string(b))
 		}
 		var source *string

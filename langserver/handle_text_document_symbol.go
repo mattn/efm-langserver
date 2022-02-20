@@ -133,7 +133,7 @@ func (h *langHandler) symbol(uri DocumentURI) ([]SymbolInformation, error) {
 		if err != nil {
 			continue
 		}
-		if h.loglevel >= 1 {
+		if h.loglevel >= 3 {
 			h.logger.Println(command+":", string(b))
 		}
 

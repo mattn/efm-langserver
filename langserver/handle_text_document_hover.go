@@ -52,28 +52,6 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 	if params.Position.Character < 0 || params.Position.Character > len(chars) {
 		return nil, fmt.Errorf("invalid position: %v", params.Position)
 	}
-	prevPos := 0
-	currPos := -1
-	prevCls := unicodeclass.Invalid
-	for i, char := range chars {
-		currCls := unicodeclass.Is(rune(char))
-		if currCls != prevCls {
-			if i <= params.Position.Character {
-				prevPos = i
-			} else {
-				if char == '_' {
-					continue
-				}
-				currPos = i
-				break
-			}
-		}
-		prevCls = currCls
-	}
-	if currPos == -1 {
-		currPos = len(chars)
-	}
-	word := string(utf16.Decode(chars[prevPos:currPos]))
 
 	var configs []Language
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
@@ -99,6 +77,28 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 	}
 
 	for _, config := range configs {
+		prevPos := 0
+		currPos := -1
+		prevCls := unicodeclass.Invalid
+		for i, char := range chars {
+			currCls := unicodeclass.Is(rune(char))
+			if currCls != prevCls {
+				if i <= params.Position.Character {
+					prevPos = i
+				} else {
+					if strings.ContainsRune(config.HoverChars, rune(char)) {
+						continue
+					}
+					currPos = i
+					break
+				}
+			}
+			prevCls = currCls
+		}
+		if currPos == -1 {
+			currPos = len(chars)
+		}
+		word := string(utf16.Decode(chars[prevPos:currPos]))
 		if config.HoverCommand == "" {
 			continue
 		}

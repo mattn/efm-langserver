@@ -71,6 +71,7 @@ type Language struct {
 	HoverCommand       string            `yaml:"hover-command" json:"hoverCommand"`
 	HoverStdin         bool              `yaml:"hover-stdin" json:"hoverStdin"`
 	HoverType          string            `yaml:"hover-type" json:"hoverType"`
+	HoverChars         string            `yaml:"hover-chars" json:"hoverChars"`
 	Env                []string          `yaml:"env" json:"env"`
 	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
 	RequireMarker      bool              `yaml:"require-marker" json:"requireMarker"`

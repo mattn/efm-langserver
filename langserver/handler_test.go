@@ -547,7 +547,7 @@ func TestHover(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	text := "`test_test-test.test`"
+	text := "test_test-test.test"
 	for scenario, config := range map[string]struct {
 		text       string
 		position   Position
@@ -558,16 +558,16 @@ func TestHover(t *testing.T) {
 			text,
 			Position{
 				Line:      0,
-				Character: 1,
+				Character: 0,
 			},
-			"",
+			"_",
 			"test_test",
 		},
 		"with -": {
 			text,
 			Position{
 				Line:      0,
-				Character: 1,
+				Character: 0,
 			},
 			"_-",
 			"test_test-test",
@@ -576,7 +576,7 @@ func TestHover(t *testing.T) {
 			text,
 			Position{
 				Line:      0,
-				Character: 1,
+				Character: 0,
 			},
 			"_-.",
 			"test_test-test.test",
@@ -585,7 +585,7 @@ func TestHover(t *testing.T) {
 			text,
 			Position{
 				Line:      0,
-				Character: 5,
+				Character: 4,
 			},
 			"_-.",
 			"test_test-test.test",

@@ -597,7 +597,7 @@ func TestHover(t *testing.T) {
 			configs: map[string][]Language{
 				"vim": {
 					{
-						HoverCommand: "echo '${INPUT}'",
+						HoverCommand: "echo ${INPUT}",
 						HoverChars:   config.hoverChars,
 					},
 				},

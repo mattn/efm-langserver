@@ -83,12 +83,12 @@ func (h *langHandler) hover(uri DocumentURI, params *HoverParams) (*Hover, error
 		for i, char := range chars {
 			currCls := unicodeclass.Is(rune(char))
 			if currCls != prevCls {
+				if strings.ContainsRune(config.HoverChars, rune(char)) {
+					continue
+				}
 				if i <= params.Position.Character {
 					prevPos = i
 				} else {
-					if strings.ContainsRune(config.HoverChars, rune(char)) {
-						continue
-					}
 					currPos = i
 					break
 				}

@@ -541,3 +541,88 @@ func TestLintNoDiagnostics(t *testing.T) {
 		t.Fatal("diagnostics should be an empty list", d)
 	}
 }
+
+func TestHover(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	text := "`test_test-test.test`"
+	for scenario, config := range map[string]struct {
+		text       string
+		position   Position
+		hoverChars string
+		expected   string
+	}{
+		"_ is default": {
+			text,
+			Position{
+				Line:      0,
+				Character: 1,
+			},
+			"",
+			"test_test",
+		},
+		"with -": {
+			text,
+			Position{
+				Line:      0,
+				Character: 1,
+			},
+			"_-",
+			"test_test-test",
+		},
+		"with - and .": {
+			text,
+			Position{
+				Line:      0,
+				Character: 1,
+			},
+			"_-.",
+			"test_test-test.test",
+		},
+		"inner position": {
+			text,
+			Position{
+				Line:      0,
+				Character: 5,
+			},
+			"_-.",
+			"test_test-test.test",
+		},
+	} {
+		h := &langHandler{
+			logger:   log.New(log.Writer(), "", log.LstdFlags),
+			rootPath: base,
+			configs: map[string][]Language{
+				"vim": {
+					{
+						HoverCommand: "echo '${INPUT}'",
+						HoverChars:   config.hoverChars,
+					},
+				},
+			},
+			files: map[DocumentURI]*File{
+				uri: {
+					LanguageID: "vim",
+					Text:       config.text,
+				},
+			},
+		}
+		t.Run(scenario, func(t *testing.T) {
+			hover, err := h.hover(uri, &HoverParams{
+				TextDocumentPositionParams{
+					TextDocument: TextDocumentIdentifier{uri},
+					Position:     config.position,
+				},
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			content := hover.Contents.(MarkupContent).Value
+			if content != config.expected {
+				t.Fatal("invalid hover contents:", content+",", "exptected:", config.expected)
+			}
+		})
+	}
+}

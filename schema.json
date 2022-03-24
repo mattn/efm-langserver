@@ -178,6 +178,13 @@
     "lint-debounce": {
       "description": "debounce for lints",
       "type": "string"
+    },
+    "trigger-chars": {
+      "description": "trigger characters for completion",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
     }
   },
   "title": "efm-langserver",

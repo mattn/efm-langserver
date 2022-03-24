@@ -142,6 +142,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{},
 			h.commands = *config.Commands
 			h.configs = *config.Languages
 			h.rootMarkers = *config.RootMarkers
+			h.triggerChars = config.TriggerChars
 			h.loglevel = config.LogLevel
 			h.lintDebounce = time.Duration(config.LintDebounce)
 		}

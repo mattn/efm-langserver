@@ -30,6 +30,7 @@ type Config struct {
 	Commands       *[]Command             `yaml:"commands"        json:"commands"`
 	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
 	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
+	TriggerChars   []string              `yaml:"trigger-chars"   json:"triggerChars"`
 	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
 	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
 
@@ -100,6 +101,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		conn:           nil,
 		filename:       config.Filename,
 		rootMarkers:    *config.RootMarkers,
+		triggerChars:   config.TriggerChars,
 
 		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
 	}
@@ -124,6 +126,7 @@ type langHandler struct {
 	filename          string
 	folders           []string
 	rootMarkers       []string
+	triggerChars      []string
 
 	// lastPublishedURIs is mapping from LanguageID string to mapping of
 	// whether diagnostics are published in a DocumentURI or not.
@@ -506,7 +509,6 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 			}
 
 			diagURI := uri
-			h.logger.Println(entry.Filename)
 			if entry.Filename != "" {
 				if filepath.IsAbs(entry.Filename) {
 					diagURI = toURI(entry.Filename)

@@ -28,6 +28,9 @@ func (h *langHandler) didChangeConfiguration(config *Config) (interface{}, error
 	if config.RootMarkers != nil {
 		h.rootMarkers = *config.RootMarkers
 	}
+	if config.TriggerChars != nil {
+		h.triggerChars = config.TriggerChars
+	}
 	if config.Commands != nil {
 		h.commands = *config.Commands
 	}

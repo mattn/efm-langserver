@@ -478,6 +478,10 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 				entry.Col = entry.Col + config.LintOffsetColumns
 			}
 
+			if entry.Lnum == 0 {
+				entry.Lnum = 1 // entry.Lnum == 0 indicates the top line, set to 1 because it is subtracted later
+			}
+
 			if entry.Col == 0 {
 				entry.Col = 1 // entry.Col == 0 indicates the whole line without column, set to 1 because it is subtracted later
 			} else {

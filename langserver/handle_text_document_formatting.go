@@ -62,6 +62,9 @@ func (h *langHandler) formatting(uri DocumentURI, options FormattingOptions) ([]
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
 		for _, cfg := range cfgs {
 			if cfg.FormatCommand != "" {
+				if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker {
+					continue
+				}
 				configs = append(configs, cfg)
 			}
 		}

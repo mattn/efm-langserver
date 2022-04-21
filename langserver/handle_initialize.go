@@ -66,8 +66,12 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 	}
 
 	if hasCompletionCommand {
+		chars := []string{"."}
+		if len(h.triggerChars) > 0 {
+			chars = h.triggerChars
+		}
 		completion = &CompletionProvider{
-			TriggerCharacters: []string{"*"},
+			TriggerCharacters: chars,
 		}
 	}
 

@@ -429,8 +429,8 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 		configs: map[string][]Language{
 			"vim": {
 				{
-					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file!`,
-					LintFormats:        []string{"%f:%l:%c:%m"},
+					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file! && echo ` + file2 + `:Empty l and c!` ,
+					LintFormats:        []string{"%f:%l:%c:%m", "%f:%m"},
 					LintIgnoreExitCode: true,
 					LintWorkspace:      true,
 				},
@@ -467,6 +467,12 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	}
 	if d[uri2][0].Range.Start.Line != 0 {
 		t.Fatalf("second range.start.line should be %v but got: %v", 0, d[uri2][0].Range.Start.Line)
+	}
+	if d[uri2][1].Range.Start.Character != 0 {
+		t.Fatalf("second range.start.character should be %v but got: %v", 0, d[uri2][1].Range.Start.Character)
+	}
+	if d[uri2][1].Range.Start.Line != 0 {
+		t.Fatalf("second range.start.line should be %v but got: %v", 0, d[uri2][1].Range.Start.Line)
 	}
 
 	startedFlagPath := "already-started"

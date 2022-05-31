@@ -30,7 +30,7 @@ type Config struct {
 	Commands       *[]Command             `yaml:"commands"        json:"commands"`
 	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
 	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
-	TriggerChars   []string              `yaml:"trigger-chars"   json:"triggerChars"`
+	TriggerChars   []string               `yaml:"trigger-chars"   json:"triggerChars"`
 	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
 	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
 
@@ -656,6 +656,8 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleWorkspaceExecuteCommand(ctx, conn, req)
 	case "workspace/didChangeConfiguration":
 		return h.handleWorkspaceDidChangeConfiguration(ctx, conn, req)
+	case "workspace/didChangeWorkspaceFolders":
+		return h.handleDidChangeWorkspaceWorkspaceFolders(ctx, conn, req)
 	case "workspace/workspaceFolders":
 		return h.handleWorkspaceWorkspaceFolders(ctx, conn, req)
 	}

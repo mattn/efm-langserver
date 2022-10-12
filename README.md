@@ -73,6 +73,25 @@ commands:
     title: メモ帳
 
 tools:
+  any-excitetranslate: &any-excitetranslate
+    hover-command: 'excitetranslate'
+    hover-stdin: true
+
+  blade-blade-formatter: &blade-blade-formatter
+    format-command: 'blade-formatter --stdin'
+    format-stdin: true
+
+  css-prettier: &css-prettier
+    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser css'
+
+  csv-csvlint: &csv-csvlint
+    lint-command: 'csvlint'
+
+  dockerfile-hadolint: &dockerfile-hadolint
+    lint-command: 'hadolint'
+    lint-formats:
+      - '%f:%l %m'
+
   eruby-erb: &eruby-erb
     lint-debounce: 2s
     lint-command: 'erb -x -T - | ruby -c'
@@ -81,11 +100,29 @@ tools:
     format-stdin: true
     format-command: htmlbeautifier
 
-  vim-vint: &vim-vint
-    lint-command: 'vint -'
+  html-prettier: &html-prettier
+    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
+
+  javascript-eslint: &javascript-eslint
+    lint-command: 'eslint -f visualstudio --stdin --stdin-filename ${INPUT}'
+    lint-ignore-exit-code: true
     lint-stdin: true
     lint-formats:
-      - '%f:%l:%c: %m'
+      - "%f(%l,%c): %tarning %m"
+      - "%f(%l,%c): %rror %m"
+
+  json-fixjson: &json-fixjson
+    format-command: 'fixjson'
+
+  json-jq: &json-jq
+    lint-command: 'jq .'
+
+  json-prettier: &json-prettier
+    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} --parser json'
+
+  lua-lua-format: &lua-lua-format
+    format-command: 'lua-format -i'
+    format-stdin: true
 
   make-checkmake: &make-checkmake
     lint-command: 'checkmake'
@@ -102,20 +139,32 @@ tools:
   markdown-pandoc: &markdown-pandoc
     format-command: 'pandoc -f markdown -t gfm -sp --tab-stop=2'
 
-  rst-pandoc: &rst-pandoc
-    format-command: 'pandoc -f rst -t rst -s --columns=79'
-
-  rst-lint: &rst-lint
-    lint-command: 'rst-lint'
-    lint-formats:
-      - '%tNFO %f:%l %m'
-      - '%tARNING %f:%l %m'
-      - '%tRROR %f:%l %m'
-      - '%tEVERE %f:%l %m'
-
-  yaml-yamllint: &yaml-yamllint
-    lint-command: 'yamllint -f parsable -'
+  mix_credo: &mix_credo
+    lint-command: "mix credo suggest --format=flycheck --read-from-stdin ${INPUT}"
     lint-stdin: true
+    lint-formats:
+      - '%f:%l:%c: %t: %m'
+      - '%f:%l: %t: %m'
+    root-markers:
+      - mix.lock
+      - mix.exs
+
+  php-phpstan: &php-phpstan
+    lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
+
+  php-psalm: &php-psalm
+    lint-command: './vendor/bin/psalm --output-format=emacs --no-progress'
+    lint-formats:
+      - '%f:%l:%c:%trror - %m'
+      - '%f:%l:%c:%tarning - %m'
+
+  python-autopep8: &python-autopep8
+    format-command: 'autopep8 -'
+    format-stdin: true
+
+  python-black: &python-black
+    format-command: 'black --quiet -'
+    format-stdin: true
 
   python-flake8: &python-flake8
     lint-command: 'flake8 --stdin-display-name ${INPUT} -'
@@ -123,28 +172,16 @@ tools:
     lint-formats:
       - '%f:%l:%c: %m'
 
+  python-isort: &python-isort
+    format-command: 'isort --quiet -'
+    format-stdin: true
+
   python-mypy: &python-mypy
     lint-command: 'mypy --show-column-numbers'
     lint-formats:
       - '%f:%l:%c: %trror: %m'
       - '%f:%l:%c: %tarning: %m'
       - '%f:%l:%c: %tote: %m'
-
-  python-black: &python-black
-    format-command: 'black --quiet -'
-    format-stdin: true
-
-  python-autopep8: &python-autopep8
-    format-command: 'autopep8 -'
-    format-stdin: true
-
-  python-yapf: &python-yapf
-    format-command: 'yapf --quiet'
-    format-stdin: true
-
-  python-isort: &python-isort
-    format-command: 'isort --quiet -'
-    format-stdin: true
 
   python-pylint: &python-pylint
     lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}'
@@ -160,10 +197,20 @@ tools:
       E: E
       F: E
 
-  dockerfile-hadolint: &dockerfile-hadolint
-    lint-command: 'hadolint'
+  python-yapf: &python-yapf
+    format-command: 'yapf --quiet'
+    format-stdin: true
+
+  rst-lint: &rst-lint
+    lint-command: 'rst-lint'
     lint-formats:
-      - '%f:%l %m'
+      - '%tNFO %f:%l %m'
+      - '%tARNING %f:%l %m'
+      - '%tRROR %f:%l %m'
+      - '%tEVERE %f:%l %m'
+
+  rst-pandoc: &rst-pandoc
+    format-command: 'pandoc -f rst -t rst -s --columns=79'
 
   sh-shellcheck: &sh-shellcheck
     lint-command: 'shellcheck -f gcc -x'
@@ -177,70 +224,48 @@ tools:
     format-command: 'shfmt -ci -s -bn'
     format-stdin: true
 
-  javascript-eslint: &javascript-eslint
-    lint-command: 'eslint -f visualstudio --stdin --stdin-filename ${INPUT}'
-    lint-ignore-exit-code: true
+  vim-vint: &vim-vint
+    lint-command: 'vint -'
     lint-stdin: true
     lint-formats:
-      - "%f(%l,%c): %tarning %m"
-      - "%f(%l,%c): %rror %m"
+      - '%f:%l:%c: %m'
 
-
-  php-phpstan: &php-phpstan
-    lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
-
-  php-psalm: &php-psalm
-    lint-command: './vendor/bin/psalm --output-format=emacs --no-progress'
-    lint-formats:
-      - '%f:%l:%c:%trror - %m'
-      - '%f:%l:%c:%tarning - %m'
-
-  html-prettier: &html-prettier
-    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
-
-  css-prettier: &css-prettier
-    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser css'
-
-  json-prettier: &json-prettier
-    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} --parser json'
-
-  json-jq: &json-jq
-    lint-command: 'jq .'
-
-  json-fixjson: &json-fixjson
-    format-command: 'fixjson'
-
-  csv-csvlint: &csv-csvlint
-    lint-command: 'csvlint'
-
-  lua-lua-format: &lua-lua-format
-    format-command: 'lua-format -i'
-    format-stdin: true
-
-  blade-blade-formatter: &blade-blade-formatter
-    format-command: 'blade-formatter --stdin'
-    format-stdin: true
-
-  mix_credo: &mix_credo
-    lint-command: "mix credo suggest --format=flycheck --read-from-stdin ${INPUT}"
+  yaml-yamllint: &yaml-yamllint
+    lint-command: 'yamllint -f parsable -'
     lint-stdin: true
-    lint-formats:
-      - '%f:%l:%c: %t: %m'
-      - '%f:%l: %t: %m'
-    root-markers:
-      - mix.lock
-      - mix.exs
-
-  any-excitetranslate: &any-excitetranslate
-    hover-command: 'excitetranslate'
-    hover-stdin: true
 
 languages:
+  blade:
+    - <<: *blade-blade-formatter
+
+  css:
+    - <<: *css-prettier
+
+  csv:
+    - <<: *csv-csvlint
+
+  dockerfile:
+    - <<: *dockerfile-hadolint
+
+  elixir:
+    - <<: *mix_credo
+
   eruby:
     - <<: *eruby-erb
 
-  vim:
-    - <<: *vim-vint
+  html:
+    - <<: *html-prettier
+
+  javascript:
+    - <<: *javascript-eslint
+
+  json:
+    - <<: *json-fixjson
+    - <<: *json-jq
+    # - <<: *json-prettier
+
+  lua:
+    - <<: *lua-lua-format
 
   make:
     - <<: *make-checkmake
@@ -249,57 +274,31 @@ languages:
     - <<: *markdown-markdownlint
     - <<: *markdown-pandoc
 
-  rst:
-    - <<: *rst-lint
-    - <<: *rst-pandoc
-
-  yaml:
-    - <<: *yaml-yamllint
+  php:
+    - <<: *php-phpstan
+    - <<: *php-psalm
 
   python:
+    - <<: *python-black
     - <<: *python-flake8
+    - <<: *python-isort
     - <<: *python-mypy
     # - <<: *python-autopep8
     # - <<: *python-yapf
-    - <<: *python-black
-    - <<: *python-isort
 
-  dockerfile:
-    - <<: *dockerfile-hadolint
+  rst:
+    - <<: *rst-lint
+    - <<: *rst-pandoc
 
   sh:
     - <<: *sh-shellcheck
     - <<: *sh-shfmt
 
-  javascript:
-    - <<: *javascript-eslint
+  vim:
+    - <<: *vim-vint
 
-  php:
-    - <<: *php-phpstan
-    - <<: *php-psalm
-
-  html:
-    - <<: *html-prettier
-
-  css:
-    - <<: *css-prettier
-
-  json:
-    - <<: *json-jq
-    - <<: *json-fixjson
-    # - <<: *json-prettier
-
-  csv:
-    - <<: *csv-csvlint
-
-  lua:
-    - <<: *lua-lua-format
-
-  blade:
-    - <<: *blade-blade-formatter
-
-  elixir:
-    - <<: *mix_credo
+  yaml:
+    - <<: *yaml-yamllint
 
   =:
     - <<: *any-excitetranslate

@@ -56,7 +56,7 @@ Example
 
 Location of config.yaml is:
 
-* UNIX: `$HOME/.config/efm-langserver/config.yaml`
+* UNIX: `$XDG_CONFIG_HOME/efm-langserver/config.yaml` or `$HOME/.config/efm-langserver/config.yaml`
 * Windows: `%APPDATA%\efm-langserver\config.yaml`
 
 Below is example for `config.yaml` for Windows.

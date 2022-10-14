@@ -29,7 +29,7 @@ const (
 // https://www.codeproject.com/Articles/42279/%2FArticles%2F42279%2FInvestigating-Myers-diff-algorithm-Part-1-of-2
 
 // ComputeEdits computes diff edits from 2 string inputs
-func ComputeEdits(uri DocumentURI, before, after string) []TextEdit {
+func ComputeEdits(_ DocumentURI, before, after string) []TextEdit {
 	ops := operations(splitLines(before), splitLines(after))
 	edits := make([]TextEdit, 0, len(ops))
 	for _, op := range ops {

@@ -1,0 +1,2 @@
+# Workaround for gofmt/goimports
+*.go text eol=lf

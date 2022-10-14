@@ -9,7 +9,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -33,11 +33,11 @@ func (h *langHandler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn,
 	}
 
 	var completion *CompletionProvider
-	var hasCompletionCommand bool = params.InitializationOptions.Completion
-	var hasHoverCommand bool = params.InitializationOptions.Hover
-	var hasCodeActionCommand bool = params.InitializationOptions.CodeAction
-	var hasSymbolCommand bool = params.InitializationOptions.DocumentSymbol
-	var hasFormatCommand bool = params.InitializationOptions.DocumentFormatting
+	hasCompletionCommand := params.InitializationOptions.Completion
+	hasHoverCommand := params.InitializationOptions.Hover
+	hasCodeActionCommand := params.InitializationOptions.CodeAction
+	hasSymbolCommand := params.InitializationOptions.DocumentSymbol
+	hasFormatCommand := params.InitializationOptions.DocumentFormatting
 	var hasDefinitionCommand bool
 
 	if len(h.commands) > 0 {

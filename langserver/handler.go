@@ -17,9 +17,10 @@ import (
 	"unicode"
 	"unicode/utf16"
 
-	"github.com/mattn/go-unicodeclass"
 	"github.com/reviewdog/errorformat"
 	"github.com/sourcegraph/jsonrpc2"
+
+	"github.com/mattn/go-unicodeclass"
 )
 
 // Config is
@@ -30,7 +31,7 @@ type Config struct {
 	Commands       *[]Command             `yaml:"commands"        json:"commands"`
 	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
 	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
-	TriggerChars   []string              `yaml:"trigger-chars"   json:"triggerChars"`
+	TriggerChars   []string               `yaml:"trigger-chars"   json:"triggerChars"`
 	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
 	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
 

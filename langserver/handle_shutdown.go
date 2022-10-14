@@ -6,7 +6,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleShutdown(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleShutdown(_ context.Context, conn *jsonrpc2.Conn, _ *jsonrpc2.Request) (result interface{}, err error) {
 	if h.lintTimer != nil {
 		h.lintTimer.Stop()
 	}

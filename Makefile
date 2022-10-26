@@ -34,14 +34,6 @@ $(GOBIN)/goxz:
 test: build
 	go test -v ./...
 
-.PHONY: lint
-lint: $(GOBIN)/golint
-	go vet ./...
-	golint -set_exit_status ./...
-
-$(GOBIN)/golint:
-	go install golang.org/x/lint/golint@latest
-
 .PHONY: clean
 clean:
 	rm -rf $(BIN) goxz

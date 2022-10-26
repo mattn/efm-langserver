@@ -106,7 +106,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 			},
 		},
 		files: map[DocumentURI]*File{
-			uri: &File{
+			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
@@ -157,7 +157,7 @@ func TestLintOffsetColumnsZero(t *testing.T) {
 			},
 		},
 		files: map[DocumentURI]*File{
-			uri: &File{
+			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
@@ -198,7 +198,7 @@ func TestLintOffsetColumnsNoOffset(t *testing.T) {
 			},
 		},
 		files: map[DocumentURI]*File{
-			uri: &File{
+			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
@@ -240,7 +240,7 @@ func TestLintOffsetColumnsNonZero(t *testing.T) {
 			},
 		},
 		files: map[DocumentURI]*File{
-			uri: &File{
+			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
@@ -285,7 +285,7 @@ func TestLintCategoryMap(t *testing.T) {
 			},
 		},
 		files: map[DocumentURI]*File{
-			uri: &File{
+			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
@@ -326,7 +326,7 @@ func TestLintRequireRootMarker(t *testing.T) {
 			},
 		},
 		files: map[DocumentURI]*File{
-			uri: &File{
+			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
@@ -429,7 +429,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 		configs: map[string][]Language{
 			"vim": {
 				{
-					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file! && echo ` + file2 + `:Empty l and c!` ,
+					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file! && echo ` + file2 + `:Empty l and c!`,
 					LintFormats:        []string{"%f:%l:%c:%m", "%f:%m"},
 					LintIgnoreExitCode: true,
 					LintWorkspace:      true,

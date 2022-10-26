@@ -14,7 +14,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleTextDocumentCodeAction(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleTextDocumentCodeAction(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -176,7 +176,7 @@ func filterCommands(uri DocumentURI, commands []Command) []Command {
 	return results
 }
 
-func (h *langHandler) codeAction(uri DocumentURI, params *CodeActionParams) ([]Command, error) {
+func (h *langHandler) codeAction(uri DocumentURI, _ *CodeActionParams) ([]Command, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)

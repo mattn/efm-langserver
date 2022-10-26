@@ -15,7 +15,7 @@ func (h *langHandler) handleWorkspaceWorkspaceFolders(_ context.Context, _ *json
 	return h.workspaceFolders()
 }
 
-func (h *langHandler) workspaceFolders() (result interface{}, err error) {
+func (h *langHandler) workspaceFolders() (result any, err error) {
 	workspaces := []WorkspaceFolder{}
 	for _, workspace := range h.folders {
 		workspaces = append(workspaces, WorkspaceFolder{

@@ -625,7 +625,7 @@ func (h *langHandler) addFolder(folder string) {
 	}
 }
 
-func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	switch req.Method {
 	case "initialize":
 		return h.handleInitialize(ctx, conn, req)

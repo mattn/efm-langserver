@@ -20,7 +20,7 @@ func (h *langHandler) handleDidChangeWorkspaceWorkspaceFolders(_ context.Context
 	return h.didChangeWorkspaceFolders(&params)
 }
 
-func (h *langHandler) didChangeWorkspaceFolders(params *DidChangeWorkspaceFoldersParams) (result interface{}, err error) {
+func (h *langHandler) didChangeWorkspaceFolders(params *DidChangeWorkspaceFoldersParams) (result any, err error) {
 	var folders []string
 	for _, removed := range params.Event.Removed {
 		for _, folder := range h.folders {

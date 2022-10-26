@@ -195,7 +195,7 @@ type PublishDiagnosticsParams struct {
 }
 
 // FormattingOptions is
-type FormattingOptions map[string]interface{}
+type FormattingOptions map[string]any
 
 // DocumentFormattingParams is
 type DocumentFormattingParams struct {
@@ -269,16 +269,16 @@ const (
 
 // Command is
 type Command struct {
-	Title     string        `json:"title" yaml:"title"`
-	Command   string        `json:"command" yaml:"command"`
-	Arguments []interface{} `json:"arguments,omitempty" yaml:"arguments,omitempty"`
-	OS        string        `json:"-" yaml:"os,omitempty"`
+	Title     string `json:"title" yaml:"title"`
+	Command   string `json:"command" yaml:"command"`
+	Arguments []any  `json:"arguments,omitempty" yaml:"arguments,omitempty"`
+	OS        string `json:"-" yaml:"os,omitempty"`
 }
 
 // WorkspaceEdit is
 type WorkspaceEdit struct {
-	Changes         interface{} `json:"changes"`         // { [uri: DocumentUri]: TextEdit[]; };
-	DocumentChanges interface{} `json:"documentChanges"` // (TextDocumentEdit[] | (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[]);
+	Changes         any `json:"changes"`         // { [uri: DocumentUri]: TextEdit[]; };
+	DocumentChanges any `json:"documentChanges"` // (TextDocumentEdit[] | (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[]);
 }
 
 // CodeAction is
@@ -307,13 +307,13 @@ type CompletionItem struct {
 	AdditionalTextEdits []TextEdit          `json:"additionalTextEdits,omitempty"`
 	CommitCharacters    []string            `json:"commitCharacters,omitempty"`
 	Command             *Command            `json:"command,omitempty"`
-	Data                interface{}         `json:"data,omitempty"`
+	Data                any                 `json:"data,omitempty"`
 }
 
 // Hover is
 type Hover struct {
-	Contents interface{} `json:"contents"`
-	Range    *Range      `json:"range"`
+	Contents any    `json:"contents"`
+	Range    *Range `json:"range"`
 }
 
 // MarkedString is
@@ -339,15 +339,15 @@ type MarkupContent struct {
 
 // WorkDoneProgressParams is
 type WorkDoneProgressParams struct {
-	WorkDoneToken interface{} `json:"workDoneToken"`
+	WorkDoneToken any `json:"workDoneToken"`
 }
 
 // ExecuteCommandParams is
 type ExecuteCommandParams struct {
 	WorkDoneProgressParams
 
-	Command   string        `json:"command"`
-	Arguments []interface{} `json:"arguments,omitempty"`
+	Command   string `json:"command"`
+	Arguments []any  `json:"arguments,omitempty"`
 }
 
 // CodeActionKind is
@@ -373,7 +373,7 @@ type CodeActionContext struct {
 
 // PartialResultParams is
 type PartialResultParams struct {
-	PartialResultToken interface{} `json:"partialResultToken"`
+	PartialResultToken any `json:"partialResultToken"`
 }
 
 // CodeActionParams is
@@ -393,8 +393,8 @@ type DidChangeConfigurationParams struct {
 
 // NotificationMessage is
 type NotificationMessage struct {
-	Method string      `json:"message"`
-	Params interface{} `json:"params"`
+	Method string `json:"message"`
+	Params any    `json:"params"`
 }
 
 // DocumentDefinitionParams is

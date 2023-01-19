@@ -33,11 +33,11 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 	}
 
 	var completion *CompletionProvider
-	hasCompletionCommand := params.InitializationOptions.Completion
-	hasHoverCommand := params.InitializationOptions.Hover
-	hasCodeActionCommand := params.InitializationOptions.CodeAction
-	hasSymbolCommand := params.InitializationOptions.DocumentSymbol
-	hasFormatCommand := params.InitializationOptions.DocumentFormatting
+	var hasCompletionCommand bool
+	var hasHoverCommand bool
+	var hasCodeActionCommand bool
+	var hasSymbolCommand bool
+	var hasFormatCommand bool
 	var hasDefinitionCommand bool
 
 	if len(h.commands) > 0 {
@@ -63,6 +63,14 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 				hasFormatCommand = true
 			}
 		}
+	}
+
+	if params.InitializationOptions != nil {
+		hasCompletionCommand = params.InitializationOptions.Completion
+		hasHoverCommand = params.InitializationOptions.Hover
+		hasCodeActionCommand = params.InitializationOptions.CodeAction
+		hasSymbolCommand = params.InitializationOptions.DocumentSymbol
+		hasFormatCommand = params.InitializationOptions.DocumentFormatting
 	}
 
 	if hasCompletionCommand {

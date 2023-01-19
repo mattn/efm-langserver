@@ -9,7 +9,7 @@ type DocumentURI string
 type InitializeParams struct {
 	ProcessID             int                `json:"processId,omitempty"`
 	RootURI               DocumentURI        `json:"rootUri,omitempty"`
-	InitializationOptions InitializeOptions  `json:"initializationOptions,omitempty"`
+	InitializationOptions *InitializeOptions `json:"initializationOptions,omitempty"`
 	Capabilities          ClientCapabilities `json:"capabilities,omitempty"`
 	Trace                 string             `json:"trace,omitempty"`
 }

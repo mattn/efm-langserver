@@ -13,6 +13,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 	"unicode"
 	"unicode/utf16"
@@ -111,6 +112,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 }
 
 type langHandler struct {
+	mu                sync.Mutex
 	loglevel          int
 	logger            *log.Logger
 	commands          []Command

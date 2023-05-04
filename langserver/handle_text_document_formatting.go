@@ -37,9 +37,13 @@ func (h *langHandler) formatRequest(uri DocumentURI, opt FormattingOptions) ([]T
 		return []TextEdit{}, nil
 	}
 
+	h.mu.Lock()
 	h.formatTimer = time.AfterFunc(h.formatDebounce, func() {
+		h.mu.Lock()
 		h.formatTimer = nil
+		h.mu.Unlock()
 	})
+	h.mu.Unlock()
 	return h.formatting(uri, opt)
 }
 

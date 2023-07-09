@@ -24,6 +24,19 @@ import (
 	"github.com/mattn/go-unicodeclass"
 )
 
+type eventType int
+
+const (
+	eventTypeChange eventType = iota
+	eventTypeSave
+	eventTypeOpen
+)
+
+type lintRequest struct {
+	URI       DocumentURI
+	EventType eventType
+}
+
 // Config is
 type Config struct {
 	Version        int                    `yaml:"version"`
@@ -64,6 +77,7 @@ type Language struct {
 	LintSource         string            `yaml:"lint-source" json:"lintSource"`
 	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
 	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
+	LintOnSave         bool              `yaml:"lint-on-save" json:"lintOnSave"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
 	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
 	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
@@ -94,7 +108,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		configs:           *config.Languages,
 		provideDefinition: config.ProvideDefinition,
 		files:             make(map[DocumentURI]*File),
-		request:           make(chan DocumentURI),
+		request:           make(chan lintRequest),
 		lintDebounce:      time.Duration(config.LintDebounce),
 		lintTimer:         nil,
 
@@ -119,7 +133,7 @@ type langHandler struct {
 	configs           map[string][]Language
 	provideDefinition bool
 	files             map[DocumentURI]*File
-	request           chan DocumentURI
+	request           chan lintRequest
 	lintDebounce      time.Duration
 	lintTimer         *time.Timer
 	formatDebounce    time.Duration
@@ -215,14 +229,14 @@ func toURI(path string) DocumentURI {
 	}).String())
 }
 
-func (h *langHandler) lintRequest(uri DocumentURI) {
+func (h *langHandler) lintRequest(uri DocumentURI, eventType eventType) {
 	if h.lintTimer != nil {
 		h.lintTimer.Reset(h.lintDebounce)
 		return
 	}
 	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
 		h.lintTimer = nil
-		h.request <- uri
+		h.request <- lintRequest{URI: uri, EventType: eventType}
 	})
 }
 
@@ -240,21 +254,21 @@ func (h *langHandler) linter() {
 	running := make(map[DocumentURI]context.CancelFunc)
 
 	for {
-		uri, ok := <-h.request
+		lintReq, ok := <-h.request
 		if !ok {
 			break
 		}
 
-		cancel, ok := running[uri]
+		cancel, ok := running[lintReq.URI]
 		if ok {
 			cancel()
 		}
 
 		ctx, cancel := context.WithCancel(context.Background())
-		running[uri] = cancel
+		running[lintReq.URI] = cancel
 
 		go func() {
-			uriToDiagnostics, err := h.lint(ctx, uri)
+			uriToDiagnostics, err := h.lint(ctx, lintReq.URI, lintReq.EventType)
 			if err != nil {
 				h.logger.Println(err)
 				return
@@ -262,11 +276,11 @@ func (h *langHandler) linter() {
 
 			for diagURI, diagnostics := range uriToDiagnostics {
 				if diagURI == "file:" {
-					diagURI = uri
+					diagURI = lintReq.URI
 				}
 				version := 0
-				if _, ok := h.files[uri]; ok {
-					version = h.files[uri].Version
+				if _, ok := h.files[lintReq.URI]; ok {
+					version = h.files[lintReq.URI].Version
 				}
 				h.conn.Notify(
 					ctx,
@@ -341,7 +355,7 @@ func isFilename(s string) bool {
 	}
 }
 
-func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentURI][]Diagnostic, error) {
+func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -358,6 +372,10 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI) (map[DocumentUR
 		for _, cfg := range cfgs {
 			// if we require markers and find that they dont exist we do not add the configuration
 			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker == true {
+				continue
+			}
+			// if LintOnSave is true, only lint when running on didSave
+			if cfg.LintOnSave && eventType != eventTypeSave {
 				continue
 			}
 			if cfg.LintCommand != "" {
@@ -573,7 +591,7 @@ func (h *langHandler) closeFile(uri DocumentURI) error {
 }
 
 func (h *langHandler) saveFile(uri DocumentURI) error {
-	h.lintRequest(uri)
+	h.lintRequest(uri, eventTypeSave)
 	return nil
 }
 
@@ -587,7 +605,7 @@ func (h *langHandler) openFile(uri DocumentURI, languageID string, version int) 
 	return nil
 }
 
-func (h *langHandler) updateFile(uri DocumentURI, text string, version *int) error {
+func (h *langHandler) updateFile(uri DocumentURI, text string, version *int, eventType eventType) error {
 	f, ok := h.files[uri]
 	if !ok {
 		return fmt.Errorf("document not found: %v", uri)
@@ -597,7 +615,7 @@ func (h *langHandler) updateFile(uri DocumentURI, text string, version *int) err
 		f.Version = *version
 	}
 
-	h.lintRequest(uri)
+	h.lintRequest(uri, eventType)
 	return nil
 }
 

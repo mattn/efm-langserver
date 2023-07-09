@@ -18,7 +18,7 @@ func (h *langHandler) handleTextDocumentDidChange(_ context.Context, _ *jsonrpc2
 	}
 
 	if len(params.ContentChanges) == 1 {
-		if err := h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text, &params.TextDocument.Version); err != nil {
+		if err := h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text, &params.TextDocument.Version, eventTypeChange); err != nil {
 			return nil, err
 		}
 	}

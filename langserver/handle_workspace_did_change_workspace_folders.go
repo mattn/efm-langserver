@@ -7,7 +7,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleDidChangeWorkspaceWorkspaceFolders(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleDidChangeWorkspaceWorkspaceFolders(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -20,7 +20,7 @@ func (h *langHandler) handleDidChangeWorkspaceWorkspaceFolders(_ context.Context
 	return h.didChangeWorkspaceFolders(&params)
 }
 
-func (h *langHandler) didChangeWorkspaceFolders(params *DidChangeWorkspaceFoldersParams) (result interface{}, err error) {
+func (h *langHandler) didChangeWorkspaceFolders(params *DidChangeWorkspaceFoldersParams) (result any, err error) {
 	var folders []string
 	for _, removed := range params.Event.Removed {
 		for _, folder := range h.folders {

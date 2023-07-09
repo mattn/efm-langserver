@@ -4,7 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -56,7 +56,7 @@ func main() {
 		}
 
 		dir := filepath.Join(configHome, "efm-langserver")
-		if err := os.MkdirAll(dir, 0700); err != nil {
+		if err := os.MkdirAll(dir, 0o700); err != nil {
 			log.Fatal(err)
 		}
 
@@ -87,7 +87,7 @@ func main() {
 	}
 
 	if quiet {
-		log.SetOutput(ioutil.Discard)
+		log.SetOutput(io.Discard)
 	}
 
 	log.Println("efm-langserver: reading on stdin, writing on stdout")
@@ -102,7 +102,7 @@ func main() {
 	var connOpt []jsonrpc2.ConnOpt
 
 	if logfile != "" {
-		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0660)
+		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o660)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -114,7 +114,7 @@ func main() {
 	}
 
 	if quiet && (logfile == "" || loglevel < 5) {
-		connOpt = append(connOpt, jsonrpc2.LogMessages(log.New(ioutil.Discard, "", 0)))
+		connOpt = append(connOpt, jsonrpc2.LogMessages(log.New(io.Discard, "", 0)))
 	}
 
 	handler := langserver.NewHandler(config)

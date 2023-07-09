@@ -14,7 +14,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleTextDocumentCodeAction(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleTextDocumentCodeAction(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -27,7 +27,7 @@ func (h *langHandler) handleTextDocumentCodeAction(_ context.Context, _ *jsonrpc
 	return h.codeAction(params.TextDocument.URI, &params)
 }
 
-func (h *langHandler) executeCommand(params *ExecuteCommandParams) (interface{}, error) {
+func (h *langHandler) executeCommand(params *ExecuteCommandParams) (any, error) {
 	if len(params.Arguments) != 1 {
 		return nil, fmt.Errorf("invalid command")
 	}
@@ -170,7 +170,7 @@ func filterCommands(uri DocumentURI, commands []Command) []Command {
 		results = append(results, Command{
 			Title:     v.Title,
 			Command:   fmt.Sprintf("efm-langserver\t%s\t%s", v.Command, string(uri)),
-			Arguments: []interface{}{string(uri)},
+			Arguments: []any{string(uri)},
 		})
 	}
 	return results

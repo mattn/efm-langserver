@@ -8,7 +8,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleWorkspaceDidChangeConfiguration(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleWorkspaceDidChangeConfiguration(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -21,7 +21,7 @@ func (h *langHandler) handleWorkspaceDidChangeConfiguration(_ context.Context, _
 	return h.didChangeConfiguration(&params.Settings)
 }
 
-func (h *langHandler) didChangeConfiguration(config *Config) (interface{}, error) {
+func (h *langHandler) didChangeConfiguration(config *Config) (any, error) {
 	if config.Languages != nil {
 		h.configs = *config.Languages
 	}

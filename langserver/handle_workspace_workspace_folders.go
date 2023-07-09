@@ -7,7 +7,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleWorkspaceWorkspaceFolders(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleWorkspaceWorkspaceFolders(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -15,7 +15,7 @@ func (h *langHandler) handleWorkspaceWorkspaceFolders(_ context.Context, _ *json
 	return h.workspaceFolders()
 }
 
-func (h *langHandler) workspaceFolders() (result interface{}, err error) {
+func (h *langHandler) workspaceFolders() (result any, err error) {
 	workspaces := []WorkspaceFolder{}
 	for _, workspace := range h.folders {
 		workspaces = append(workspaces, WorkspaceFolder{

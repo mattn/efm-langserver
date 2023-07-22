@@ -38,6 +38,7 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 	var hasCodeActionCommand bool
 	var hasSymbolCommand bool
 	var hasFormatCommand bool
+	var hasRangeFormatCommand bool
 	var hasDefinitionCommand bool
 
 	if len(h.commands) > 0 {
@@ -61,6 +62,9 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 			}
 			if v.FormatCommand != "" {
 				hasFormatCommand = true
+				if v.FormatCanRange {
+					hasRangeFormatCommand = true
+				}
 			}
 		}
 	}
@@ -71,6 +75,7 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 		hasCodeActionCommand = params.InitializationOptions.CodeAction
 		hasSymbolCommand = params.InitializationOptions.DocumentSymbol
 		hasFormatCommand = params.InitializationOptions.DocumentFormatting
+		hasRangeFormatCommand = params.InitializationOptions.RangeFormatting
 	}
 
 	if hasCompletionCommand {
@@ -87,6 +92,7 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 		Capabilities: ServerCapabilities{
 			TextDocumentSync:           TDSKFull,
 			DocumentFormattingProvider: hasFormatCommand,
+			RangeFormattingProvider:    hasRangeFormatCommand,
 			DocumentSymbolProvider:     hasSymbolCommand,
 			DefinitionProvider:         hasDefinitionCommand,
 			CompletionProvider:         completion,

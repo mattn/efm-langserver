@@ -17,6 +17,7 @@ type InitializeParams struct {
 // InitializeOptions is
 type InitializeOptions struct {
 	DocumentFormatting bool `json:"documentFormatting"`
+	RangeFormatting    bool `json:"documentRangeFormatting"`
 	Hover              bool `json:"hover"`
 	DocumentSymbol     bool `json:"documentSymbol"`
 	CodeAction         bool `json:"codeAction"`
@@ -77,6 +78,7 @@ type ServerCapabilities struct {
 	CompletionProvider         *CompletionProvider          `json:"completionProvider,omitempty"`
 	DefinitionProvider         bool                         `json:"definitionProvider,omitempty"`
 	DocumentFormattingProvider bool                         `json:"documentFormattingProvider,omitempty"`
+	RangeFormattingProvider    bool                         `json:"documentRangeFormattingProvider,omitempty"`
 	HoverProvider              bool                         `json:"hoverProvider,omitempty"`
 	CodeActionProvider         bool                         `json:"codeActionProvider,omitempty"`
 	Workspace                  *ServerCapabilitiesWorkspace `json:"workspace,omitempty"`

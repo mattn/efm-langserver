@@ -203,6 +203,13 @@ type DocumentFormattingParams struct {
 	Options      FormattingOptions      `json:"options"`
 }
 
+// DocumentRangeFormattingParams is
+type DocumentRangeFormattingParams struct {
+	TextDocument TextDocumentIdentifier `json:"textDocument"`
+	Range        Range                  `json:"range"`
+	Options      FormattingOptions      `json:"options"`
+}
+
 // TextEdit is
 type TextEdit struct {
 	Range   Range  `json:"range"`

@@ -158,6 +158,22 @@ tools:
       - '%f:%l:%c:%trror - %m'
       - '%f:%l:%c:%tarning - %m'
 
+  prettierd: &prettierd
+    format-command: >
+      prettierd ${INPUT} ${--range-start=charStart} ${--range-end=charEnd} \
+        ${--tab-width=tabSize}
+    format-stdin: true
+    root-markers:
+      - .prettierrc
+      - .prettierrc.json
+      - .prettierrc.js
+      - .prettierrc.yml
+      - .prettierrc.yaml
+      - .prettierrc.json5
+      - .prettierrc.mjs
+      - .prettierrc.cjs
+      - .prettierrc.toml
+
   python-autopep8: &python-autopep8
     format-command: 'autopep8 -'
     format-stdin: true
@@ -258,6 +274,7 @@ languages:
 
   javascript:
     - <<: *javascript-eslint
+    - <<: *prettierd
 
   json:
     - <<: *json-fixjson

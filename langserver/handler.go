@@ -645,6 +645,8 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentDidClose(ctx, conn, req)
 	case "textDocument/formatting":
 		return h.handleTextDocumentFormatting(ctx, conn, req)
+	case "textDocument/rangeFormatting":
+		return h.handleTextDocumentRangeFormatting(ctx, conn, req)
 	case "textDocument/documentSymbol":
 		return h.handleTextDocumentSymbol(ctx, conn, req)
 	case "textDocument/completion":

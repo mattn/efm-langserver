@@ -65,6 +65,7 @@ type Language struct {
 	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
 	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
+	FormatCanRange     bool              `yaml:"format-can-range" json:"formatCanRange"`
 	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
 	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
 	SymbolStdin        bool              `yaml:"symbol-stdin" json:"symbolStdin"`

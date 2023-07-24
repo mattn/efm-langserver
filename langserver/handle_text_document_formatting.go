@@ -138,18 +138,19 @@ Configs:
 				command = re.ReplaceAllString(command, fmt.Sprintf("$1 %v", v))
 				command = re2.ReplaceAllString(command, fmt.Sprintf("$1=%v", v))
 			case bool:
+				const FLAG = "$1"
 				if v {
-					command = re.ReplaceAllString(command, "$1")
-					command = re2.ReplaceAllString(command, "$1")
+					command = re.ReplaceAllString(command, FLAG)
+					command = re2.ReplaceAllString(command, FLAG)
 				} else {
-					command = nre.ReplaceAllString(command, "$1")
-					command = nre2.ReplaceAllString(command, "$1")
+					command = nre.ReplaceAllString(command, FLAG)
+					command = nre2.ReplaceAllString(command, FLAG)
 				}
 			}
 		}
 
 		// Range Options
-		if (rng.Start.Line != -1) {
+		if rng.Start.Line != -1 {
 			charStart := convertRowColToIndex(text, rng.Start.Line, rng.Start.Character)
 			charEnd := convertRowColToIndex(text, rng.End.Line, rng.End.Character)
 
@@ -177,7 +178,7 @@ Configs:
 			}
 		}
 
-    // remove unfilled placeholders
+		// remove unfilled placeholders
 		re := regexp.MustCompile(`\${[^}]*}`)
 		command = re.ReplaceAllString(command, "")
 

@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema",
   "additionalProperties": false,
+  "description": "If configuring via `DidChangeConfiguration` (e.g. an editor API such as `nvim-lspconfig`), all properties should be in camelCase instead of kebab-case.",
   "definitions": {
     "command-definition": {
       "description": "list of commands",
@@ -36,11 +37,15 @@
       "description": "definition of the tool",
       "properties": {
         "prefix": {
-          "description": "prefix string to be able to see where an error comming from",
+          "description": "If `lint-source` doesn't work, you can set a prefix here instead, which will render the messages as \"[prefix] message\".",
           "type": "string"
         },
+        "format-can-range": {
+          "description": "Whether the formatting command handles range start and range end",
+          "type": "boolean"
+        },
         "format-command": {
-          "description": "format command",
+          "description": "Formatting command. Input filename can be injected using `${INPUT}`, and flags can be injected using `${--flag:key}` (adds `--flag <value>` if value exists for key), `${--flag=key}` (adds `--flag=<value>` if value exists for key), or `${--flag:!key}` (adds `--flag` if value for key is falsy).\n\n`efm-langserver` may provide values for keys `charStart`, `charEnd`, `rowStart`, `rowEnd`, `colStart`, `colEnd`, or any key in [`interface FormattingOptions`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions).\n\nExample: `prettier --stdin --stdin-filepath ${INPUT} ${--tab-width:tabWidth} ${--use-tabs:insertSpaces} ${--range-start=charStart} ${--range-start=charEnd}`",
           "type": "string"
         },
         "format-stdin": {
@@ -72,7 +77,7 @@
           "type": "array"
         },
         "lint-command": {
-          "description": "lint command",
+          "description": "Lint command. Input filename can be injected using `${INPUT}`.",
           "type": "string"
         },
         "lint-offset-columns": {
@@ -84,7 +89,7 @@
           "type": "object"
         },
         "lint-formats": {
-          "description": "list of lint format",
+          "description": "List of Vim errorformats to capture. See: https://vimhelp.org/quickfix.txt.html#errorformats. If this is not expressive enough, you can edit the `lint-command` to do some preprocessing, e.g. using `sed` or `jq`.\n\n`efm-langserver` uses a Go implementation to parse the errors, which comes with a CLI for quick testing: https://github.com/reviewdog/errorformat",
           "items": {
             "type": "string"
           },

@@ -385,7 +385,7 @@ coc-settings.json
   },
 ```
 
-### Configuration for [elgot](https://github.com/joaotavora/eglot)
+### Configuration for [Eglot](https://github.com/joaotavora/eglot)
 
 Add to eglot-server-programs with major mode you want.
 

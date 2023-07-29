@@ -680,6 +680,8 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleWorkspaceExecuteCommand(ctx, conn, req)
 	case "workspace/didChangeConfiguration":
 		return h.handleWorkspaceDidChangeConfiguration(ctx, conn, req)
+	case "workspace/didChangeWorkspaceFolders":
+		return h.handleDidChangeWorkspaceWorkspaceFolders(ctx, conn, req)
 	case "workspace/workspaceFolders":
 		return h.handleWorkspaceWorkspaceFolders(ctx, conn, req)
 	}

@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -17,7 +16,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleTextDocumentDefinition(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handleTextDocumentDefinition(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	if req.Params == nil {
 		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
@@ -51,7 +50,7 @@ func (h *langHandler) findTag(fname string, tag string) ([]Location, error) {
 		if token[0] == tag {
 			token[2] = strings.TrimRight(token[2], `;"`)
 			fullpath := filepath.Clean(filepath.Join(h.rootPath, token[1]))
-			b, err := ioutil.ReadFile(fullpath)
+			b, err := os.ReadFile(fullpath)
 			if err != nil {
 				continue
 			}

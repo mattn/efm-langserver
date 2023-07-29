@@ -25,7 +25,7 @@ linters-settings:
         arguments:
           - maxLitCount: "3"
             allowStrs: '""'
-            allowInts: "0,1,2,3,4,5,0700,0660"
+            allowInts: "0,1,2,3,4,5,0700,0660,0o700,0o660"
             allowFloats: "0.0,0.,1.0,1.,2.0,2."
       - name: blank-imports
       - name: context-as-argument

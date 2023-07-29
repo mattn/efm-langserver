@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/url"
 	"os"
@@ -300,7 +299,7 @@ func matchRootPath(fname string, markers []string) string {
 	dir := filepath.Dir(filepath.Clean(fname))
 	var prev string
 	for dir != prev {
-		files, _ := ioutil.ReadDir(dir)
+		files, _ := os.ReadDir(dir)
 		for _, file := range files {
 			name := file.Name()
 			isDir := file.IsDir()
@@ -646,7 +645,7 @@ func (h *langHandler) addFolder(folder string) {
 	}
 }
 
-func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result interface{}, err error) {
+func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	switch req.Method {
 	case "initialize":
 		return h.handleInitialize(ctx, conn, req)
@@ -699,4 +698,11 @@ func replaceCommandInputFilename(command, fname, rootPath string) string {
 	command = strings.Replace(command, "${ROOT}", rootPath, -1)
 
 	return command
+}
+
+func succeeded(err error) bool {
+	exitErr, ok := err.(*exec.ExitError)
+	// When the context is canceled, the process is killed,
+	// and the exit code is -1
+	return ok && exitErr.ExitCode() < 0
 }

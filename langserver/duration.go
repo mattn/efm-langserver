@@ -16,7 +16,7 @@ func (d Duration) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON method Unmash duration from string or decimal
 func (d *Duration) UnmarshalJSON(b []byte) error {
-	var v interface{}
+	var v any
 	if err := json.Unmarshal(b, &v); err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func (d *Duration) UnmarshalJSON(b []byte) error {
 }
 
 // UnmarshalYAML method Unmash duration from string or decimal
-func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
+func (d *Duration) UnmarshalYAML(unmarshal func(any) error) error {
 	var s string
 	if err := unmarshal(&s); err != nil {
 		return err

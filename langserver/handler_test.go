@@ -20,7 +20,7 @@ func TestLintNoLinter(t *testing.T) {
 		},
 	}
 
-	_, err := h.lint(context.Background(), "file:///foo")
+	_, err := h.lint(context.Background(), "file:///foo", eventTypeChange)
 	if err != nil {
 		t.Fatal("Should not be an error if no linters")
 	}
@@ -35,7 +35,7 @@ func TestLintNoFileMatched(t *testing.T) {
 		},
 	}
 
-	_, err := h.lint(context.Background(), "file:///bar")
+	_, err := h.lint(context.Background(), "file:///bar", eventTypeChange)
 	if err == nil {
 		t.Fatal("Should be an error if no linters")
 	}
@@ -66,7 +66,7 @@ func TestLintFileMatched(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -113,7 +113,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -164,7 +164,7 @@ func TestLintOffsetColumnsZero(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -205,7 +205,7 @@ func TestLintOffsetColumnsNoOffset(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -247,7 +247,7 @@ func TestLintOffsetColumnsNonZero(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -292,7 +292,7 @@ func TestLintCategoryMap(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -333,7 +333,7 @@ func TestLintRequireRootMarker(t *testing.T) {
 		},
 	}
 
-	d, err := h.lint(context.Background(), uri)
+	d, err := h.lint(context.Background(), uri, eventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -376,7 +376,7 @@ func TestLintMultipleFiles(t *testing.T) {
 		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
 	}
 
-	d, err := h.lint(context.Background(), uri)
+	d, err := h.lint(context.Background(), uri, eventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -397,7 +397,7 @@ func TestLintMultipleFiles(t *testing.T) {
 	}
 
 	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
-	d, err = h.lint(context.Background(), uri)
+	d, err = h.lint(context.Background(), uri, eventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -449,7 +449,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
 	}
 
-	d, err := h.lint(context.Background(), uri)
+	d, err := h.lint(context.Background(), uri, eventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -481,7 +481,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	h.configs["vim"][0].LintCommand = `touch ` + startedFlagPath + ` && sleep 1000000 && echo ` + file + `:2:1:First file only!`
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		h.lint(ctx, uri)
+		h.lint(ctx, uri, eventTypeChange)
 	}()
 	for true {
 		if _, err := os.Stat(startedFlagPath); errors.Is(err, os.ErrNotExist) {
@@ -492,7 +492,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	}
 	cancel()
 	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
-	d, err = h.lint(context.Background(), uri)
+	d, err = h.lint(context.Background(), uri, eventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -535,7 +535,7 @@ func TestLintNoDiagnostics(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lint(context.Background(), uri)
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -545,6 +545,63 @@ func TestLintNoDiagnostics(t *testing.T) {
 	}
 	if len(d) != 0 {
 		t.Fatal("diagnostics should be an empty list", d)
+	}
+}
+
+func TestLintOnSave(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			"vim": {
+				{
+					LintCommand:        `echo ` + file + `:2:No it is normal!`,
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+					LintOnSave:         true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := uriToDiag[uri]
+	if len(d) != 0 {
+		t.Fatal("diagnostics should be empty", d)
+	}
+
+	uriToDiag, err = h.lint(context.Background(), uri, eventTypeSave)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d = uriToDiag[uri]
+	if len(d) != 1 {
+		t.Fatal("diagnostics should be only one", d)
+	}
+	if d[0].Range.Start.Line != 1 {
+		t.Fatalf("range.start.line should be %v but got: %v", 1, d[0].Range.Start.Line)
+	}
+	if d[0].Range.Start.Character != 0 {
+		t.Fatalf("range.start.character should be %v but got: %v", 0, d[0].Range.Start.Character)
+	}
+	if d[0].Severity != 1 {
+		t.Fatalf("severity should be %v but got: %v", 0, d[0].Severity)
+	}
+	if strings.TrimSpace(d[0].Message) != "No it is normal!" {
+		t.Fatalf("message should be %q but got: %q", "No it is normal!", strings.TrimSpace(d[0].Message))
 	}
 }
 

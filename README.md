@@ -108,6 +108,13 @@ tools:
     format-stdin: true
     format-command: htmlbeautifier
 
+  gitcommit-gitlint: &gitcommit-gitlint
+    lint-command: 'gitlint'
+    lint-stdin: true
+    lint-formats:
+      - '%l: %m: "%r"'
+      - '%l: %m'
+
   html-prettier: &html-prettier
     format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
 
@@ -276,6 +283,9 @@ languages:
 
   eruby:
     - <<: *eruby-erb
+
+  gitcommit:
+    - <<: *gitcommit-gitlint
 
   html:
     - <<: *html-prettier

@@ -451,6 +451,20 @@ lua = {
 }
 ```
 
+### Configuration for [Helix](https://github.com/helix-editor/helix)
+`~/.config/helix/languages.toml`
+```toml
+[language-server.efm]
+command = "efm-langserver"
+
+[[language]]
+name = "typescript"
+language-servers = [
+  { name = "efm", only-features = [ "diagnostics", "format" ] },
+  { name = "typescript-language-server", except-features = [ "format" ] }
+]
+```
+
 ## Installation
 
 ```console

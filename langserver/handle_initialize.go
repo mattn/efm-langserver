@@ -41,6 +41,15 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 	var hasRangeFormatCommand bool
 	var hasDefinitionCommand bool
 
+	if params.InitializationOptions != nil {
+		hasCompletionCommand = params.InitializationOptions.Completion
+		hasHoverCommand = params.InitializationOptions.Hover
+		hasCodeActionCommand = params.InitializationOptions.CodeAction
+		hasSymbolCommand = params.InitializationOptions.DocumentSymbol
+		hasFormatCommand = params.InitializationOptions.DocumentFormatting
+		hasRangeFormatCommand = params.InitializationOptions.RangeFormatting
+	}
+
 	if len(h.commands) > 0 {
 		hasCodeActionCommand = true
 	}
@@ -49,6 +58,7 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 			hasDefinitionCommand = true
 		}
 	}
+
 	for _, config := range h.configs {
 		for _, v := range config {
 			if v.CompletionCommand != "" {
@@ -67,15 +77,6 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 				}
 			}
 		}
-	}
-
-	if params.InitializationOptions != nil {
-		hasCompletionCommand = params.InitializationOptions.Completion
-		hasHoverCommand = params.InitializationOptions.Hover
-		hasCodeActionCommand = params.InitializationOptions.CodeAction
-		hasSymbolCommand = params.InitializationOptions.DocumentSymbol
-		hasFormatCommand = params.InitializationOptions.DocumentFormatting
-		hasRangeFormatCommand = params.InitializationOptions.RangeFormatting
 	}
 
 	if hasCompletionCommand {

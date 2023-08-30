@@ -6,7 +6,7 @@ require (
 	github.com/mattn/go-unicodeclass v0.0.1
 	github.com/reviewdog/errorformat v0.0.0-20220309155058-b075c45b6d9a
 	github.com/sourcegraph/jsonrpc2 v0.1.0
-	gopkg.in/yaml.v3 v3.0.0-20210107192922-496545a6307b
+	gopkg.in/yaml.v3 v3.0.0
 )
 
 require (

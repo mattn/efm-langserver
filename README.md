@@ -164,6 +164,16 @@ tools:
       - mix.lock
       - mix.exs
 
+  perl-perlcritic: &perl-perlcritic
+    lint-command: 'perlcritic --nocolor -3 --verbose "%l:%c %m\n"'
+    lint-ignore-exit-code: true
+    lint-formats:
+      - '%l:%c %m'
+
+  perl-perltidy: &perl-perltidy
+    format-command: "perltidy -b"
+    format-stdin: true
+
   php-phpstan: &php-phpstan
     lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
 
@@ -308,6 +318,10 @@ languages:
   markdown:
     - <<: *markdown-markdownlint
     - <<: *markdown-pandoc
+
+  perl:
+    - <<: *perl-perltidy
+    - <<: *perl-perlcritic
 
   php:
     - <<: *php-phpstan

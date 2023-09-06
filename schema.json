@@ -68,6 +68,9 @@
             "plaintext"
           ]
         },
+        "hover-chars": {
+          "type": "string"
+        },
         "env": {
           "description": "command environment variables and values",
           "items": {
@@ -104,9 +107,25 @@
           "description": "offset value to skip lines",
           "type": "number"
         },
+        "lint-on-save": {
+          "description": "only lint on save, i.e. don't lint on text changed",
+          "type": "boolean"
+        },
+        "lint-severity": {
+          "description": "default severity to show if violation doesn't provide severity. 1 = error, 2 = warning, 3 = info, 4 = hint",
+          "type": "number"
+        },
+        "lint-source": {
+          "description": "show where the lint came from, e.g. 'eslint'",
+          "type": "string"
+        },
         "lint-stdin": {
           "default": true,
           "description": "use stdin for the lint",
+          "type": "boolean"
+        },
+        "lint-workspace": {
+          "description": "indicates that the command lints the whole workspace and thus doesn't need a filename argument nor stdin",
           "type": "boolean"
         },
         "completion-command": {
@@ -117,6 +136,18 @@
           "default": true,
           "description": "use stdin for the completion",
           "type": "boolean"
+        },
+        "symbol-command": {
+          "type": "string"
+        },
+        "symbol-stdin": {
+          "type": "boolean"
+        },
+        "symbol-formats": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
         },
         "root-markers": {
           "description": "markers to find root directory",
@@ -172,7 +203,7 @@
       "type": "array"
     },
     "log-file": {
-      "description": "path to log file",
+      "description": "(YAML only) path to log file",
       "type": "string"
     },
     "log-level": {
@@ -180,9 +211,17 @@
       "minimum": 1,
       "type": "number"
     },
-    "lint-debounce": {
-      "description": "debounce for lints",
+    "format-debounce": {
+      "description": "duration to debounce calls to the formatter executable. e.g: 1s",
       "type": "string"
+    },
+    "lint-debounce": {
+      "description": "duration to debounce calls to the linter executable. e.g.: 1s",
+      "type": "string"
+    },
+    "provide-definition": {
+      "description": "(YAML only) Whether this language server should be used for go-to-definition requests",
+      "type": "boolean"
     },
     "trigger-chars": {
       "description": "trigger characters for completion",

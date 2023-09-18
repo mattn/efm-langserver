@@ -207,7 +207,12 @@ Configs:
 		if h.loglevel >= 3 {
 			h.logger.Println(command+":", string(b))
 		}
-		text = strings.Replace(string(b), "\r", "", -1)
+		
+        if config.FormatTrimFile {
+			text = strings.Trim(text, "\r\n ")
+		}
+		
+        text = strings.Replace(string(b), "\r", "", -1)
 	}
 
 	if formatted {

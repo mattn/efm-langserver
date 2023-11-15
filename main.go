@@ -90,13 +90,15 @@ func main() {
 		log.SetOutput(io.Discard)
 	}
 
-	log.Println("efm-langserver: reading on stdin, writing on stdout")
-
 	if logfile == "" {
 		logfile = config.LogFile
 	}
 	if config.LogLevel > 0 {
 		loglevel = config.LogLevel
+	}
+
+	if config.LogLevel > 1 {
+		log.Println("efm-langserver: reading on stdin, writing on stdout")
 	}
 
 	var connOpt []jsonrpc2.ConnOpt
@@ -122,8 +124,9 @@ func main() {
 		context.Background(),
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),
 		handler, connOpt...).DisconnectNotify()
-
-	log.Println("efm-langserver: connections closed")
+	if config.LogLevel > 1 {
+		log.Println("efm-langserver: connections closed")
+	}
 }
 
 type stdrwc struct{}

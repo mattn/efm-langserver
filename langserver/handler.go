@@ -692,12 +692,19 @@ func replaceCommandInputFilename(command, fname, rootPath string) string {
 	ext := filepath.Ext(fname)
 	ext = strings.TrimPrefix(ext, ".")
 
-	command = strings.Replace(command, "${INPUT}", fname, -1)
+	command = strings.Replace(command, "${INPUT}", escapeBrackets(fname), -1)
 	command = strings.Replace(command, "${FILEEXT}", ext, -1)
-	command = strings.Replace(command, "${FILENAME}", filepath.FromSlash(fname), -1)
-	command = strings.Replace(command, "${ROOT}", rootPath, -1)
+	command = strings.Replace(command, "${FILENAME}", escapeBrackets(filepath.FromSlash(fname)), -1)
+	command = strings.Replace(command, "${ROOT}", escapeBrackets(rootPath), -1)
 
 	return command
+}
+
+func escapeBrackets(path string) string {
+	path = strings.Replace(path, "(", `\(`, -1)
+	path = strings.Replace(path, ")", `\)`, -1)
+
+	return path
 }
 
 func succeeded(err error) bool {

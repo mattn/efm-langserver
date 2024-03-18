@@ -7,6 +7,33 @@ generated from specified command. This is useful for editing code with linter.
 
 ![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)
 
+* [Installation](#installation)
+* [Usage](#usage)
+  + [Configuration](#configuration)
+    - [InitializeParams](#initializeparams)
+  + [Example for config.yaml](#example-for-configyaml)
+  + [Example for DidChangeConfiguration notification](#example-for-didchangeconfiguration-notification)
+* [Client Setup](#client-setup)
+  + [Configuration for vim-lsp](#configuration-for-vim-lsp)
+  + [Configuration for coc.nvim](#configuration-for-cocnvim)
+  + [Configuration for Eglot (Emacs)](#configuration-for-eglot)
+  + [Configuration for neovim builtin LSP with nvim-lspconfig](#configuration-for-neovim-builtin-lsp-with-nvim-lspconfig)
+  + [Configuration for Helix](#configuration-for-helix)
+  + [Configuration for VSCode](#configuration-for-vscode)
+* [License](#license)
+* [Author](#author)
+
+## Installation
+
+```console
+go install github.com/mattn/efm-langserver@latest
+```
+
+or via [Homebrew](https://brew.sh/):
+```console
+brew install efm-langserver
+```
+
 ## Usage
 
 ```text
@@ -377,6 +404,8 @@ log-level: 1
 }
 ```
 
+## Client Setup
+
 ### Configuration for [vim-lsp](https://github.com/prabirshrestha/vim-lsp/)
 
 ```vim
@@ -409,7 +438,7 @@ coc-settings.json
   },
 ```
 
-### Configuration for [Eglot](https://github.com/joaotavora/eglot)
+### Configuration for [Eglot](https://github.com/joaotavora/eglot) (Emacs)
 
 Add to eglot-server-programs with major mode you want.
 
@@ -479,15 +508,16 @@ language-servers = [
 ]
 ```
 
-## Installation
+### Configuration for [VSCode](https://github.com/microsoft/vscode)
+[Generic LSP Client for VSCode](https://github.com/llllvvuu/vscode-glspc)
 
-```console
-go install github.com/mattn/efm-langserver@latest
-```
-
-Homebrew
-```console
-brew install efm-langserver
+Example `settings.json` (change to fit your local installs):
+```json
+{
+  "glspc.languageId": "lua",
+  "glspc.serverCommand": "/Users/me/.local/share/nvim/mason/bin/efm-langserver",
+  "glspc.pathPrepend": "/Users/me/.local/share/rtx/installs/python/3.11.4/bin:/Users/me/.local/share/rtx/installs/node/20.3.1/bin",
+}
 ```
 
 ## License

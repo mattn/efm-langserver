@@ -15,6 +15,8 @@ github.com/reviewdog/errorformat v0.0.0-20220309155058-b075c45b6d9a h1:HIL+jTKsW
 github.com/reviewdog/errorformat v0.0.0-20220309155058-b075c45b6d9a/go.mod h1:AqhrP0G7F9YRROF10JQwdd4cNO8bdm6bY6KzcOc3Cp8=
 github.com/reviewdog/errorformat v0.0.0-20230917110423-33358de5bbea h1:4nmQZsFy/s1J6faH8D7UQWcGz/BcC/uFMlsPkg/4hRg=
 github.com/reviewdog/errorformat v0.0.0-20230917110423-33358de5bbea/go.mod h1:AqhrP0G7F9YRROF10JQwdd4cNO8bdm6bY6KzcOc3Cp8=
+github.com/reviewdog/errorformat v0.0.0-20240311054359-739e471a49b3 h1:lV04V4ovHohXYTxIk6pttGRTu/AcxuYqJ/DGetAonqU=
+github.com/reviewdog/errorformat v0.0.0-20240311054359-739e471a49b3/go.mod h1:AqhrP0G7F9YRROF10JQwdd4cNO8bdm6bY6KzcOc3Cp8=
 github.com/sourcegraph/jsonrpc2 v0.1.0 h1:ohJHjZ+PcaLxDUjqk2NC3tIGsVa5bXThe1ZheSXOjuk=
 github.com/sourcegraph/jsonrpc2 v0.1.0/go.mod h1:ZafdZgk/axhT1cvZAPOhw+95nz2I/Ra5qMlU4gTRwIo=
 github.com/sourcegraph/jsonrpc2 v0.2.0 h1:KjN/dC4fP6aN9030MZCJs9WQbTOjWHhrtKVpzzSrr/U=

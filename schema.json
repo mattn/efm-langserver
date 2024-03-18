@@ -107,6 +107,11 @@
           "description": "offset value to skip lines",
           "type": "number"
         },
+        "lint-after-open": {
+          "default": true,
+          "description": "lint after open",
+          "type": "boolean"
+        },
         "lint-on-save": {
           "description": "only lint on save, i.e. don't lint on text changed",
           "type": "boolean"

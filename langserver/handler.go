@@ -76,6 +76,7 @@ type Language struct {
 	LintSource         string            `yaml:"lint-source" json:"lintSource"`
 	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
 	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
+	LintAfterOpen      bool              `yaml:"lint-after-open" json:"lintAfterOpen"`
 	LintOnSave         bool              `yaml:"lint-on-save" json:"lintOnSave"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
 	FormatCanRange     bool              `yaml:"format-can-range" json:"formatCanRange"`
@@ -374,9 +375,18 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker == true {
 				continue
 			}
-			// if LintOnSave is true, only lint when running on didSave
-			if cfg.LintOnSave && eventType != eventTypeSave {
-				continue
+			switch eventType {
+			case eventTypeOpen:
+				// if LintAfterOpen is not true, ignore didOpen
+				if !cfg.LintAfterOpen {
+					continue
+				}
+			case eventTypeChange:
+				// if LintOnSave is true, ignore didChange
+				if cfg.LintOnSave {
+					continue
+				}
+			default:
 			}
 			if cfg.LintCommand != "" {
 				configs = append(configs, cfg)

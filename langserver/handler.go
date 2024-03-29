@@ -76,7 +76,7 @@ type Language struct {
 	LintSource         string            `yaml:"lint-source" json:"lintSource"`
 	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
 	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
-	LintAfterOpen      bool              `yaml:"lint-after-open" json:"lintAfterOpen"`
+	LintAfterOpen      bool              `default:"true" yaml:"lint-after-open" json:"lintAfterOpen"`
 	LintOnSave         bool              `yaml:"lint-on-save" json:"lintOnSave"`
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
 	FormatCanRange     bool              `yaml:"format-can-range" json:"formatCanRange"`

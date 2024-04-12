@@ -151,7 +151,7 @@ tools:
     lint-stdin: true
     lint-formats:
       - "%f(%l,%c): %tarning %m"
-      - "%f(%l,%c): %rror %m"
+      - "%f(%l,%c): %trror %m"
 
   json-fixjson: &json-fixjson
     format-command: 'fixjson'

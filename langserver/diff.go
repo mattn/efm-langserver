@@ -7,57 +7,82 @@
 package langserver
 
 import (
+	"slices"
 	"strings"
-)
-
-// OpKind is used to denote the type of operation a line represents.
-type OpKind int
-
-const (
-	// Delete is the operation kind for a line that is present in the input
-	// but not in the output.
-	Delete OpKind = iota
-	// Insert is the operation kind for a line that is new in the output.
-	Insert
-	// Equal is the operation kind for a line that is the same in the input and
-	// output, often used to provide context around edited lines.
-	Equal
 )
 
 // Sources:
 // https://blog.jcoglan.com/2017/02/17/the-myers-diff-algorithm-part-3/
 // https://www.codeproject.com/Articles/42279/%2FArticles%2F42279%2FInvestigating-Myers-diff-algorithm-Part-1-of-2
 
-// ComputeEdits computes diff edits from 2 string inputs
+// ComputeEdits returns the diffs of two strings using a simple
+// line-based implementation, like [diff.Strings].
 func ComputeEdits(_ DocumentURI, before, after string) []TextEdit {
 	ops := operations(splitLines(before), splitLines(after))
 	edits := make([]TextEdit, 0, len(ops))
+
+	// If there're some insertions on the same line, they must be reversed to be applied in order.
+	// So memorize the last insertion line and its index.
+	var insHankLine int
+	var insHankIndex int
 	for _, op := range ops {
 		switch op.Kind {
-		case Delete:
+		case opDelete:
 			// Delete: unformatted[i1:i2] is deleted.
 			edits = append(edits, TextEdit{Range: Range{
 				Start: Position{Line: op.I1, Character: 0},
 				End:   Position{Line: op.I2, Character: 0},
 			}})
-		case Insert:
+			insHankLine = -1 // Reset insertion hanking
+		case opInsert:
 			// Insert: formatted[j1:j2] is inserted at unformatted[i1:i1].
 			if content := strings.Join(op.Content, ""); content != "" {
-				edits = append(edits, TextEdit{
+				newEdit := TextEdit{
 					Range: Range{
 						Start: Position{Line: op.I1, Character: 0},
 						End:   Position{Line: op.I2, Character: 0},
 					},
 					NewText: content,
-				})
+				}
+
+				if insHankLine == op.I1 {
+					// If there're some insertion on the same line, insert it before the hank of the last insertions.
+					edits = slices.Insert(edits, insHankIndex, newEdit)
+				} else {
+					insHankLine = op.I1
+					insHankIndex = len(edits)
+					edits = append(edits, newEdit)
+				}
 			}
 		}
 	}
 	return edits
 }
 
+// opKind is used to denote the type of operation a line represents.
+type opKind int
+
+const (
+	opDelete opKind = iota // line deleted from input (-)
+	opInsert               // line inserted into output (+)
+	opEqual                // line present in input and output
+)
+
+func (kind opKind) String() string {
+	switch kind {
+	case opDelete:
+		return "delete"
+	case opInsert:
+		return "insert"
+	case opEqual:
+		return "equal"
+	default:
+		panic("unknown opKind")
+	}
+}
+
 type operation struct {
-	Kind    OpKind
+	Kind    opKind
 	Content []string // content from b
 	I1, I2  int      // indices of the line in a
 	J1      int      // indices of the line in b, J2 implied by len(Content)
@@ -83,7 +108,7 @@ func operations(a, b []string) []*operation {
 			return
 		}
 		op.I2 = i2
-		if op.Kind == Insert {
+		if op.Kind == opInsert {
 			op.Content = b[op.J1:j2]
 		}
 		solution[i] = op
@@ -99,7 +124,7 @@ func operations(a, b []string) []*operation {
 		for snake[0]-snake[1] > x-y {
 			if op == nil {
 				op = &operation{
-					Kind: Delete,
+					Kind: opDelete,
 					I1:   x,
 					J1:   y,
 				}
@@ -115,7 +140,7 @@ func operations(a, b []string) []*operation {
 		for snake[0]-snake[1] < x-y {
 			if op == nil {
 				op = &operation{
-					Kind: Insert,
+					Kind: opInsert,
 					I1:   x,
 					J1:   y,
 				}

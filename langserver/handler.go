@@ -556,7 +556,8 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 					continue
 				}
 			} else {
-				if diagURI != uri && !config.LintWorkspace {
+				diagFname, _ := fromURI(diagURI)
+				if diagFname != fname && !config.LintWorkspace {
 					continue
 				}
 			}

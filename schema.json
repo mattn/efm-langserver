@@ -48,6 +48,11 @@
           "description": "Formatting command. Input filename can be injected using `${INPUT}`, and flags can be injected using `${--flag:key}` (adds `--flag <value>` if value exists for key), `${--flag=key}` (adds `--flag=<value>` if value exists for key), or `${--flag:!key}` (adds `--flag` if value for key is falsy).\n\n`efm-langserver` may provide values for keys `charStart`, `charEnd`, `rowStart`, `rowEnd`, `colStart`, `colEnd`, or any key in [`interface FormattingOptions`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions).\n\nExample: `prettier --stdin --stdin-filepath ${INPUT} ${--tab-width:tabWidth} ${--use-tabs:insertSpaces} ${--range-start=charStart} ${--range-start=charEnd}`",
           "type": "string"
         },
+        "format-ignore-exit-code": {
+          "default": false,
+          "description": "ignore exit code of format",
+          "type": "boolean"
+        },
         "format-stdin": {
           "description": "use stdin for the format",
           "type": "boolean"

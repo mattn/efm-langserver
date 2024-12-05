@@ -520,6 +520,22 @@ Example `settings.json` (change to fit your local installs):
 }
 ```
 
+### Configuration for [SublimeText LSP](https://lsp.sublimetext.io)
+
+Open `Preferences: LSP Settings` command from the Command Palette (Ctrl+Shift+P)
+
+```
+{
+	"clients": {
+	    "efm-langserver": {
+	      "enabled": true,
+	      "command": ["efm-langserver"],
+	      "selector": "source.c | source.php | source.python" // see https://www.sublimetext.com/docs/3/selectors.html
+	    }
+  	}
+}
+```
+
 ## License
 
 MIT

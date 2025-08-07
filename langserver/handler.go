@@ -44,12 +44,8 @@ type Config struct {
 	Commands       *[]Command             `yaml:"commands"        json:"commands"`
 	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
 	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
-	TriggerChars   []string               `yaml:"trigger-chars"   json:"triggerChars"`
 	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
 	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
-
-	// Toggle support for "go to definition" requests.
-	ProvideDefinition bool `yaml:"provide-definition"`
 
 	Filename string      `yaml:"-"`
 	Logger   *log.Logger `yaml:"-"`
@@ -81,15 +77,6 @@ type Language struct {
 	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
 	FormatCanRange     bool              `yaml:"format-can-range" json:"formatCanRange"`
 	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
-	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
-	SymbolStdin        bool              `yaml:"symbol-stdin" json:"symbolStdin"`
-	SymbolFormats      []string          `yaml:"symbol-formats" json:"symbolFormats"`
-	CompletionCommand  string            `yaml:"completion-command" json:"completionCommand"`
-	CompletionStdin    bool              `yaml:"completion-stdin" json:"completionStdin"`
-	HoverCommand       string            `yaml:"hover-command" json:"hoverCommand"`
-	HoverStdin         bool              `yaml:"hover-stdin" json:"hoverStdin"`
-	HoverType          string            `yaml:"hover-type" json:"hoverType"`
-	HoverChars         string            `yaml:"hover-chars" json:"hoverChars"`
 	Env                []string          `yaml:"env" json:"env"`
 	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
 	RequireMarker      bool              `yaml:"require-marker" json:"requireMarker"`
@@ -103,22 +90,20 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 	}
 
 	handler := &langHandler{
-		loglevel:          config.LogLevel,
-		logger:            config.Logger,
-		commands:          *config.Commands,
-		configs:           *config.Languages,
-		provideDefinition: config.ProvideDefinition,
-		files:             make(map[DocumentURI]*File),
-		request:           make(chan lintRequest),
-		lintDebounce:      time.Duration(config.LintDebounce),
-		lintTimer:         nil,
+		loglevel:     config.LogLevel,
+		logger:       config.Logger,
+		commands:     *config.Commands,
+		configs:      *config.Languages,
+		files:        make(map[DocumentURI]*File),
+		request:      make(chan lintRequest),
+		lintDebounce: time.Duration(config.LintDebounce),
+		lintTimer:    nil,
 
 		formatDebounce: time.Duration(config.FormatDebounce),
 		formatTimer:    nil,
 		conn:           nil,
 		filename:       config.Filename,
 		rootMarkers:    *config.RootMarkers,
-		triggerChars:   config.TriggerChars,
 
 		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
 	}
@@ -127,24 +112,22 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 }
 
 type langHandler struct {
-	mu                sync.Mutex
-	loglevel          int
-	logger            *log.Logger
-	commands          []Command
-	configs           map[string][]Language
-	provideDefinition bool
-	files             map[DocumentURI]*File
-	request           chan lintRequest
-	lintDebounce      time.Duration
-	lintTimer         *time.Timer
-	formatDebounce    time.Duration
-	formatTimer       *time.Timer
-	conn              *jsonrpc2.Conn
-	rootPath          string
-	filename          string
-	folders           []string
-	rootMarkers       []string
-	triggerChars      []string
+	mu             sync.Mutex
+	loglevel       int
+	logger         *log.Logger
+	commands       []Command
+	configs        map[string][]Language
+	files          map[DocumentURI]*File
+	request        chan lintRequest
+	lintDebounce   time.Duration
+	lintTimer      *time.Timer
+	formatDebounce time.Duration
+	formatTimer    *time.Timer
+	conn           *jsonrpc2.Conn
+	rootPath       string
+	filename       string
+	folders        []string
+	rootMarkers    []string
 
 	// lastPublishedURIs is mapping from LanguageID string to mapping of
 	// whether diagnostics are published in a DocumentURI or not.
@@ -675,18 +658,6 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentFormatting(ctx, conn, req)
 	case "textDocument/rangeFormatting":
 		return h.handleTextDocumentRangeFormatting(ctx, conn, req)
-	case "textDocument/documentSymbol":
-		return h.handleTextDocumentSymbol(ctx, conn, req)
-	case "textDocument/completion":
-		return h.handleTextDocumentCompletion(ctx, conn, req)
-	case "textDocument/definition":
-		return h.handleTextDocumentDefinition(ctx, conn, req)
-	case "textDocument/hover":
-		return h.handleTextDocumentHover(ctx, conn, req)
-	case "textDocument/codeAction":
-		return h.handleTextDocumentCodeAction(ctx, conn, req)
-	case "workspace/executeCommand":
-		return h.handleWorkspaceExecuteCommand(ctx, conn, req)
 	case "workspace/didChangeConfiguration":
 		return h.handleWorkspaceDidChangeConfiguration(ctx, conn, req)
 	case "workspace/didChangeWorkspaceFolders":

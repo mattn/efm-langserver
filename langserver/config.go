@@ -11,10 +11,9 @@ import (
 // LoadConfig load configuration from file
 func LoadConfig(yamlfile string) (*Config, error) {
 	var config = Config{
-		ProvideDefinition: true, // Enabled by default.
-		Commands:          &[]Command{},
-		Languages:         &map[string][]Language{},
-		RootMarkers:       &[]string{},
+		Commands:    &[]Command{},
+		Languages:   &map[string][]Language{},
+		RootMarkers: &[]string{},
 	}
 	var config1 Config1
 
@@ -47,12 +46,5 @@ func LoadConfig(yamlfile string) (*Config, error) {
 		config.Languages = &languages
 	}
 	config.Filename = yamlfile
-	for _, v := range *config.Languages {
-		for _, l := range v {
-			if l.HoverChars == "" {
-				l.HoverChars = "_"
-			}
-		}
-	}
 	return &config, nil
 }

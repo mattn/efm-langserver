@@ -41,7 +41,6 @@ type Config struct {
 	Version        int                    `yaml:"version"`
 	LogFile        string                 `yaml:"log-file"`
 	LogLevel       int                    `yaml:"log-level"       json:"logLevel"`
-	Commands       *[]Command             `yaml:"commands"        json:"commands"`
 	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
 	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
 	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
@@ -49,14 +48,6 @@ type Config struct {
 
 	Filename string      `yaml:"-"`
 	Logger   *log.Logger `yaml:"-"`
-}
-
-// Config1 is
-type Config1 struct {
-	Version   int                 `yaml:"version"`
-	Logger    *log.Logger         `yaml:"-"`
-	Commands  []Command           `yaml:"commands"`
-	Languages map[string]Language `yaml:"languages"`
 }
 
 // Language is
@@ -80,7 +71,6 @@ type Language struct {
 	Env                []string          `yaml:"env" json:"env"`
 	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
 	RequireMarker      bool              `yaml:"require-marker" json:"requireMarker"`
-	Commands           []Command         `yaml:"commands" json:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -92,7 +82,6 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 	handler := &langHandler{
 		loglevel:     config.LogLevel,
 		logger:       config.Logger,
-		commands:     *config.Commands,
 		configs:      *config.Languages,
 		files:        make(map[DocumentURI]*File),
 		request:      make(chan lintRequest),
@@ -115,7 +104,6 @@ type langHandler struct {
 	mu             sync.Mutex
 	loglevel       int
 	logger         *log.Logger
-	commands       []Command
 	configs        map[string][]Language
 	files          map[DocumentURI]*File
 	request        chan lintRequest

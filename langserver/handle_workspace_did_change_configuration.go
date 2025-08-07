@@ -30,9 +30,6 @@ func (h *langHandler) didChangeConfiguration(config *Config) (any, error) {
 	if config.RootMarkers != nil {
 		h.rootMarkers = *config.RootMarkers
 	}
-	if config.Commands != nil {
-		h.commands = *config.Commands
-	}
 	if config.LogLevel > 0 {
 		h.loglevel = config.LogLevel
 	}

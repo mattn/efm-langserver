@@ -1,4 +1,4 @@
-module github.com/mattn/efm-langserver
+module github.com/konradmalik/efm-langserver
 
 go 1.23
 

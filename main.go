@@ -13,7 +13,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 	"gopkg.in/yaml.v3"
 
-	"github.com/mattn/efm-langserver/langserver"
+	"github.com/konradmalik/efm-langserver/langserver"
 )
 
 const (

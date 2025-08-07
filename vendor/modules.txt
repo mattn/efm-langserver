@@ -1,0 +1,16 @@
+# github.com/kr/pretty v0.1.0
+## explicit
+# github.com/mattn/go-unicodeclass v0.0.2
+## explicit
+github.com/mattn/go-unicodeclass
+# github.com/reviewdog/errorformat v0.0.0-20240608101709-1d3280ed6bd4
+## explicit; go 1.13
+github.com/reviewdog/errorformat
+# github.com/sourcegraph/jsonrpc2 v0.2.0
+## explicit; go 1.12
+github.com/sourcegraph/jsonrpc2
+# gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15
+## explicit
+# gopkg.in/yaml.v3 v3.0.1
+## explicit
+gopkg.in/yaml.v3

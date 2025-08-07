@@ -1,0 +1,6 @@
+# Folders to ignore
+.vscode/
+.idea/
+
+# Files to ignore
+.drone.sec.yaml

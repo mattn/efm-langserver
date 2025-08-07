@@ -1,3 +1,5 @@
+NOTE: this is a fork that I aim to maintain and develop. It will be a cleaned up and simplified version of the original.
+
 # efm-langserver
 
 [![Actions Status](https://github.com/mattn/efm-langserver/workflows/CI/badge.svg)](https://github.com/mattn/efm-langserver/actions)
@@ -7,21 +9,21 @@ generated from specified command. This is useful for editing code with linter.
 
 ![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)
 
-* [Installation](#installation)
-* [Usage](#usage)
-  + [Configuration](#configuration)
-    - [InitializeParams](#initializeparams)
-  + [Example for config.yaml](#example-for-configyaml)
-  + [Example for DidChangeConfiguration notification](#example-for-didchangeconfiguration-notification)
-* [Client Setup](#client-setup)
-  + [Configuration for vim-lsp](#configuration-for-vim-lsp)
-  + [Configuration for coc.nvim](#configuration-for-cocnvim)
-  + [Configuration for Eglot (Emacs)](#configuration-for-eglot)
-  + [Configuration for neovim builtin LSP with nvim-lspconfig](#configuration-for-neovim-builtin-lsp-with-nvim-lspconfig)
-  + [Configuration for Helix](#configuration-for-helix)
-  + [Configuration for VSCode](#configuration-for-vscode)
-* [License](#license)
-* [Author](#author)
+- [Installation](#installation)
+- [Usage](#usage)
+    - [Configuration](#configuration)
+        - [InitializeParams](#initializeparams)
+    - [Example for config.yaml](#example-for-configyaml)
+    - [Example for DidChangeConfiguration notification](#example-for-didchangeconfiguration-notification)
+- [Client Setup](#client-setup)
+    - [Configuration for vim-lsp](#configuration-for-vim-lsp)
+    - [Configuration for coc.nvim](#configuration-for-cocnvim)
+    - [Configuration for Eglot (Emacs)](#configuration-for-eglot)
+    - [Configuration for neovim builtin LSP with nvim-lspconfig](#configuration-for-neovim-builtin-lsp-with-nvim-lspconfig)
+    - [Configuration for Helix](#configuration-for-helix)
+    - [Configuration for VSCode](#configuration-for-vscode)
+- [License](#license)
+- [Author](#author)
 
 ## Installation
 
@@ -30,6 +32,7 @@ go install github.com/mattn/efm-langserver@latest
 ```
 
 or via [Homebrew](https://brew.sh/):
+
 ```console
 brew install efm-langserver
 ```
@@ -61,11 +64,12 @@ properties.
 
 `efm-langserver` does not include formatters/linters for any languages, you must install these manually,
 e.g.
- - lua: [LuaFormatter](https://github.com/Koihik/LuaFormatter)
- - python: [yapf](https://github.com/google/yapf) [isort](https://github.com/PyCQA/isort)
- - [vint](https://github.com/Kuniwak/vint) for Vim script
- - [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) for Markdown
- - etc...
+
+- lua: [LuaFormatter](https://github.com/Koihik/LuaFormatter)
+- python: [yapf](https://github.com/google/yapf) [isort](https://github.com/PyCQA/isort)
+- [vint](https://github.com/Kuniwak/vint) for Vim script
+- [markdownlint-cli](https://github.com/igorshubovych/markdownlint-cli) for Markdown
+- etc...
 
 #### InitializeParams
 
@@ -74,6 +78,7 @@ throughout the lifetime of the server. To enable support for capabilities that w
 be available later, set them in the [InitializeParams](https://microsoft.github.io/language-server-protocol/specification.html#initialize)
 
 Example
+
 ```json
 {
     "initializationOptions": {
@@ -91,293 +96,293 @@ Example
 
 Location of config.yaml is:
 
-* UNIX: `$XDG_CONFIG_HOME/efm-langserver/config.yaml` or `$HOME/.config/efm-langserver/config.yaml`
-* Windows: `%APPDATA%\efm-langserver\config.yaml`
+- UNIX: `$XDG_CONFIG_HOME/efm-langserver/config.yaml` or `$HOME/.config/efm-langserver/config.yaml`
+- Windows: `%APPDATA%\efm-langserver\config.yaml`
 
 Below is example for `config.yaml` for Windows. Please see [schema.md](schema.md) for full documentation of the available options.
 
 ```yaml
 version: 2
 root-markers:
-  - .git/
+    - .git/
 lint-debounce: 1s
 commands:
-  - command: notepad
-    arguments:
-      - ${INPUT}
-    title: メモ帳
+    - command: notepad
+      arguments:
+          - ${INPUT}
+      title: メモ帳
 
 tools:
-  any-excitetranslate: &any-excitetranslate
-    hover-command: 'excitetranslate'
-    hover-stdin: true
+    any-excitetranslate: &any-excitetranslate
+        hover-command: "excitetranslate"
+        hover-stdin: true
 
-  blade-blade-formatter: &blade-blade-formatter
-    format-command: 'blade-formatter --stdin'
-    format-stdin: true
+    blade-blade-formatter: &blade-blade-formatter
+        format-command: "blade-formatter --stdin"
+        format-stdin: true
 
-  css-prettier: &css-prettier
-    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser css'
+    css-prettier: &css-prettier
+        format-command: "./node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser css"
 
-  csv-csvlint: &csv-csvlint
-    lint-command: 'csvlint'
+    csv-csvlint: &csv-csvlint
+        lint-command: "csvlint"
 
-  dockerfile-hadolint: &dockerfile-hadolint
-    lint-command: 'hadolint'
-    lint-formats:
-      - '%f:%l %m'
+    dockerfile-hadolint: &dockerfile-hadolint
+        lint-command: "hadolint"
+        lint-formats:
+            - "%f:%l %m"
 
-  eruby-erb: &eruby-erb
-    lint-debounce: 2s
-    lint-command: 'erb -x -T - | ruby -c'
-    lint-stdin: true
-    lint-offset: 1
-    format-stdin: true
-    format-command: htmlbeautifier
+    eruby-erb: &eruby-erb
+        lint-debounce: 2s
+        lint-command: "erb -x -T - | ruby -c"
+        lint-stdin: true
+        lint-offset: 1
+        format-stdin: true
+        format-command: htmlbeautifier
 
-  gitcommit-gitlint: &gitcommit-gitlint
-    lint-command: 'gitlint'
-    lint-stdin: true
-    lint-formats:
-      - '%l: %m: "%r"'
-      - '%l: %m'
+    gitcommit-gitlint: &gitcommit-gitlint
+        lint-command: "gitlint"
+        lint-stdin: true
+        lint-formats:
+            - '%l: %m: "%r"'
+            - "%l: %m"
 
-  html-prettier: &html-prettier
-    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
+    html-prettier: &html-prettier
+        format-command: "./node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html"
 
-  javascript-eslint: &javascript-eslint
-    lint-command: 'eslint -f visualstudio --stdin --stdin-filename ${INPUT}'
-    lint-ignore-exit-code: true
-    lint-stdin: true
-    lint-formats:
-      - "%f(%l,%c): %tarning %m"
-      - "%f(%l,%c): %rror %m"
+    javascript-eslint: &javascript-eslint
+        lint-command: "eslint -f visualstudio --stdin --stdin-filename ${INPUT}"
+        lint-ignore-exit-code: true
+        lint-stdin: true
+        lint-formats:
+            - "%f(%l,%c): %tarning %m"
+            - "%f(%l,%c): %rror %m"
 
-  json-fixjson: &json-fixjson
-    format-command: 'fixjson'
+    json-fixjson: &json-fixjson
+        format-command: "fixjson"
 
-  json-jq: &json-jq
-    lint-command: 'jq .'
+    json-jq: &json-jq
+        lint-command: "jq ."
 
-  json-prettier: &json-prettier
-    format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} --parser json'
+    json-prettier: &json-prettier
+        format-command: "./node_modules/.bin/prettier ${--tab-width:tabWidth} --parser json"
 
-  lua-lua-format: &lua-lua-format
-    format-command: 'lua-format -i'
-    format-stdin: true
+    lua-lua-format: &lua-lua-format
+        format-command: "lua-format -i"
+        format-stdin: true
 
-  make-checkmake: &make-checkmake
-    lint-command: 'checkmake'
-    lint-stdin: true
+    make-checkmake: &make-checkmake
+        lint-command: "checkmake"
+        lint-stdin: true
 
-  markdown-markdownlint: &markdown-markdownlint
-    lint-command: 'markdownlint -s -c %USERPROFILE%\.markdownlintrc'
-    lint-stdin: true
-    lint-formats:
-      - '%f:%l %m'
-      - '%f:%l:%c %m'
-      - '%f: %l: %m'
+    markdown-markdownlint: &markdown-markdownlint
+        lint-command: 'markdownlint -s -c %USERPROFILE%\.markdownlintrc'
+        lint-stdin: true
+        lint-formats:
+            - "%f:%l %m"
+            - "%f:%l:%c %m"
+            - "%f: %l: %m"
 
-  markdown-pandoc: &markdown-pandoc
-    format-command: 'pandoc -f markdown -t gfm -sp --tab-stop=2'
+    markdown-pandoc: &markdown-pandoc
+        format-command: "pandoc -f markdown -t gfm -sp --tab-stop=2"
 
-  mix_credo: &mix_credo
-    lint-command: "mix credo suggest --format=flycheck --read-from-stdin ${INPUT}"
-    lint-stdin: true
-    lint-formats:
-      - '%f:%l:%c: %t: %m'
-      - '%f:%l: %t: %m'
-    root-markers:
-      - mix.lock
-      - mix.exs
+    mix_credo: &mix_credo
+        lint-command: "mix credo suggest --format=flycheck --read-from-stdin ${INPUT}"
+        lint-stdin: true
+        lint-formats:
+            - "%f:%l:%c: %t: %m"
+            - "%f:%l: %t: %m"
+        root-markers:
+            - mix.lock
+            - mix.exs
 
-  perl-perlcritic: &perl-perlcritic
-    lint-command: 'perlcritic --nocolor -3 --verbose "%l:%c %m\n"'
-    lint-ignore-exit-code: true
-    lint-formats:
-      - '%l:%c %m'
+    perl-perlcritic: &perl-perlcritic
+        lint-command: 'perlcritic --nocolor -3 --verbose "%l:%c %m\n"'
+        lint-ignore-exit-code: true
+        lint-formats:
+            - "%l:%c %m"
 
-  perl-perltidy: &perl-perltidy
-    format-command: "perltidy -b"
-    format-stdin: true
+    perl-perltidy: &perl-perltidy
+        format-command: "perltidy -b"
+        format-stdin: true
 
-  php-phpstan: &php-phpstan
-    lint-command: './vendor/bin/phpstan analyze --error-format raw --no-progress'
+    php-phpstan: &php-phpstan
+        lint-command: "./vendor/bin/phpstan analyze --error-format raw --no-progress"
 
-  php-psalm: &php-psalm
-    lint-command: './vendor/bin/psalm --output-format=emacs --no-progress'
-    lint-formats:
-      - '%f:%l:%c:%trror - %m'
-      - '%f:%l:%c:%tarning - %m'
+    php-psalm: &php-psalm
+        lint-command: "./vendor/bin/psalm --output-format=emacs --no-progress"
+        lint-formats:
+            - "%f:%l:%c:%trror - %m"
+            - "%f:%l:%c:%tarning - %m"
 
-  prettierd: &prettierd
-    format-command: >
-      prettierd ${INPUT} ${--range-start=charStart} ${--range-end=charEnd} \
-        ${--tab-width=tabSize}
-    format-stdin: true
-    root-markers:
-      - .prettierrc
-      - .prettierrc.json
-      - .prettierrc.js
-      - .prettierrc.yml
-      - .prettierrc.yaml
-      - .prettierrc.json5
-      - .prettierrc.mjs
-      - .prettierrc.cjs
-      - .prettierrc.toml
+    prettierd: &prettierd
+        format-command: >
+            prettierd ${INPUT} ${--range-start=charStart} ${--range-end=charEnd} \
+              ${--tab-width=tabSize}
+        format-stdin: true
+        root-markers:
+            - .prettierrc
+            - .prettierrc.json
+            - .prettierrc.js
+            - .prettierrc.yml
+            - .prettierrc.yaml
+            - .prettierrc.json5
+            - .prettierrc.mjs
+            - .prettierrc.cjs
+            - .prettierrc.toml
 
-  python-autopep8: &python-autopep8
-    format-command: 'autopep8 -'
-    format-stdin: true
+    python-autopep8: &python-autopep8
+        format-command: "autopep8 -"
+        format-stdin: true
 
-  python-black: &python-black
-    format-command: 'black --quiet -'
-    format-stdin: true
+    python-black: &python-black
+        format-command: "black --quiet -"
+        format-stdin: true
 
-  python-flake8: &python-flake8
-    lint-command: 'flake8 --stdin-display-name ${INPUT} -'
-    lint-stdin: true
-    lint-formats:
-      - '%f:%l:%c: %m'
+    python-flake8: &python-flake8
+        lint-command: "flake8 --stdin-display-name ${INPUT} -"
+        lint-stdin: true
+        lint-formats:
+            - "%f:%l:%c: %m"
 
-  python-isort: &python-isort
-    format-command: 'isort --quiet -'
-    format-stdin: true
+    python-isort: &python-isort
+        format-command: "isort --quiet -"
+        format-stdin: true
 
-  python-mypy: &python-mypy
-    lint-command: 'mypy --show-column-numbers'
-    lint-formats:
-      - '%f:%l:%c: %trror: %m'
-      - '%f:%l:%c: %tarning: %m'
-      - '%f:%l:%c: %tote: %m'
+    python-mypy: &python-mypy
+        lint-command: "mypy --show-column-numbers"
+        lint-formats:
+            - "%f:%l:%c: %trror: %m"
+            - "%f:%l:%c: %tarning: %m"
+            - "%f:%l:%c: %tote: %m"
 
-  python-pylint: &python-pylint
-    lint-command: 'pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}'
-    lint-stdin: false
-    lint-formats:
-      - '%f:%l:%c:%t:%m'
-    lint-offset-columns: 1
-    lint-category-map:
-      I: H
-      R: I
-      C: I
-      W: W
-      E: E
-      F: E
+    python-pylint: &python-pylint
+        lint-command: "pylint --output-format text --score no --msg-template {path}:{line}:{column}:{C}:{msg} ${INPUT}"
+        lint-stdin: false
+        lint-formats:
+            - "%f:%l:%c:%t:%m"
+        lint-offset-columns: 1
+        lint-category-map:
+            I: H
+            R: I
+            C: I
+            W: W
+            E: E
+            F: E
 
-  python-yapf: &python-yapf
-    format-command: 'yapf --quiet'
-    format-stdin: true
+    python-yapf: &python-yapf
+        format-command: "yapf --quiet"
+        format-stdin: true
 
-  rst-lint: &rst-lint
-    lint-command: 'rst-lint'
-    lint-formats:
-      - '%tNFO %f:%l %m'
-      - '%tARNING %f:%l %m'
-      - '%tRROR %f:%l %m'
-      - '%tEVERE %f:%l %m'
+    rst-lint: &rst-lint
+        lint-command: "rst-lint"
+        lint-formats:
+            - "%tNFO %f:%l %m"
+            - "%tARNING %f:%l %m"
+            - "%tRROR %f:%l %m"
+            - "%tEVERE %f:%l %m"
 
-  rst-pandoc: &rst-pandoc
-    format-command: 'pandoc -f rst -t rst -s --columns=79'
+    rst-pandoc: &rst-pandoc
+        format-command: "pandoc -f rst -t rst -s --columns=79"
 
-  sh-shellcheck: &sh-shellcheck
-    lint-command: 'shellcheck -f gcc -x'
-    lint-source: 'shellcheck'
-    lint-formats:
-      - '%f:%l:%c: %trror: %m'
-      - '%f:%l:%c: %tarning: %m'
-      - '%f:%l:%c: %tote: %m'
+    sh-shellcheck: &sh-shellcheck
+        lint-command: "shellcheck -f gcc -x"
+        lint-source: "shellcheck"
+        lint-formats:
+            - "%f:%l:%c: %trror: %m"
+            - "%f:%l:%c: %tarning: %m"
+            - "%f:%l:%c: %tote: %m"
 
-  sh-shfmt: &sh-shfmt
-    format-command: 'shfmt -ci -s -bn'
-    format-stdin: true
+    sh-shfmt: &sh-shfmt
+        format-command: "shfmt -ci -s -bn"
+        format-stdin: true
 
-  vim-vint: &vim-vint
-    lint-command: 'vint -'
-    lint-stdin: true
-    lint-formats:
-      - '%f:%l:%c: %m'
+    vim-vint: &vim-vint
+        lint-command: "vint -"
+        lint-stdin: true
+        lint-formats:
+            - "%f:%l:%c: %m"
 
-  yaml-yamllint: &yaml-yamllint
-    lint-command: 'yamllint -f parsable -'
-    lint-stdin: true
+    yaml-yamllint: &yaml-yamllint
+        lint-command: "yamllint -f parsable -"
+        lint-stdin: true
 
 languages:
-  blade:
-    - <<: *blade-blade-formatter
+    blade:
+        - <<: *blade-blade-formatter
 
-  css:
-    - <<: *css-prettier
+    css:
+        - <<: *css-prettier
 
-  csv:
-    - <<: *csv-csvlint
+    csv:
+        - <<: *csv-csvlint
 
-  dockerfile:
-    - <<: *dockerfile-hadolint
+    dockerfile:
+        - <<: *dockerfile-hadolint
 
-  elixir:
-    - <<: *mix_credo
+    elixir:
+        - <<: *mix_credo
 
-  eruby:
-    - <<: *eruby-erb
+    eruby:
+        - <<: *eruby-erb
 
-  gitcommit:
-    - <<: *gitcommit-gitlint
+    gitcommit:
+        - <<: *gitcommit-gitlint
 
-  html:
-    - <<: *html-prettier
+    html:
+        - <<: *html-prettier
 
-  javascript:
-    - <<: *javascript-eslint
-    - <<: *prettierd
+    javascript:
+        - <<: *javascript-eslint
+        - <<: *prettierd
 
-  json:
-    - <<: *json-fixjson
-    - <<: *json-jq
-    # - <<: *json-prettier
+    json:
+        - <<: *json-fixjson
+        - <<: *json-jq
+        # - <<: *json-prettier
 
-  lua:
-    - <<: *lua-lua-format
+    lua:
+        - <<: *lua-lua-format
 
-  make:
-    - <<: *make-checkmake
+    make:
+        - <<: *make-checkmake
 
-  markdown:
-    - <<: *markdown-markdownlint
-    - <<: *markdown-pandoc
+    markdown:
+        - <<: *markdown-markdownlint
+        - <<: *markdown-pandoc
 
-  perl:
-    - <<: *perl-perltidy
-    - <<: *perl-perlcritic
+    perl:
+        - <<: *perl-perltidy
+        - <<: *perl-perlcritic
 
-  php:
-    - <<: *php-phpstan
-    - <<: *php-psalm
+    php:
+        - <<: *php-phpstan
+        - <<: *php-psalm
 
-  python:
-    - <<: *python-black
-    - <<: *python-flake8
-    - <<: *python-isort
-    - <<: *python-mypy
-    # - <<: *python-autopep8
-    # - <<: *python-yapf
+    python:
+        - <<: *python-black
+        - <<: *python-flake8
+        - <<: *python-isort
+        - <<: *python-mypy
+        # - <<: *python-autopep8
+        # - <<: *python-yapf
 
-  rst:
-    - <<: *rst-lint
-    - <<: *rst-pandoc
+    rst:
+        - <<: *rst-lint
+        - <<: *rst-pandoc
 
-  sh:
-    - <<: *sh-shellcheck
-    - <<: *sh-shfmt
+    sh:
+        - <<: *sh-shellcheck
+        - <<: *sh-shfmt
 
-  vim:
-    - <<: *vim-vint
+    vim:
+        - <<: *vim-vint
 
-  yaml:
-    - <<: *yaml-yamllint
+    yaml:
+        - <<: *yaml-yamllint
 
-  =:
-    - <<: *any-excitetranslate
+    =:
+        - <<: *any-excitetranslate
 ```
 
 If you want to debug output of commands:
@@ -469,6 +474,7 @@ require "lspconfig".efm.setup {
 ```
 
 You can get premade tool definitions from [`creativenull/efmls-configs-nvim`](https://github.com/creativenull/efmls-configs-nvim):
+
 ```lua
 lua = {
   require('efmls-configs.linters.luacheck'),
@@ -495,7 +501,9 @@ lua = {
 ```
 
 ### Configuration for [Helix](https://github.com/helix-editor/helix)
+
 `~/.config/helix/languages.toml`
+
 ```toml
 [language-server.efm]
 command = "efm-langserver"
@@ -509,14 +517,16 @@ language-servers = [
 ```
 
 ### Configuration for [VSCode](https://github.com/microsoft/vscode)
+
 [Generic LSP Client for VSCode](https://github.com/llllvvuu/vscode-glspc)
 
 Example `settings.json` (change to fit your local installs):
+
 ```json
 {
-  "glspc.languageId": "lua",
-  "glspc.serverCommand": "/Users/me/.local/share/nvim/mason/bin/efm-langserver",
-  "glspc.pathPrepend": "/Users/me/.local/share/rtx/installs/python/3.11.4/bin:/Users/me/.local/share/rtx/installs/node/20.3.1/bin",
+    "glspc.languageId": "lua",
+    "glspc.serverCommand": "/Users/me/.local/share/nvim/mason/bin/efm-langserver",
+    "glspc.pathPrepend": "/Users/me/.local/share/rtx/installs/python/3.11.4/bin:/Users/me/.local/share/rtx/installs/node/20.3.1/bin"
 }
 ```
 

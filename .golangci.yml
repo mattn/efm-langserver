@@ -1,0 +1,13 @@
+version: "2"
+formatters:
+    enable:
+        - gofmt
+linters:
+    enable:
+        - govet
+        - nlreturn
+        - whitespace
+run:
+    timeout: "5m"
+    allow-parallel-runners: true
+

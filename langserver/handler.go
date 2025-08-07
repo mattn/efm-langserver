@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -600,27 +601,9 @@ func (h *langHandler) updateFile(uri DocumentURI, text string, version *int, eve
 	return nil
 }
 
-func (h *langHandler) configFor(uri DocumentURI) []Language {
-	f, ok := h.files[uri]
-	if !ok {
-		return []Language{}
-	}
-	c, ok := h.configs[f.LanguageID]
-	if !ok {
-		return []Language{}
-	}
-	return c
-}
-
 func (h *langHandler) addFolder(folder string) {
 	folder = filepath.Clean(folder)
-	found := false
-	for _, cur := range h.folders {
-		if cur == folder {
-			found = true
-			break
-		}
-	}
+	found := slices.Contains(h.folders, folder)
 	if !found {
 		h.folders = append(h.folders, folder)
 	}

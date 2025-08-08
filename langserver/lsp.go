@@ -133,10 +133,20 @@ type DiagnosticRelatedInformation struct {
 	Message  string   `json:"message"`
 }
 
+// DiagnosticSeverity is
+type DiagnosticSeverity int
+
+const (
+	Error DiagnosticSeverity = iota + 1
+	Warning
+	Information
+	Hint
+)
+
 // Diagnostic is
 type Diagnostic struct {
 	Range              Range                          `json:"range"`
-	Severity           int                            `json:"severity,omitempty"`
+	Severity           DiagnosticSeverity             `json:"severity,omitempty"`
 	Code               *string                        `json:"code,omitempty"`
 	Source             *string                        `json:"source,omitempty"`
 	Message            string                         `json:"message"`

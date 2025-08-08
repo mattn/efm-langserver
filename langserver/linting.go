@@ -236,27 +236,6 @@ func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri Documen
 				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
 
-			// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
-			if len(config.LintCategoryMap) > 0 {
-				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
-			}
-
-			severity := 1
-			if config.LintSeverity != 0 {
-				severity = config.LintSeverity
-			}
-
-			switch entry.Type {
-			case 'E', 'e':
-				severity = 1
-			case 'W', 'w':
-				severity = 2
-			case 'I', 'i':
-				severity = 3
-			case 'N', 'n':
-				severity = 4
-			}
-
 			diagURI := uri
 			if entry.Filename != "" {
 				if filepath.IsAbs(entry.Filename) {
@@ -285,7 +264,7 @@ func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri Documen
 				},
 				Code:     itoaPtrIfNotZero(entry.Nr),
 				Message:  prefix + entry.Text,
-				Severity: severity,
+				Severity: getSeverity(entry.Type, config.LintCategoryMap, config.LintSeverity),
 				Source:   source,
 			})
 		}
@@ -299,4 +278,27 @@ func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri Documen
 		}
 	}
 	return uriToDiagnostics, nil
+}
+func getSeverity(typ rune, categoryMap map[string]string, defaultSeverity DiagnosticSeverity) DiagnosticSeverity {
+	// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
+	if len(categoryMap) > 0 {
+		typ = []rune(categoryMap[string(typ)])[0]
+	}
+
+	severity := Error
+	if defaultSeverity != 0 {
+		severity = defaultSeverity
+	}
+
+	switch typ {
+	case 'E', 'e':
+		severity = Error
+	case 'W', 'w':
+		severity = Warning
+	case 'I', 'i':
+		severity = Information
+	case 'N', 'n':
+		severity = Hint
+	}
+	return severity
 }

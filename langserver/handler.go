@@ -60,7 +60,7 @@ type Language struct {
 	LintIgnoreExitCode bool
 	LintCategoryMap    map[string]string
 	LintSource         string
-	LintSeverity       int
+	LintSeverity       DiagnosticSeverity
 	LintWorkspace      bool
 	LintAfterOpen      bool
 	LintOnSave         bool

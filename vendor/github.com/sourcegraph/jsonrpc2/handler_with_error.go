@@ -30,20 +30,16 @@ func (h *HandlerWithErrorConfigurer) Handle(ctx context.Context, conn *Conn, req
 	if err == nil {
 		err = resp.SetResult(result)
 	}
-	if err != nil {
-		if e, ok := err.(*Error); ok {
-			resp.Error = e
-		} else {
-			resp.Error = &Error{Message: err.Error()}
-		}
+
+	if e, ok := err.(*Error); ok {
+		resp.Error = e
+	} else if err != nil {
+		resp.Error = &Error{Message: err.Error()}
 	}
 
-	if !req.Notif {
-		if err := conn.SendResponse(ctx, resp); err != nil {
-			if err != ErrClosed || !h.suppressErrClosed {
-				conn.logger.Printf("jsonrpc2 handler: sending response %s: %v\n", resp.ID, err)
-			}
-		}
+	err = conn.SendResponse(ctx, resp)
+	if err != nil && (err != ErrClosed || !h.suppressErrClosed) {
+		conn.logger.Printf("jsonrpc2 handler: sending response %s: %v\n", resp.ID, err)
 	}
 }
 

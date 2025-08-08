@@ -166,9 +166,7 @@ func (c *Conn) SendResponse(ctx context.Context, resp *Response) error {
 }
 
 func (c *Conn) close(cause error) error {
-	c.sending.Lock()
 	c.mu.Lock()
-	defer c.sending.Unlock()
 	defer c.mu.Unlock()
 
 	if c.closed {
@@ -189,15 +187,17 @@ func (c *Conn) close(cause error) error {
 }
 
 func (c *Conn) readMessages(ctx context.Context) {
-	var err error
-	for err == nil {
+	for {
 		var m anyMessage
-		err = c.stream.ReadObject(&m)
+		err := c.stream.ReadObject(&m)
 		if err != nil {
-			break
+			c.close(err)
+			return
 		}
 
 		switch {
+		// TODO: handle the case where both request and response are nil.
+
 		case m.request != nil:
 			for _, onRecv := range c.onRecv {
 				onRecv(m.request, nil)
@@ -206,48 +206,52 @@ func (c *Conn) readMessages(ctx context.Context) {
 
 		case m.response != nil:
 			resp := m.response
-			if resp != nil {
-				id := resp.ID
-				c.mu.Lock()
-				call := c.pending[id]
-				delete(c.pending, id)
-				c.mu.Unlock()
+			id := resp.ID
+			c.mu.Lock()
+			call := c.pending[id]
+			delete(c.pending, id)
+			c.mu.Unlock()
 
-				if call != nil {
-					call.response = resp
-				}
-
-				if len(c.onRecv) > 0 {
-					var req *Request
-					if call != nil {
-						req = call.request
-					}
-					for _, onRecv := range c.onRecv {
-						onRecv(req, resp)
-					}
-				}
-
-				switch {
-				case call == nil:
-					c.logger.Printf("jsonrpc2: ignoring response #%s with no corresponding request\n", id)
-
-				case resp.Error != nil:
-					call.done <- resp.Error
-					close(call.done)
-
-				default:
-					call.done <- nil
-					close(call.done)
-				}
+			var req *Request
+			if call != nil {
+				call.response = resp
+				req = call.request
 			}
+
+			for _, onRecv := range c.onRecv {
+				onRecv(req, resp)
+			}
+
+			if call == nil {
+				c.logger.Printf("jsonrpc2: ignoring response #%s with no corresponding request\n", id)
+				continue
+			}
+
+			var err error
+			if resp.Error != nil {
+				err = resp.Error
+			}
+
+			call.done <- err
+			close(call.done)
 		}
 	}
-	c.close(err)
 }
 
 func (c *Conn) send(_ context.Context, m *anyMessage, wait bool) (cc *call, err error) {
 	c.sending.Lock()
 	defer c.sending.Unlock()
+
+	// double check the error isn't due to being closed while sending.
+	defer func() {
+		if err != nil {
+			c.mu.Lock()
+			if c.closed {
+				err = ErrClosed
+			}
+			c.mu.Unlock()
+		}
+	}()
 
 	// m.request.ID could be changed, so we store a copy to correctly
 	// clean up pending
@@ -330,25 +334,20 @@ type Waiter struct {
 // error is returned.
 func (w Waiter) Wait(ctx context.Context, result interface{}) error {
 	select {
-	case err, ok := <-w.call.done:
-		if !ok {
-			err = ErrClosed
-		}
-		if err != nil {
-			return err
-		}
-		if result != nil {
-			if w.call.response.Result == nil {
-				w.call.response.Result = &jsonNull
-			}
-			if err := json.Unmarshal(*w.call.response.Result, result); err != nil {
-				return err
-			}
-		}
-		return nil
-
 	case <-ctx.Done():
 		return ctx.Err()
+
+	case err, ok := <-w.call.done:
+		if !ok {
+			return ErrClosed
+		}
+		if err != nil || result == nil {
+			return err
+		}
+		if w.call.response.Result == nil {
+			w.call.response.Result = &jsonNull
+		}
+		return json.Unmarshal(*w.call.response.Result, result)
 	}
 }
 
@@ -414,12 +413,7 @@ func (m *anyMessage) UnmarshalJSON(data []byte) error {
 			return errors.New("jsonrpc2: invalid empty batch")
 		}
 		for i := range msgs {
-			if err := checkType(&msg{
-				ID:     msgs[i].ID,
-				Method: msgs[i].Method,
-				Result: msgs[i].Result,
-				Error:  msgs[i].Error,
-			}); err != nil {
+			if err := checkType(&msgs[i]); err != nil {
 				return err
 			}
 		}

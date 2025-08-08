@@ -55,6 +55,10 @@ func (r Request) MarshalJSON() ([]byte, error) {
 // UnmarshalJSON implements json.Unmarshaler.
 func (r *Request) UnmarshalJSON(data []byte) error {
 	r2 := make(map[string]interface{})
+	pop := func(key string) interface{} {
+		defer delete(r2, key)
+		return r2[key]
+	}
 
 	// Detect if the "params" or "meta" fields are JSON "null" or just not
 	// present by seeing if the field gets overwritten to nil.
@@ -68,36 +72,37 @@ func (r *Request) UnmarshalJSON(data []byte) error {
 	if err := decoder.Decode(&r2); err != nil {
 		return err
 	}
+
 	var ok bool
-	r.Method, ok = r2["method"].(string)
+	r.Method, ok = pop("method").(string)
 	if !ok {
 		return errors.New("missing method field")
 	}
-	switch {
-	case r2["params"] == nil:
+	switch params := pop("params"); params {
+	case nil:
 		r.Params = &jsonNull
-	case r2["params"] == emptyParams:
+	case emptyParams:
 		r.Params = nil
 	default:
-		b, err := json.Marshal(r2["params"])
+		b, err := json.Marshal(params)
 		if err != nil {
 			return fmt.Errorf("failed to marshal params: %w", err)
 		}
 		r.Params = (*json.RawMessage)(&b)
 	}
-	switch {
-	case r2["meta"] == nil:
+	switch meta := pop("meta"); meta {
+	case nil:
 		r.Meta = &jsonNull
-	case r2["meta"] == emptyMeta:
+	case emptyMeta:
 		r.Meta = nil
 	default:
-		b, err := json.Marshal(r2["meta"])
+		b, err := json.Marshal(meta)
 		if err != nil {
 			return fmt.Errorf("failed to marshal Meta: %w", err)
 		}
 		r.Meta = (*json.RawMessage)(&b)
 	}
-	switch rawID := r2["id"].(type) {
+	switch rawID := pop("id").(type) {
 	case nil:
 		r.ID = ID{}
 		r.Notif = true
@@ -115,13 +120,12 @@ func (r *Request) UnmarshalJSON(data []byte) error {
 		return fmt.Errorf("unexpected ID type: %T", rawID)
 	}
 
+	// The jsonrpc field should not be added to ExtraFields.
+	delete(r2, "jsonrpc")
+
 	// Clear the extra fields before populating them again.
 	r.ExtraFields = nil
 	for name, value := range r2 {
-		switch name {
-		case "id", "jsonrpc", "meta", "method", "params":
-			continue
-		}
 		r.ExtraFields = append(r.ExtraFields, RequestField{
 			Name:  name,
 			Value: value,

@@ -3,9 +3,8 @@
 
 Package jsonrpc2 provides a [Go](https://golang.org) implementation of [JSON-RPC 2.0](http://www.jsonrpc.org/specification).
 
-This package is **experimental** until further notice.
-
-[**Open the code in Sourcegraph**](https://sourcegraph.com/github.com/sourcegraph/jsonrpc2)
+* [Documentation](https://pkg.go.dev/github.com/sourcegraph/jsonrpc2)
+* [Open the code in Sourcegraph](https://sourcegraph.com/github.com/sourcegraph/jsonrpc2)
 
 ## Known issues
 

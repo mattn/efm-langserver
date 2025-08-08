@@ -4,7 +4,7 @@ github.com/haya14busa/go-checkstyle v0.0.0-20170303121022-5e9d09f51fa1/go.mod h1
 github.com/haya14busa/go-sarif v0.0.0-20210102043135-e2c5fed2fa3d/go.mod h1:1Hkn3JseGMB/hv1ywzkapVQDWV3bFgp6POZobZmR/5g=
 github.com/mattn/go-unicodeclass v0.0.2 h1:0pektcNiDCDNyEcNGTeRt6lf+EbVDS2dwaH4KnjYuT0=
 github.com/mattn/go-unicodeclass v0.0.2/go.mod h1:dDCkCgOKUwD3sYX4N+tVQdFh/xlFQ1+cWakbQzy98T8=
-github.com/reviewdog/errorformat v0.0.0-20240608101709-1d3280ed6bd4 h1:wFzV+/KigR9v01F8+cK/QyaMg6NgyfOOZaSquborhpY=
-github.com/reviewdog/errorformat v0.0.0-20240608101709-1d3280ed6bd4/go.mod h1:AqhrP0G7F9YRROF10JQwdd4cNO8bdm6bY6KzcOc3Cp8=
-github.com/sourcegraph/jsonrpc2 v0.2.0 h1:KjN/dC4fP6aN9030MZCJs9WQbTOjWHhrtKVpzzSrr/U=
-github.com/sourcegraph/jsonrpc2 v0.2.0/go.mod h1:ZafdZgk/axhT1cvZAPOhw+95nz2I/Ra5qMlU4gTRwIo=
+github.com/reviewdog/errorformat v0.0.0-20250320004447-223c26dbe212 h1:vln3OhpVhkYTVwvdVKSqnJ80IGZyc9M7tIesYpfm/UQ=
+github.com/reviewdog/errorformat v0.0.0-20250320004447-223c26dbe212/go.mod h1:AqhrP0G7F9YRROF10JQwdd4cNO8bdm6bY6KzcOc3Cp8=
+github.com/sourcegraph/jsonrpc2 v0.2.1 h1:2GtljixMQYUYCmIg7W9aF2dFmniq/mOr2T9tFRh6zSQ=
+github.com/sourcegraph/jsonrpc2 v0.2.1/go.mod h1:ZafdZgk/axhT1cvZAPOhw+95nz2I/Ra5qMlU4gTRwIo=

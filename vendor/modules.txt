@@ -1,9 +1,9 @@
 # github.com/mattn/go-unicodeclass v0.0.2
 ## explicit
 github.com/mattn/go-unicodeclass
-# github.com/reviewdog/errorformat v0.0.0-20240608101709-1d3280ed6bd4
+# github.com/reviewdog/errorformat v0.0.0-20250320004447-223c26dbe212
 ## explicit; go 1.13
 github.com/reviewdog/errorformat
-# github.com/sourcegraph/jsonrpc2 v0.2.0
+# github.com/sourcegraph/jsonrpc2 v0.2.1
 ## explicit; go 1.12
 github.com/sourcegraph/jsonrpc2

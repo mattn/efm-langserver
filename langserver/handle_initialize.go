@@ -28,7 +28,6 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 			return nil, err
 		}
 		h.rootPath = filepath.Clean(rootPath)
-		h.addFolder(rootPath)
 	}
 
 	var hasFormatCommand bool
@@ -55,12 +54,6 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 			TextDocumentSync:           TDSKFull,
 			DocumentFormattingProvider: hasFormatCommand,
 			RangeFormattingProvider:    hasRangeFormatCommand,
-			Workspace: &ServerCapabilitiesWorkspace{
-				WorkspaceFolders: WorkspaceFoldersServerCapabilities{
-					Supported:           true,
-					ChangeNotifications: true,
-				},
-			},
 		},
 	}, nil
 }

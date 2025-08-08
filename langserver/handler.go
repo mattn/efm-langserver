@@ -10,7 +10,6 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
-	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -39,39 +38,48 @@ type lintRequest struct {
 
 // Config is
 type Config struct {
-	Version        int                    `yaml:"version"`
-	LogFile        string                 `yaml:"log-file"`
-	LogLevel       int                    `yaml:"log-level"       json:"logLevel"`
-	Languages      *map[string][]Language `yaml:"languages"       json:"languages"`
-	RootMarkers    *[]string              `yaml:"root-markers"    json:"rootMarkers"`
-	LintDebounce   Duration               `yaml:"lint-debounce"   json:"lintDebounce"`
-	FormatDebounce Duration               `yaml:"format-debounce" json:"formatDebounce"`
+	Version        int
+	LogFile        string
+	LogLevel       int
+	Languages      *map[string][]Language
+	RootMarkers    *[]string
+	LintDebounce   time.Duration
+	FormatDebounce time.Duration
 
-	Filename string      `yaml:"-"`
-	Logger   *log.Logger `yaml:"-"`
+	Filename string
+	Logger   *log.Logger
+}
+
+func NewConfig() *Config {
+	languages := make(map[string][]Language)
+	rootMarkers := make([]string, 0)
+	return &Config{
+		Languages:   &languages,
+		RootMarkers: &rootMarkers,
+	}
 }
 
 // Language is
 type Language struct {
-	Prefix             string            `yaml:"prefix" json:"prefix"`
-	LintFormats        []string          `yaml:"lint-formats" json:"lintFormats"`
-	LintStdin          bool              `yaml:"lint-stdin" json:"lintStdin"`
-	LintOffset         int               `yaml:"lint-offset" json:"lintOffset"`
-	LintOffsetColumns  int               `yaml:"lint-offset-columns" json:"lintOffsetColumns"`
-	LintCommand        string            `yaml:"lint-command" json:"lintCommand"`
-	LintIgnoreExitCode bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"lintCategoryMap"`
-	LintSource         string            `yaml:"lint-source" json:"lintSource"`
-	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
-	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
-	LintAfterOpen      bool              `yaml:"lint-after-open" json:"lintAfterOpen"`
-	LintOnSave         bool              `yaml:"lint-on-save" json:"lintOnSave"`
-	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
-	FormatCanRange     bool              `yaml:"format-can-range" json:"formatCanRange"`
-	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
-	Env                []string          `yaml:"env" json:"env"`
-	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
-	RequireMarker      bool              `yaml:"require-marker" json:"requireMarker"`
+	Prefix             string
+	LintFormats        []string
+	LintStdin          bool
+	LintOffset         int
+	LintOffsetColumns  int
+	LintCommand        string
+	LintIgnoreExitCode bool
+	LintCategoryMap    map[string]string
+	LintSource         string
+	LintSeverity       int
+	LintWorkspace      bool
+	LintAfterOpen      bool
+	LintOnSave         bool
+	FormatCommand      string
+	FormatCanRange     bool
+	FormatStdin        bool
+	Env                []string
+	RootMarkers        []string
+	RequireMarker      bool
 }
 
 // NewHandler create JSON-RPC handler for this language server.
@@ -115,7 +123,6 @@ type langHandler struct {
 	conn           *jsonrpc2.Conn
 	rootPath       string
 	filename       string
-	folders        []string
 	rootMarkers    []string
 
 	// lastPublishedURIs is mapping from LanguageID string to mapping of
@@ -308,12 +315,6 @@ func (h *langHandler) findRootPath(fname string, lang Language) string {
 	}
 	if dir := matchRootPath(fname, h.rootMarkers); dir != "" {
 		return dir
-	}
-
-	for _, folder := range h.folders {
-		if len(fname) > len(folder) && strings.EqualFold(fname[:len(folder)], folder) {
-			return folder
-		}
 	}
 
 	return h.rootPath
@@ -601,14 +602,6 @@ func (h *langHandler) updateFile(uri DocumentURI, text string, version *int, eve
 	return nil
 }
 
-func (h *langHandler) addFolder(folder string) {
-	folder = filepath.Clean(folder)
-	found := slices.Contains(h.folders, folder)
-	if !found {
-		h.folders = append(h.folders, folder)
-	}
-}
-
 func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
 	switch req.Method {
 	case "initialize":
@@ -631,10 +624,6 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleTextDocumentRangeFormatting(ctx, conn, req)
 	case "workspace/didChangeConfiguration":
 		return h.handleWorkspaceDidChangeConfiguration(ctx, conn, req)
-	case "workspace/didChangeWorkspaceFolders":
-		return h.handleDidChangeWorkspaceWorkspaceFolders(ctx, conn, req)
-	case "workspace/workspaceFolders":
-		return h.handleWorkspaceWorkspaceFolders(ctx, conn, req)
 	}
 
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}

@@ -50,24 +50,12 @@ const (
 	TDSKIncremental
 )
 
-// WorkspaceFoldersServerCapabilities is
-type WorkspaceFoldersServerCapabilities struct {
-	Supported           bool `json:"supported"`
-	ChangeNotifications bool `json:"changeNotifications"`
-}
-
-// ServerCapabilitiesWorkspace is
-type ServerCapabilitiesWorkspace struct {
-	WorkspaceFolders WorkspaceFoldersServerCapabilities `json:"workspaceFolders"`
-}
-
 // ServerCapabilities is
 type ServerCapabilities struct {
-	TextDocumentSync           TextDocumentSyncKind         `json:"textDocumentSync,omitempty"`
-	DefinitionProvider         bool                         `json:"definitionProvider,omitempty"`
-	DocumentFormattingProvider bool                         `json:"documentFormattingProvider,omitempty"`
-	RangeFormattingProvider    bool                         `json:"documentRangeFormattingProvider,omitempty"`
-	Workspace                  *ServerCapabilitiesWorkspace `json:"workspace,omitempty"`
+	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
+	DefinitionProvider         bool                 `json:"definitionProvider,omitempty"`
+	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitempty"`
+	RangeFormattingProvider    bool                 `json:"documentRangeFormattingProvider,omitempty"`
 }
 
 // TextDocumentItem is
@@ -204,12 +192,6 @@ type Command struct {
 	OS        string `json:"-" yaml:"os,omitempty"`
 }
 
-// WorkspaceEdit is
-type WorkspaceEdit struct {
-	Changes         any `json:"changes"`         // { [uri: DocumentUri]: TextEdit[]; };
-	DocumentChanges any `json:"documentChanges"` // (TextDocumentEdit[] | (TextDocumentEdit | CreateFile | RenameFile | DeleteFile)[]);
-}
-
 // MarkedString is
 type MarkedString struct {
 	Language string `json:"language"`
@@ -277,21 +259,4 @@ type ShowMessageParams struct {
 type LogMessageParams struct {
 	Type    MessageType `json:"type"`
 	Message string      `json:"message"`
-}
-
-// DidChangeWorkspaceFoldersParams is
-type DidChangeWorkspaceFoldersParams struct {
-	Event WorkspaceFoldersChangeEvent `json:"event"`
-}
-
-// WorkspaceFoldersChangeEvent is
-type WorkspaceFoldersChangeEvent struct {
-	Added   []WorkspaceFolder `json:"added,omitempty"`
-	Removed []WorkspaceFolder `json:"removed,omitempty"`
-}
-
-// WorkspaceFolder is
-type WorkspaceFolder struct {
-	URI  DocumentURI `json:"uri"`
-	Name string      `json:"name"`
 }

@@ -30,7 +30,7 @@ func main() {
 	flag.StringVar(&logfile, "logfile", "", "logfile")
 	flag.IntVar(&loglevel, "loglevel", 1, "loglevel")
 	flag.BoolVar(&showVersion, "v", false, "Print the version")
-	flag.BoolVar(&quiet, "q", false, "Run quieter")
+	flag.BoolVar(&quiet, "q", false, "Run quiet")
 	flag.Parse()
 
 	if showVersion {
@@ -43,15 +43,18 @@ func main() {
 		os.Exit(1)
 	}
 
+	var config *langserver.Config = langserver.NewConfig()
+	config.LogLevel = loglevel
+
 	if quiet {
 		log.SetOutput(io.Discard)
 	}
 
 	log.Println("efm-langserver: reading on stdin, writing on stdout")
 
-	var config *langserver.Config
 	var connOpt []jsonrpc2.ConnOpt
 
+	config.LogFile = logfile
 	if logfile != "" {
 		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o660)
 		if err != nil {

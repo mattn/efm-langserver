@@ -54,30 +54,39 @@ func main() {
 
 	var connOpt []jsonrpc2.ConnOpt
 
-	config.LogFile = logfile
-	if logfile != "" {
-		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o660)
-		if err != nil {
-			log.Fatal(err)
+	var f *os.File
+	defer func() {
+		if f != nil {
+			f.Close()
 		}
-		defer f.Close()
-		config.Logger = log.New(f, "", log.LstdFlags)
-		if loglevel >= 5 {
-			connOpt = append(connOpt, jsonrpc2.LogMessages(config.Logger))
-		}
-	}
+	}()
 
-	if quiet && (logfile == "" || loglevel < 5) {
+	logger := createLogger(logfile)
+	if !quiet && loglevel >= 5 {
+		connOpt = append(connOpt, jsonrpc2.LogMessages(logger))
+	} else {
 		connOpt = append(connOpt, jsonrpc2.LogMessages(log.New(io.Discard, "", 0)))
 	}
 
-	handler := langserver.NewHandler(config)
+	handler := langserver.NewHandler(logger, config)
 	<-jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),
 		handler, connOpt...).DisconnectNotify()
 
 	log.Println("efm-langserver: connections closed")
+}
+
+func createLogger(logfile string) *log.Logger {
+	if logfile != "" {
+		f, err := os.OpenFile(logfile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o660)
+		if err != nil {
+			log.Fatal(err)
+		}
+		return log.New(f, "", log.LstdFlags)
+	} else {
+		return log.New(os.Stderr, "", log.LstdFlags)
+	}
 }
 
 type stdrwc struct{}

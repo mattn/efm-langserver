@@ -3,9 +3,6 @@ package langserver
 import (
 	"context"
 	"encoding/json"
-	"log"
-	"os"
-	"time"
 
 	"github.com/sourcegraph/jsonrpc2"
 )
@@ -34,24 +31,11 @@ func (h *langHandler) didChangeConfiguration(config *Config) (any, error) {
 		h.loglevel = config.LogLevel
 	}
 	if config.LintDebounce > 0 {
-		h.lintDebounce = time.Duration(config.LintDebounce)
+		h.lintDebounce = config.LintDebounce
 	}
 	if config.FormatDebounce > 0 {
-		h.formatDebounce = time.Duration(config.FormatDebounce)
+		h.formatDebounce = config.FormatDebounce
 	}
-
-	if config.LogFile != "" {
-		f, err := os.OpenFile(config.LogFile, os.O_CREATE|os.O_RDWR|os.O_APPEND, 0o660)
-		if err == nil {
-			if h.logger != nil {
-				if w, ok := h.logger.Writer().(*os.File); ok {
-					w.Close()
-				}
-			}
-			h.logger = log.New(f, "", log.LstdFlags)
-		}
-	}
-
 	if config.LogLevel > 0 {
 		h.loglevel = config.LogLevel
 	}

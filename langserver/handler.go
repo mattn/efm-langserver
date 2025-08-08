@@ -39,7 +39,6 @@ type lintRequest struct {
 // Config is
 type Config struct {
 	Version        int
-	LogFile        string
 	LogLevel       int
 	Languages      *map[string][]Language
 	RootMarkers    *[]string
@@ -47,7 +46,6 @@ type Config struct {
 	FormatDebounce time.Duration
 
 	Filename string
-	Logger   *log.Logger
 }
 
 func NewConfig() *Config {
@@ -83,14 +81,10 @@ type Language struct {
 }
 
 // NewHandler create JSON-RPC handler for this language server.
-func NewHandler(config *Config) jsonrpc2.Handler {
-	if config.Logger == nil {
-		config.Logger = log.New(os.Stderr, "", log.LstdFlags)
-	}
-
+func NewHandler(logger *log.Logger, config *Config) jsonrpc2.Handler {
 	handler := &langHandler{
 		loglevel:     config.LogLevel,
-		logger:       config.Logger,
+		logger:       logger,
 		configs:      *config.Languages,
 		files:        make(map[DocumentURI]*File),
 		request:      make(chan lintRequest),

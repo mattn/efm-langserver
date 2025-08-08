@@ -321,7 +321,7 @@ func (h *langHandler) onUpdateFile(conn *jsonrpc2.Conn, uri DocumentURI, text st
 		f.Version = *version
 	}
 
-	h.ScheduleLinting(conn, uri, eventTypeChange)
+	h.ScheduleLinting(conn, uri, eventType)
 	return nil
 }
 

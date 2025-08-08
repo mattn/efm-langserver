@@ -37,11 +37,12 @@ func (h *langHandler) handleInitialize(_ context.Context, _ *jsonrpc2.Conn, req 
 	}
 
 	for _, config := range h.configs {
-		for _, v := range config {
-			if v.FormatCommand != "" {
+		for _, lang := range config {
+			if lang.FormatCommand != "" {
 				hasFormatCommand = true
-				if v.FormatCanRange {
+				if lang.FormatCanRange {
 					hasRangeFormatCommand = true
+					break
 				}
 			}
 		}

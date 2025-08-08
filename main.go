@@ -26,11 +26,13 @@ func main() {
 	var loglevel int
 	var showVersion bool
 	var quiet bool
+	var usage bool
 
-	flag.StringVar(&logfile, "logfile", "", "logfile")
-	flag.IntVar(&loglevel, "loglevel", 1, "loglevel")
+	flag.StringVar(&logfile, "logfile", "", "File to save logs into. If provided stderr won't be used anymore.")
+	flag.IntVar(&loglevel, "loglevel", 1, "Set the log level. Max is 5, min is 0.")
 	flag.BoolVar(&showVersion, "v", false, "Print the version")
 	flag.BoolVar(&quiet, "q", false, "Run quiet")
+	flag.BoolVar(&usage, "h", false, "Show help")
 	flag.Parse()
 
 	if showVersion {
@@ -38,7 +40,7 @@ func main() {
 		return
 	}
 
-	if flag.NArg() != 0 {
+	if usage || flag.NArg() != 0 {
 		flag.Usage()
 		os.Exit(1)
 	}

@@ -1,13 +1,12 @@
 version: "2"
 formatters:
-    enable:
-        - gofmt
+  enable:
+    - gofmt
 linters:
-    enable:
-        - govet
-        - nlreturn
-        - whitespace
+  enable:
+    - govet
+    - nlreturn
+    - whitespace
 run:
-    timeout: "5m"
-    allow-parallel-runners: true
-
+  timeout: "5m"
+  allow-parallel-runners: true

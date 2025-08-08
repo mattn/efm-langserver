@@ -1,190 +1,190 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema",
-    "additionalProperties": false,
-    "description": "If configuring via `DidChangeConfiguration` (e.g. an editor API such as `nvim-lspconfig`), all properties should be in camelCase instead of kebab-case.",
-    "definitions": {
-        "command-definition": {
-            "description": "list of commands",
+  "$schema": "http://json-schema.org/draft-04/schema",
+  "additionalProperties": false,
+  "description": "If configuring via `DidChangeConfiguration` (e.g. an editor API such as `nvim-lspconfig`), all properties should be in camelCase instead of kebab-case.",
+  "definitions": {
+    "command-definition": {
+      "description": "list of commands",
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "arguments": {
+            "description": "arguments for the command",
             "items": {
-                "additionalProperties": false,
-                "properties": {
-                    "arguments": {
-                        "description": "arguments for the command",
-                        "items": {
-                            "type": "string"
-                        },
-                        "type": "array"
-                    },
-                    "command": {
-                        "description": "command to execute",
-                        "type": "string"
-                    },
-                    "os": {
-                        "description": "command executable OS environment",
-                        "type": "string"
-                    },
-                    "title": {
-                        "description": "title for clients",
-                        "type": "string"
-                    }
-                },
-                "type": "object"
+              "type": "string"
             },
             "type": "array"
+          },
+          "command": {
+            "description": "command to execute",
+            "type": "string"
+          },
+          "os": {
+            "description": "command executable OS environment",
+            "type": "string"
+          },
+          "title": {
+            "description": "title for clients",
+            "type": "string"
+          }
         },
-        "tool-definition": {
-            "additionalProperties": false,
-            "description": "definition of the tool",
-            "properties": {
-                "prefix": {
-                    "description": "If `lint-source` doesn't work, you can set a prefix here instead, which will render the messages as \"[prefix] message\".",
-                    "type": "string"
-                },
-                "format-can-range": {
-                    "description": "Whether the formatting command handles range start and range end",
-                    "type": "boolean"
-                },
-                "format-command": {
-                    "description": "Formatting command. Input filename can be injected using `${INPUT}`, and flags can be injected using `${--flag:key}` (adds `--flag <value>` if value exists for key), `${--flag=key}` (adds `--flag=<value>` if value exists for key), or `${--flag:!key}` (adds `--flag` if value for key is falsy).\n\n`efm-langserver` may provide values for keys `charStart`, `charEnd`, `rowStart`, `rowEnd`, `colStart`, `colEnd`, or any key in [`interface FormattingOptions`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions).\n\nExample: `prettier --stdin --stdin-filepath ${INPUT} ${--tab-width:tabWidth} ${--use-tabs:insertSpaces} ${--range-start=charStart} ${--range-start=charEnd}`",
-                    "type": "string"
-                },
-                "format-stdin": {
-                    "description": "use stdin for the format",
-                    "type": "boolean"
-                },
-                "env": {
-                    "description": "command environment variables and values",
-                    "items": {
-                        "type": "string",
-                        "pattern": "^.+=.+$"
-                    },
-                    "type": "array"
-                },
-                "lint-command": {
-                    "description": "Lint command. Input filename can be injected using `${INPUT}`.",
-                    "type": "string"
-                },
-                "lint-offset-columns": {
-                    "description": "offset value to skip columns",
-                    "type": "number"
-                },
-                "lint-category-map": {
-                    "description": "Map linter categories to LSP categories",
-                    "type": "object"
-                },
-                "lint-formats": {
-                    "description": "List of Vim errorformats to capture. See: https://vimhelp.org/quickfix.txt.html#errorformats. If this is not expressive enough, you can edit the `lint-command` to do some preprocessing, e.g. using `sed` or `jq`.\n\n`efm-langserver` uses a Go implementation to parse the errors, which comes with a CLI for quick testing: https://github.com/reviewdog/errorformat",
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "lint-ignore-exit-code": {
-                    "default": true,
-                    "description": "ignore exit code of lint",
-                    "type": "boolean"
-                },
-                "lint-offset": {
-                    "description": "offset value to skip lines",
-                    "type": "number"
-                },
-                "lint-after-open": {
-                    "default": true,
-                    "description": "lint after open",
-                    "type": "boolean"
-                },
-                "lint-on-save": {
-                    "description": "only lint on save, i.e. don't lint on text changed",
-                    "type": "boolean"
-                },
-                "lint-severity": {
-                    "description": "default severity to show if violation doesn't provide severity. 1 = error, 2 = warning, 3 = info, 4 = hint",
-                    "type": "number"
-                },
-                "lint-source": {
-                    "description": "show where the lint came from, e.g. 'eslint'",
-                    "type": "string"
-                },
-                "lint-stdin": {
-                    "default": true,
-                    "description": "use stdin for the lint",
-                    "type": "boolean"
-                },
-                "lint-workspace": {
-                    "description": "indicates that the command lints the whole workspace and thus doesn't need a filename argument nor stdin",
-                    "type": "boolean"
-                },
-                "root-markers": {
-                    "description": "markers to find root directory",
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "require-marker": {
-                    "description": "require a marker to run linter",
-                    "type": "boolean"
-                },
-                "commands": {
-                    "$ref": "#/definitions/command-definition"
-                }
-            },
-            "type": "object"
-        }
+        "type": "object"
+      },
+      "type": "array"
     },
-    "properties": {
-        "commands": {
-            "$ref": "#/definitions/command-definition"
+    "tool-definition": {
+      "additionalProperties": false,
+      "description": "definition of the tool",
+      "properties": {
+        "prefix": {
+          "description": "If `lint-source` doesn't work, you can set a prefix here instead, which will render the messages as \"[prefix] message\".",
+          "type": "string"
         },
-        "languages": {
-            "description": "list of language",
-            "patternProperties": {
-                "^([a-z0-9_-]+)+$": {
-                    "items": {
-                        "$ref": "#/definitions/tool-definition"
-                    },
-                    "type": "array"
-                }
-            }
+        "format-can-range": {
+          "description": "Whether the formatting command handles range start and range end",
+          "type": "boolean"
         },
-        "tools": {
-            "description": "definition of tools",
-            "patternProperties": {
-                "^([a-z0-9_-]+)+$": {
-                    "$ref": "#/definitions/tool-definition"
-                }
-            },
-            "type": "object"
+        "format-command": {
+          "description": "Formatting command. Input filename can be injected using `${INPUT}`, and flags can be injected using `${--flag:key}` (adds `--flag <value>` if value exists for key), `${--flag=key}` (adds `--flag=<value>` if value exists for key), or `${--flag:!key}` (adds `--flag` if value for key is falsy).\n\n`efm-langserver` may provide values for keys `charStart`, `charEnd`, `rowStart`, `rowEnd`, `colStart`, `colEnd`, or any key in [`interface FormattingOptions`](https://microsoft.github.io/language-server-protocol/specifications/lsp/3.17/specification/#formattingOptions).\n\nExample: `prettier --stdin --stdin-filepath ${INPUT} ${--tab-width:tabWidth} ${--use-tabs:insertSpaces} ${--range-start=charStart} ${--range-start=charEnd}`",
+          "type": "string"
         },
-        "version": {
-            "description": "version of this yaml format",
-            "type": "number"
+        "format-stdin": {
+          "description": "use stdin for the format",
+          "type": "boolean"
+        },
+        "env": {
+          "description": "command environment variables and values",
+          "items": {
+            "type": "string",
+            "pattern": "^.+=.+$"
+          },
+          "type": "array"
+        },
+        "lint-command": {
+          "description": "Lint command. Input filename can be injected using `${INPUT}`.",
+          "type": "string"
+        },
+        "lint-offset-columns": {
+          "description": "offset value to skip columns",
+          "type": "number"
+        },
+        "lint-category-map": {
+          "description": "Map linter categories to LSP categories",
+          "type": "object"
+        },
+        "lint-formats": {
+          "description": "List of Vim errorformats to capture. See: https://vimhelp.org/quickfix.txt.html#errorformats. If this is not expressive enough, you can edit the `lint-command` to do some preprocessing, e.g. using `sed` or `jq`.\n\n`efm-langserver` uses a Go implementation to parse the errors, which comes with a CLI for quick testing: https://github.com/reviewdog/errorformat",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "lint-ignore-exit-code": {
+          "default": true,
+          "description": "ignore exit code of lint",
+          "type": "boolean"
+        },
+        "lint-offset": {
+          "description": "offset value to skip lines",
+          "type": "number"
+        },
+        "lint-after-open": {
+          "default": true,
+          "description": "lint after open",
+          "type": "boolean"
+        },
+        "lint-on-save": {
+          "description": "only lint on save, i.e. don't lint on text changed",
+          "type": "boolean"
+        },
+        "lint-severity": {
+          "description": "default severity to show if violation doesn't provide severity. 1 = error, 2 = warning, 3 = info, 4 = hint",
+          "type": "number"
+        },
+        "lint-source": {
+          "description": "show where the lint came from, e.g. 'eslint'",
+          "type": "string"
+        },
+        "lint-stdin": {
+          "default": true,
+          "description": "use stdin for the lint",
+          "type": "boolean"
+        },
+        "lint-workspace": {
+          "description": "indicates that the command lints the whole workspace and thus doesn't need a filename argument nor stdin",
+          "type": "boolean"
         },
         "root-markers": {
-            "description": "markers to find root directory",
-            "items": {
-                "type": "string"
-            },
-            "type": "array"
-        },
-        "log-file": {
-            "description": "(YAML only) path to log file",
+          "description": "markers to find root directory",
+          "items": {
             "type": "string"
+          },
+          "type": "array"
         },
-        "log-level": {
-            "description": "log level",
-            "minimum": 1,
-            "type": "number"
+        "require-marker": {
+          "description": "require a marker to run linter",
+          "type": "boolean"
         },
-        "format-debounce": {
-            "description": "duration to debounce calls to the formatter executable. e.g: 1s",
-            "type": "string"
-        },
-        "lint-debounce": {
-            "description": "duration to debounce calls to the linter executable. e.g.: 1s",
-            "type": "string"
+        "commands": {
+          "$ref": "#/definitions/command-definition"
         }
+      },
+      "type": "object"
+    }
+  },
+  "properties": {
+    "commands": {
+      "$ref": "#/definitions/command-definition"
     },
-    "title": "efm-langserver",
-    "type": "object"
+    "languages": {
+      "description": "list of language",
+      "patternProperties": {
+        "^([a-z0-9_-]+)+$": {
+          "items": {
+            "$ref": "#/definitions/tool-definition"
+          },
+          "type": "array"
+        }
+      }
+    },
+    "tools": {
+      "description": "definition of tools",
+      "patternProperties": {
+        "^([a-z0-9_-]+)+$": {
+          "$ref": "#/definitions/tool-definition"
+        }
+      },
+      "type": "object"
+    },
+    "version": {
+      "description": "version of this yaml format",
+      "type": "number"
+    },
+    "root-markers": {
+      "description": "markers to find root directory",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "log-file": {
+      "description": "(YAML only) path to log file",
+      "type": "string"
+    },
+    "log-level": {
+      "description": "log level",
+      "minimum": 1,
+      "type": "number"
+    },
+    "format-debounce": {
+      "description": "duration to debounce calls to the formatter executable. e.g: 1s",
+      "type": "string"
+    },
+    "lint-debounce": {
+      "description": "duration to debounce calls to the linter executable. e.g.: 1s",
+      "type": "string"
+    }
+  },
+  "title": "efm-langserver",
+  "type": "object"
 }

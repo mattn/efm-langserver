@@ -476,14 +476,16 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	}
 
 	startedFlagPath := "already-started"
-	defer os.Remove(startedFlagPath)
+	defer func() {
+		_ = os.Remove(startedFlagPath)
+	}()
 	// Emulate heavy job
 	h.configs["vim"][0].LintCommand = `touch ` + startedFlagPath + ` && sleep 1000000 && echo ` + file + `:2:1:First file only!`
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		h.lint(ctx, uri, eventTypeChange)
+		_, _ = h.lint(ctx, uri, eventTypeChange)
 	}()
-	for true {
+	for {
 		if _, err := os.Stat(startedFlagPath); errors.Is(err, os.ErrNotExist) {
 			time.Sleep(50 * time.Microsecond)
 			continue

@@ -215,7 +215,7 @@ func (h *langHandler) lintRequest(uri DocumentURI, eventType eventType) {
 }
 
 func (h *langHandler) logMessage(typ MessageType, message string) {
-	h.conn.Notify(
+	_ = h.conn.Notify(
 		context.Background(),
 		"window/logMessage",
 		&LogMessageParams{
@@ -256,7 +256,7 @@ func (h *langHandler) linter() {
 				if _, ok := h.files[lintReq.URI]; ok {
 					version = h.files[lintReq.URI].Version
 				}
-				h.conn.Notify(
+				_ = h.conn.Notify(
 					ctx,
 					"textDocument/publishDiagnostics",
 					&PublishDiagnosticsParams{
@@ -339,7 +339,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 	if cfgs, ok := h.configs[f.LanguageID]; ok {
 		for _, cfg := range cfgs {
 			// if we require markers and find that they dont exist we do not add the configuration
-			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker == true {
+			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker {
 				continue
 			}
 			switch eventType {
@@ -462,7 +462,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 					continue
 				}
 				path = filepath.ToSlash(path)
-				if runtime.GOOS == "windows" && strings.ToLower(path) != strings.ToLower(fname) {
+				if runtime.GOOS == "windows" && !strings.EqualFold(path, fname) {
 					continue
 				} else if path != fname {
 					continue
@@ -519,7 +519,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 				}
 			}
 			if runtime.GOOS == "windows" {
-				if strings.ToLower(string(diagURI)) != strings.ToLower(string(uri)) && !config.LintWorkspace {
+				if !strings.EqualFold(string(diagURI), string(uri)) && !config.LintWorkspace {
 					continue
 				}
 			} else {
@@ -627,17 +627,17 @@ func replaceCommandInputFilename(command, fname, rootPath string) string {
 	ext := filepath.Ext(fname)
 	ext = strings.TrimPrefix(ext, ".")
 
-	command = strings.Replace(command, "${INPUT}", escapeBrackets(fname), -1)
-	command = strings.Replace(command, "${FILEEXT}", ext, -1)
-	command = strings.Replace(command, "${FILENAME}", escapeBrackets(filepath.FromSlash(fname)), -1)
-	command = strings.Replace(command, "${ROOT}", escapeBrackets(rootPath), -1)
+	command = strings.ReplaceAll(command, "${INPUT}", escapeBrackets(fname))
+	command = strings.ReplaceAll(command, "${FILEEXT}", ext)
+	command = strings.ReplaceAll(command, "${FILENAME}", escapeBrackets(filepath.FromSlash(fname)))
+	command = strings.ReplaceAll(command, "${ROOT}", escapeBrackets(rootPath))
 
 	return command
 }
 
 func escapeBrackets(path string) string {
-	path = strings.Replace(path, "(", `\(`, -1)
-	path = strings.Replace(path, ")", `\)`, -1)
+	path = strings.ReplaceAll(path, "(", `\(`)
+	path = strings.ReplaceAll(path, ")", `\)`)
 
 	return path
 }

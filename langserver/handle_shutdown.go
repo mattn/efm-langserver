@@ -14,6 +14,5 @@ func (h *langHandler) handleShutdown(_ context.Context, conn *jsonrpc2.Conn, _ *
 		h.lintTimer.Stop()
 	}
 
-	close(h.request)
 	return nil, conn.Close()
 }

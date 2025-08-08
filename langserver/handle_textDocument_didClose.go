@@ -17,7 +17,7 @@ func (h *langHandler) handleTextDocumentDidClose(_ context.Context, _ *jsonrpc2.
 		return nil, err
 	}
 
-	if err := h.closeFile(params.TextDocument.URI); err != nil {
+	if err := h.onCloseFile(params.TextDocument.URI); err != nil {
 		return nil, err
 	}
 	return nil, nil

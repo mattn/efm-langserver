@@ -71,8 +71,6 @@ func main() {
 	}
 
 	handler := langserver.NewHandler(logger, config)
-	go handler.ListenForLintRequests()
-
 	<-jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),

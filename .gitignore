@@ -3,3 +3,4 @@ config
 efm-langserver
 efm-langserver.exe
 .direnv
+result

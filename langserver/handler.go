@@ -79,13 +79,11 @@ func NewHandler(logger *log.Logger, config *Config) *langHandler {
 		logger:       logger,
 		configs:      *config.Languages,
 		files:        make(map[DocumentURI]*File),
-		request:      make(chan lintRequest),
 		lintDebounce: time.Duration(config.LintDebounce),
 		lintTimer:    nil,
 
 		formatDebounce: time.Duration(config.FormatDebounce),
 		formatTimer:    nil,
-		conn:           nil,
 		filename:       config.Filename,
 		rootMarkers:    *config.RootMarkers,
 
@@ -100,12 +98,10 @@ type langHandler struct {
 	logger         *log.Logger
 	configs        map[string][]Language
 	files          map[DocumentURI]*File
-	request        chan lintRequest
 	lintDebounce   time.Duration
 	lintTimer      *time.Timer
 	formatDebounce time.Duration
 	formatTimer    *time.Timer
-	conn           *jsonrpc2.Conn
 	rootPath       string
 	filename       string
 	rootMarkers    []string
@@ -221,8 +217,8 @@ func toURI(path string) DocumentURI {
 	}).String())
 }
 
-func (h *langHandler) logMessage(typ MessageType, message string) {
-	_ = h.conn.Notify(
+func (h *langHandler) logMessage(conn *jsonrpc2.Conn, typ MessageType, message string) {
+	_ = conn.Notify(
 		context.Background(),
 		"window/logMessage",
 		&LogMessageParams{
@@ -293,27 +289,29 @@ func itoaPtrIfNotZero(n int) *string {
 	return &s
 }
 
-func (h *langHandler) closeFile(uri DocumentURI) error {
+func (h *langHandler) onCloseFile(uri DocumentURI) error {
 	delete(h.files, uri)
 	return nil
 }
 
-func (h *langHandler) saveFile(uri DocumentURI) error {
-	h.lintRequest(uri, eventTypeSave)
+func (h *langHandler) onSaveFile(conn *jsonrpc2.Conn, uri DocumentURI) error {
+	h.ScheduleLinting(conn, uri, eventTypeSave)
 	return nil
 }
 
-func (h *langHandler) openFile(uri DocumentURI, languageID string, version int) error {
+func (h *langHandler) onOpenFile(conn *jsonrpc2.Conn, uri DocumentURI, languageID string, version int, text string) error {
 	f := &File{
-		Text:       "",
+		Text:       text,
 		LanguageID: languageID,
 		Version:    version,
 	}
 	h.files[uri] = f
+
+	h.ScheduleLinting(conn, uri, eventTypeOpen)
 	return nil
 }
 
-func (h *langHandler) updateFile(uri DocumentURI, text string, version *int, eventType eventType) error {
+func (h *langHandler) onUpdateFile(conn *jsonrpc2.Conn, uri DocumentURI, text string, version *int, eventType eventType) error {
 	f, ok := h.files[uri]
 	if !ok {
 		return fmt.Errorf("document not found: %v", uri)
@@ -323,7 +321,7 @@ func (h *langHandler) updateFile(uri DocumentURI, text string, version *int, eve
 		f.Version = *version
 	}
 
-	h.lintRequest(uri, eventType)
+	h.ScheduleLinting(conn, uri, eventTypeChange)
 	return nil
 }
 

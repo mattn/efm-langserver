@@ -8,16 +8,14 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
+func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result InitializeResult, err error) {
 	if req.Params == nil {
-		return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
+		return InitializeResult{}, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}
-
-	h.conn = conn
 
 	var params InitializeParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
-		return nil, err
+		return InitializeResult{}, err
 	}
 
 	// https://microsoft.github.io/language-server-protocol/specification#initialize
@@ -25,7 +23,7 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 	if params.RootURI != "" {
 		rootPath, err := fromURI(params.RootURI)
 		if err != nil {
-			return nil, err
+			return InitializeResult{}, err
 		}
 		h.rootPath = filepath.Clean(rootPath)
 	}

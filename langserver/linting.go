@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/reviewdog/errorformat"
+	"github.com/sourcegraph/jsonrpc2"
 )
 
 type lintRequest struct {
@@ -19,63 +20,54 @@ type lintRequest struct {
 	EventType eventType
 }
 
-func (h *langHandler) ListenForLintRequests() {
-	running := make(map[DocumentURI]context.CancelFunc)
+var running = make(map[DocumentURI]context.CancelFunc)
 
-	for {
-		lintReq, ok := <-h.request
-		if !ok {
-			break
-		}
-
-		cancel, ok := running[lintReq.URI]
-		if ok {
-			cancel()
-		}
-
-		ctx, cancel := context.WithCancel(context.Background())
-		running[lintReq.URI] = cancel
-
-		go func() {
-			uriToDiagnostics, err := h.lint(ctx, lintReq.URI, lintReq.EventType)
-			if err != nil {
-				h.logger.Println(err)
-				return
-			}
-
-			for diagURI, diagnostics := range uriToDiagnostics {
-				if diagURI == "file:" {
-					diagURI = lintReq.URI
-				}
-				version := 0
-				if _, ok := h.files[lintReq.URI]; ok {
-					version = h.files[lintReq.URI].Version
-				}
-				_ = h.conn.Notify(
-					ctx,
-					"textDocument/publishDiagnostics",
-					&PublishDiagnosticsParams{
-						URI:         diagURI,
-						Diagnostics: diagnostics,
-						Version:     version,
-					})
-			}
-		}()
-	}
-}
-
-func (h *langHandler) lintRequest(uri DocumentURI, eventType eventType) {
+func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
 	if h.lintTimer != nil {
 		h.lintTimer.Reset(h.lintDebounce)
 		return
 	}
 	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
 		h.lintTimer = nil
-		h.request <- lintRequest{URI: uri, EventType: eventType}
+
+		cancel, ok := running[uri]
+		if ok {
+			cancel()
+		}
+
+		ctx, cancel := context.WithCancel(context.Background())
+		running[uri] = cancel
+		go h.runLintersPublishDiagnostics(ctx, conn, lintRequest{URI: uri, EventType: eventType})
 	})
 }
 
-func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
+func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *jsonrpc2.Conn, req lintRequest) {
+	uriToDiagnostics, err := h.lint(ctx, conn, req.URI, req.EventType)
+	if err != nil {
+		h.logger.Println(err)
+		return
+	}
+
+	for diagURI, diagnostics := range uriToDiagnostics {
+		if diagURI == "file:" {
+			diagURI = req.URI
+		}
+		version := 0
+		if _, ok := h.files[req.URI]; ok {
+			version = h.files[req.URI].Version
+		}
+		_ = conn.Notify(
+			ctx,
+			"textDocument/publishDiagnostics",
+			&PublishDiagnosticsParams{
+				URI:         diagURI,
+				Diagnostics: diagnostics,
+				Version:     version,
+			})
+	}
+}
+
+func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -185,7 +177,10 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 		// with zero-value. So if you want to handle the command which exit
 		// with zero value, please specify lint-ignore-exit-code.
 		if err == nil && !config.LintIgnoreExitCode {
-			h.logMessage(LogError, "command `"+command+"` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
+			if conn != nil {
+				h.logMessage(conn, LogError, "command `"+command+"` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
+				h.logger.Println("command `" + command + "` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
+			}
 			continue
 		}
 		if h.loglevel >= 3 {

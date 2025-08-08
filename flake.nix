@@ -29,6 +29,7 @@
           name = "efm";
           packages = with pkgs; [
             nodePackages.prettier
+            json-schema-for-humans
           ];
           inputsFrom = [ self.packages.${pkgs.system}.default ];
         };

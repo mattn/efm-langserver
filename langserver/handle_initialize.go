@@ -8,7 +8,7 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result InitializeResult, err error) {
+func (h *langHandler) handleInitialize(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) (result InitializeResult, err error) {
 	if req.Params == nil {
 		return InitializeResult{}, &jsonrpc2.Error{Code: jsonrpc2.CodeInvalidParams}
 	}

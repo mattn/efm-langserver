@@ -7,11 +7,9 @@ type DocumentURI string
 
 // InitializeParams is
 type InitializeParams struct {
-	ProcessID             int                `json:"processId,omitempty"`
 	RootURI               DocumentURI        `json:"rootUri,omitempty"`
 	InitializationOptions *InitializeOptions `json:"initializationOptions,omitempty"`
 	Capabilities          ClientCapabilities `json:"capabilities,omitempty"`
-	Trace                 string             `json:"trace,omitempty"`
 }
 
 // InitializeOptions is
@@ -53,7 +51,6 @@ const (
 // ServerCapabilities is
 type ServerCapabilities struct {
 	TextDocumentSync           TextDocumentSyncKind `json:"textDocumentSync,omitempty"`
-	DefinitionProvider         bool                 `json:"definitionProvider,omitempty"`
 	DocumentFormattingProvider bool                 `json:"documentFormattingProvider,omitempty"`
 	RangeFormattingProvider    bool                 `json:"documentRangeFormattingProvider,omitempty"`
 }
@@ -175,84 +172,9 @@ type TextEdit struct {
 	NewText string `json:"newText"`
 }
 
-// InsertTextFormat is
-type InsertTextFormat int
-
-// PlainTextTextFormat is
-const (
-	PlainTextTextFormat InsertTextFormat = 1
-	SnippetTextFormat   InsertTextFormat = 2
-)
-
-// Command is
-type Command struct {
-	Title     string `json:"title" yaml:"title"`
-	Command   string `json:"command" yaml:"command"`
-	Arguments []any  `json:"arguments,omitempty" yaml:"arguments,omitempty"`
-	OS        string `json:"-" yaml:"os,omitempty"`
-}
-
-// MarkedString is
-type MarkedString struct {
-	Language string `json:"language"`
-	Value    string `json:"value"`
-}
-
-// MarkupKind is
-type MarkupKind string
-
-// PlainText is
-const (
-	PlainText MarkupKind = "plaintext"
-	Markdown  MarkupKind = "markdown"
-)
-
-// MarkupContent is
-type MarkupContent struct {
-	Kind  MarkupKind `json:"kind"`
-	Value string     `json:"value"`
-}
-
-// WorkDoneProgressParams is
-type WorkDoneProgressParams struct {
-	WorkDoneToken any `json:"workDoneToken"`
-}
-
-// ExecuteCommandParams is
-type ExecuteCommandParams struct {
-	WorkDoneProgressParams
-
-	Command   string `json:"command"`
-	Arguments []any  `json:"arguments,omitempty"`
-}
-
-// PartialResultParams is
-type PartialResultParams struct {
-	PartialResultToken any `json:"partialResultToken"`
-}
-
 // DidChangeConfigurationParams is
 type DidChangeConfigurationParams struct {
 	Settings Config `json:"settings"`
-}
-
-// NotificationMessage is
-type NotificationMessage struct {
-	Method string `json:"message"`
-	Params any    `json:"params"`
-}
-
-// DocumentDefinitionParams is
-type DocumentDefinitionParams struct {
-	TextDocumentPositionParams
-	WorkDoneProgressParams
-	PartialResultParams
-}
-
-// ShowMessageParams is
-type ShowMessageParams struct {
-	Type    MessageType `json:"type"`
-	Message string      `json:"message"`
 }
 
 // LogMessageParams is

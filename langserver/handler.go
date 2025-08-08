@@ -36,8 +36,6 @@ type Config struct {
 	RootMarkers    *[]string
 	LintDebounce   time.Duration
 	FormatDebounce time.Duration
-
-	Filename string
 }
 
 func NewConfig() *Config {
@@ -84,7 +82,6 @@ func NewHandler(logger *log.Logger, config *Config) *langHandler {
 
 		formatDebounce: time.Duration(config.FormatDebounce),
 		formatTimer:    nil,
-		filename:       config.Filename,
 		rootMarkers:    *config.RootMarkers,
 
 		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
@@ -103,7 +100,6 @@ type langHandler struct {
 	formatDebounce time.Duration
 	formatTimer    *time.Timer
 	rootPath       string
-	filename       string
 	rootMarkers    []string
 
 	// lastPublishedURIs is mapping from LanguageID string to mapping of

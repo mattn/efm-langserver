@@ -43,7 +43,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	var config *langserver.Config = langserver.NewConfig()
+	config := langserver.NewConfig()
 	config.LogLevel = loglevel
 
 	if quiet {
@@ -57,7 +57,7 @@ func main() {
 	var f *os.File
 	defer func() {
 		if f != nil {
-			f.Close()
+			_ = f.Close()
 		}
 	}()
 

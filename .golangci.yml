@@ -2,10 +2,9 @@ version: "2"
 formatters:
   enable:
     - gofmt
+    - goimports
 linters:
   enable:
-    - govet
-    - nlreturn
     - whitespace
 run:
   timeout: "5m"

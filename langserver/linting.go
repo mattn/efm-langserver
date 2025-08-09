@@ -16,11 +16,6 @@ import (
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-type lintRequest struct {
-	URI       DocumentURI
-	EventType eventType
-}
-
 var mu sync.RWMutex
 var running = make(map[DocumentURI]context.CancelFunc)
 
@@ -41,12 +36,12 @@ func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, even
 
 		ctx, cancel := context.WithCancel(context.Background())
 		running[uri] = cancel
-		go h.runLintersPublishDiagnostics(ctx, conn, lintRequest{URI: uri, EventType: eventType})
+		go h.runLintersPublishDiagnostics(ctx, conn, uri, eventType)
 	})
 }
 
-func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *jsonrpc2.Conn, req lintRequest) {
-	uriToDiagnostics, err := h.lint(ctx, conn, req.URI, req.EventType)
+func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
+	uriToDiagnostics, err := h.lintDocument(ctx, conn, uri, eventType)
 	if err != nil {
 		h.logger.Println(err)
 		return
@@ -54,11 +49,11 @@ func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *js
 
 	for diagURI, diagnostics := range uriToDiagnostics {
 		if diagURI == "file:" {
-			diagURI = req.URI
+			diagURI = uri
 		}
 		version := 0
-		if _, ok := h.files[req.URI]; ok {
-			version = h.files[req.URI].Version
+		if _, ok := h.files[uri]; ok {
+			version = h.files[uri].Version
 		}
 		_ = conn.Notify(
 			ctx,
@@ -71,7 +66,7 @@ func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *js
 	}
 }
 
-func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
+func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -83,41 +78,10 @@ func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri Documen
 	}
 	fname = filepath.ToSlash(fname)
 
-	var configs []Language
-	if cfgs, ok := h.configs[f.LanguageID]; ok {
-		for _, cfg := range cfgs {
-			// if we require markers and find that they dont exist we do not add the configuration
-			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker {
-				continue
-			}
-			switch eventType {
-			case eventTypeOpen:
-				// if LintAfterOpen is not true, ignore didOpen
-				if !cfg.LintAfterOpen {
-					continue
-				}
-			case eventTypeChange:
-				// if LintOnSave is true, ignore didChange
-				if cfg.LintOnSave {
-					continue
-				}
-			default:
-			}
-			if cfg.LintCommand != "" {
-				configs = append(configs, cfg)
-			}
-		}
-	}
-	if cfgs, ok := h.configs[wildcard]; ok {
-		for _, cfg := range cfgs {
-			if cfg.LintCommand != "" {
-				configs = append(configs, cfg)
-			}
-		}
-	}
+	var configs = configsForDocument(fname, f.LanguageID, h.configs, eventType)
 
 	if len(configs) == 0 {
-		if h.loglevel >= 1 {
+		if h.loglevel >= 2 {
 			h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
 		}
 		return map[DocumentURI][]Diagnostic{}, nil
@@ -274,7 +238,7 @@ func (h *langHandler) lint(ctx context.Context, conn *jsonrpc2.Conn, uri Documen
 		}
 	}
 
-	// Update state here as no possibility of cancelation
+	// Update state here as no possibility of cancellation
 	for _, config := range configs {
 		if config.LintWorkspace {
 			h.lastPublishedURIs[f.LanguageID] = publishedURIs
@@ -305,4 +269,40 @@ func getSeverity(typ rune, categoryMap map[string]string, defaultSeverity Diagno
 		severity = Hint
 	}
 	return severity
+}
+
+func configsForDocument(fname, langId string, allConfigs map[string][]Language, eventType eventType) []Language {
+	var configs []Language
+	if cfgs, ok := allConfigs[langId]; ok {
+		for _, cfg := range cfgs {
+			// if we require markers and find that they dont exist we do not add the configuration
+			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker {
+				continue
+			}
+			switch eventType {
+			case eventTypeOpen:
+				// if LintAfterOpen is not true, ignore didOpen
+				if !cfg.LintAfterOpen {
+					continue
+				}
+			case eventTypeChange:
+				// if LintOnSave is true, ignore didChange
+				if cfg.LintOnSave {
+					continue
+				}
+			default:
+			}
+			if cfg.LintCommand != "" {
+				configs = append(configs, cfg)
+			}
+		}
+	}
+	if cfgs, ok := allConfigs[wildcard]; ok {
+		for _, cfg := range cfgs {
+			if cfg.LintCommand != "" {
+				configs = append(configs, cfg)
+			}
+		}
+	}
+	return configs
 }

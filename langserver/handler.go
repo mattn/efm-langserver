@@ -90,7 +90,8 @@ func NewHandler(logger *log.Logger, config *Config) *langHandler {
 }
 
 type langHandler struct {
-	mu             sync.Mutex
+	formatMu       sync.Mutex
+	lintMu         sync.Mutex
 	loglevel       int
 	logger         *log.Logger
 	configs        map[string][]Language

@@ -9,26 +9,27 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/reviewdog/errorformat"
 	"github.com/sourcegraph/jsonrpc2"
 )
 
-var mu sync.RWMutex
 var running = make(map[DocumentURI]context.CancelFunc)
 
 func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
 	if h.lintTimer != nil {
 		h.lintTimer.Reset(h.lintDebounce)
+		if h.loglevel >= 4 {
+			h.logger.Printf("lint debounced: %v", h.lintDebounce)
+		}
 		return
 	}
+	h.lintMu.Lock()
 	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
 		h.lintTimer = nil
 
-		mu.Lock()
-		defer mu.Unlock()
+		h.lintMu.Lock()
 		cancel, ok := running[uri]
 		if ok {
 			cancel()
@@ -36,8 +37,10 @@ func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, even
 
 		ctx, cancel := context.WithCancel(context.Background())
 		running[uri] = cancel
+		h.lintMu.Unlock()
 		go h.runLintersPublishDiagnostics(ctx, conn, uri, eventType)
 	})
+	h.lintMu.Unlock()
 }
 
 func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
@@ -78,7 +81,7 @@ func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri
 	}
 	fname = filepath.ToSlash(fname)
 
-	var configs = configsForDocument(fname, f.LanguageID, h.configs, eventType)
+	configs := lintConfigsForDocument(fname, f.LanguageID, h.configs, eventType)
 
 	if len(configs) == 0 {
 		if h.loglevel >= 2 {
@@ -271,7 +274,7 @@ func getSeverity(typ rune, categoryMap map[string]string, defaultSeverity Diagno
 	return severity
 }
 
-func configsForDocument(fname, langId string, allConfigs map[string][]Language, eventType eventType) []Language {
+func lintConfigsForDocument(fname, langId string, allConfigs map[string][]Language, eventType eventType) []Language {
 	var configs []Language
 	if cfgs, ok := allConfigs[langId]; ok {
 		for _, cfg := range cfgs {

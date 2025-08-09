@@ -20,13 +20,13 @@ func (h *langHandler) RangeFormatRequest(uri DocumentURI, rng Range, opt Formatt
 		return []TextEdit{}, nil
 	}
 
-	h.mu.Lock()
+	h.formatMu.Lock()
 	h.formatTimer = time.AfterFunc(h.formatDebounce, func() {
-		h.mu.Lock()
+		h.formatMu.Lock()
 		h.formatTimer = nil
-		h.mu.Unlock()
+		h.formatMu.Unlock()
 	})
-	h.mu.Unlock()
+	h.formatMu.Unlock()
 	return h.rangeFormatting(uri, rng, opt)
 }
 
@@ -45,27 +45,10 @@ func (h *langHandler) rangeFormatting(uri DocumentURI, rng Range, options Format
 		fname = strings.ToLower(fname)
 	}
 
-	var configs []Language
-	if cfgs, ok := h.configs[f.LanguageID]; ok {
-		for _, cfg := range cfgs {
-			if cfg.FormatCommand != "" {
-				if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker {
-					continue
-				}
-				configs = append(configs, cfg)
-			}
-		}
-	}
-	if cfgs, ok := h.configs[wildcard]; ok {
-		for _, cfg := range cfgs {
-			if cfg.FormatCommand != "" {
-				configs = append(configs, cfg)
-			}
-		}
-	}
+	configs := formatConfigsForDocument(fname, f.LanguageID, h.configs)
 
 	if len(configs) == 0 {
-		if h.loglevel >= 1 {
+		if h.loglevel >= 2 {
 			h.logger.Printf("format for LanguageID not supported: %v", f.LanguageID)
 		}
 		return nil, nil
@@ -179,12 +162,34 @@ Configs:
 		text = strings.ReplaceAll(string(b), "\r", "")
 	}
 
-	if formatted {
-		if h.loglevel >= 3 {
-			h.logger.Println("format succeeded")
-		}
-		return ComputeEdits(uri, originalText, text), nil
+	if !formatted {
+		return nil, fmt.Errorf("format for LanguageID not supported: %v", f.LanguageID)
 	}
 
-	return nil, fmt.Errorf("format for LanguageID not supported: %v", f.LanguageID)
+	if h.loglevel >= 3 {
+		h.logger.Println("format succeeded")
+	}
+	return ComputeEdits(uri, originalText, text), nil
+}
+
+func formatConfigsForDocument(fname, langId string, allConfigs map[string][]Language) []Language {
+	var configs []Language
+	if cfgs, ok := allConfigs[langId]; ok {
+		for _, cfg := range cfgs {
+			if cfg.FormatCommand != "" {
+				if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker {
+					continue
+				}
+				configs = append(configs, cfg)
+			}
+		}
+	}
+	if cfgs, ok := allConfigs[wildcard]; ok {
+		for _, cfg := range cfgs {
+			if cfg.FormatCommand != "" {
+				configs = append(configs, cfg)
+			}
+		}
+	}
+	return configs
 }

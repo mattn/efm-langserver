@@ -9,7 +9,7 @@ type DocumentURI string
 type InitializeParams struct {
 	RootURI               DocumentURI        `json:"rootUri,omitempty"`
 	InitializationOptions *InitializeOptions `json:"initializationOptions,omitempty"`
-	Capabilities          ClientCapabilities `json:"capabilities,omitempty"`
+	Capabilities          ClientCapabilities `json:"capabilities"`
 }
 
 // InitializeOptions is
@@ -23,7 +23,7 @@ type ClientCapabilities struct{}
 
 // InitializeResult is
 type InitializeResult struct {
-	Capabilities ServerCapabilities `json:"capabilities,omitempty"`
+	Capabilities ServerCapabilities `json:"capabilities"`
 }
 
 // MessageType is

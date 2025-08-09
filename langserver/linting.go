@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/reviewdog/errorformat"
@@ -20,6 +21,7 @@ type lintRequest struct {
 	EventType eventType
 }
 
+var mu sync.RWMutex
 var running = make(map[DocumentURI]context.CancelFunc)
 
 func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
@@ -30,6 +32,8 @@ func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, even
 	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
 		h.lintTimer = nil
 
+		mu.Lock()
+		defer mu.Unlock()
 		cancel, ok := running[uri]
 		if ok {
 			cancel()

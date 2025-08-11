@@ -1,4 +1,4 @@
-package langserver
+package core
 
 import (
 	"bytes"
@@ -10,14 +10,17 @@ import (
 	"runtime"
 	"strings"
 	"time"
+
+	"github.com/konradmalik/efm-langserver/diff"
+	"github.com/konradmalik/efm-langserver/types"
 )
 
-func (h *langHandler) RangeFormatRequest(uri DocumentURI, rng Range, opt FormattingOptions) ([]TextEdit, error) {
+func (h *LangHandler) RangeFormatRequest(uri types.DocumentURI, rng types.Range, opt types.FormattingOptions) ([]types.TextEdit, error) {
 	if h.formatTimer != nil {
 		if h.loglevel >= 4 {
 			h.logger.Printf("format debounced: %v", h.formatDebounce)
 		}
-		return []TextEdit{}, nil
+		return []types.TextEdit{}, nil
 	}
 
 	h.formatMu.Lock()
@@ -30,7 +33,7 @@ func (h *langHandler) RangeFormatRequest(uri DocumentURI, rng Range, opt Formatt
 	return h.rangeFormatting(uri, rng, opt)
 }
 
-func (h *langHandler) rangeFormatting(uri DocumentURI, rng Range, options FormattingOptions) ([]TextEdit, error) {
+func (h *LangHandler) rangeFormatting(uri types.DocumentURI, rng types.Range, options types.FormattingOptions) ([]types.TextEdit, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -69,7 +72,7 @@ Configs:
 		if !config.FormatStdin && !strings.Contains(command, "${INPUT}") {
 			command = command + " ${INPUT}"
 		}
-		command = replaceCommandInputFilename(command, fname, h.rootPath)
+		command = replaceCommandInputFilename(command, fname, h.RootPath)
 
 		// Formatting Options
 		for placeholder, value := range options {
@@ -169,11 +172,11 @@ Configs:
 	if h.loglevel >= 3 {
 		h.logger.Println("format succeeded")
 	}
-	return ComputeEdits(uri, originalText, text), nil
+	return diff.ComputeEdits(uri, originalText, text), nil
 }
 
-func formatConfigsForDocument(fname, langId string, allConfigs map[string][]Language) []Language {
-	var configs []Language
+func formatConfigsForDocument(fname, langId string, allConfigs map[string][]types.Language) []types.Language {
+	var configs []types.Language
 	if cfgs, ok := allConfigs[langId]; ok {
 		for _, cfg := range cfgs {
 			if cfg.FormatCommand != "" {
@@ -184,7 +187,7 @@ func formatConfigsForDocument(fname, langId string, allConfigs map[string][]Lang
 			}
 		}
 	}
-	if cfgs, ok := allConfigs[wildcard]; ok {
+	if cfgs, ok := allConfigs[types.Wildcard]; ok {
 		for _, cfg := range cfgs {
 			if cfg.FormatCommand != "" {
 				configs = append(configs, cfg)

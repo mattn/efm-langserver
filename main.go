@@ -11,7 +11,8 @@ import (
 
 	"github.com/sourcegraph/jsonrpc2"
 
-	"github.com/konradmalik/efm-langserver/langserver"
+	"github.com/konradmalik/efm-langserver/core"
+	"github.com/konradmalik/efm-langserver/lsp"
 )
 
 const (
@@ -45,7 +46,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	config := langserver.NewConfig()
+	config := core.NewConfig()
 	config.LogLevel = loglevel
 
 	if quiet {
@@ -70,7 +71,8 @@ func main() {
 		connOpt = append(connOpt, jsonrpc2.LogMessages(log.New(io.Discard, "", 0)))
 	}
 
-	handler := langserver.NewHandler(logger, config)
+	internalHandler := core.NewHandler(logger, config)
+	handler := lsp.NewHandler(internalHandler)
 	<-jsonrpc2.NewConn(
 		context.Background(),
 		jsonrpc2.NewBufferedStream(stdrwc{}, jsonrpc2.VSCodeObjectCodec{}),

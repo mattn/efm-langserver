@@ -1,4 +1,4 @@
-package langserver
+package core
 
 import (
 	"bytes"
@@ -11,13 +11,18 @@ import (
 	"strings"
 	"time"
 
+	"github.com/konradmalik/efm-langserver/types"
 	"github.com/reviewdog/errorformat"
-	"github.com/sourcegraph/jsonrpc2"
 )
 
-var running = make(map[DocumentURI]context.CancelFunc)
+var running = make(map[types.DocumentURI]context.CancelFunc)
 
-func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
+type notifier interface {
+	PublishDiagnostics(ctx context.Context, params types.PublishDiagnosticsParams)
+	LogMessage(ctx context.Context, typ types.MessageType, message string)
+}
+
+func (h *LangHandler) ScheduleLinting(notifier notifier, uri types.DocumentURI, eventType types.EventType) {
 	if h.lintTimer != nil {
 		h.lintTimer.Reset(h.lintDebounce)
 		if h.loglevel >= 4 {
@@ -38,13 +43,13 @@ func (h *langHandler) ScheduleLinting(conn *jsonrpc2.Conn, uri DocumentURI, even
 		ctx, cancel := context.WithCancel(context.Background())
 		running[uri] = cancel
 		h.lintMu.Unlock()
-		go h.runLintersPublishDiagnostics(ctx, conn, uri, eventType)
+		go h.runLintersPublishDiagnostics(ctx, notifier, uri, eventType)
 	})
 	h.lintMu.Unlock()
 }
 
-func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) {
-	uriToDiagnostics, err := h.lintDocument(ctx, conn, uri, eventType)
+func (h *LangHandler) runLintersPublishDiagnostics(ctx context.Context, notifier notifier, uri types.DocumentURI, eventType types.EventType) {
+	uriToDiagnostics, err := h.lintDocument(ctx, notifier, uri, eventType)
 	if err != nil {
 		h.logger.Println(err)
 		return
@@ -58,10 +63,9 @@ func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *js
 		if _, ok := h.files[uri]; ok {
 			version = h.files[uri].Version
 		}
-		_ = conn.Notify(
+		notifier.PublishDiagnostics(
 			ctx,
-			"textDocument/publishDiagnostics",
-			&PublishDiagnosticsParams{
+			types.PublishDiagnosticsParams{
 				URI:         diagURI,
 				Diagnostics: diagnostics,
 				Version:     version,
@@ -69,7 +73,7 @@ func (h *langHandler) runLintersPublishDiagnostics(ctx context.Context, conn *js
 	}
 }
 
-func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
+func (h *LangHandler) lintDocument(ctx context.Context, notifier notifier, uri types.DocumentURI, eventType types.EventType) (map[types.DocumentURI][]types.Diagnostic, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -87,19 +91,19 @@ func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri
 		if h.loglevel >= 2 {
 			h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
 		}
-		return map[DocumentURI][]Diagnostic{}, nil
+		return map[types.DocumentURI][]types.Diagnostic{}, nil
 	}
 
-	uriToDiagnostics := map[DocumentURI][]Diagnostic{
+	uriToDiagnostics := map[types.DocumentURI][]types.Diagnostic{
 		uri: {},
 	}
-	publishedURIs := make(map[DocumentURI]struct{})
+	publishedURIs := make(map[types.DocumentURI]struct{})
 	for i, config := range configs {
 		// To publish empty diagnostics when errors are fixed
 		if config.LintWorkspace {
 			for lastPublishedURI := range h.lastPublishedURIs[f.LanguageID] {
 				if _, ok := uriToDiagnostics[lastPublishedURI]; !ok {
-					uriToDiagnostics[lastPublishedURI] = []Diagnostic{}
+					uriToDiagnostics[lastPublishedURI] = []types.Diagnostic{}
 				}
 			}
 		}
@@ -148,10 +152,9 @@ func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri
 		// with zero-value. So if you want to handle the command which exit
 		// with zero value, please specify lint-ignore-exit-code.
 		if err == nil && !config.LintIgnoreExitCode {
-			if conn != nil {
-				h.logMessage(conn, LogError, "command `"+command+"` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
-				h.logger.Println("command `" + command + "` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
-			}
+			errorMessage := "command `" + command + "` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`."
+			notifier.LogMessage(ctx, types.LogError, errorMessage)
+			h.logger.Println(errorMessage)
 			continue
 		}
 		if h.loglevel >= 3 {
@@ -204,7 +207,7 @@ func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri
 			if entry.Col == 0 {
 				entry.Col = 1 // entry.Col == 0 indicates the whole line without column, set to 1 because it is subtracted later
 			} else {
-				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
+				word = f.WordAt(types.Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
 
 			diagURI := uri
@@ -228,10 +231,10 @@ func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri
 			if config.LintWorkspace {
 				publishedURIs[diagURI] = struct{}{}
 			}
-			uriToDiagnostics[diagURI] = append(uriToDiagnostics[diagURI], Diagnostic{
-				Range: Range{
-					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
-					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len([]rune(word))},
+			uriToDiagnostics[diagURI] = append(uriToDiagnostics[diagURI], types.Diagnostic{
+				Range: types.Range{
+					Start: types.Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
+					End:   types.Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len([]rune(word))},
 				},
 				Code:     itoaPtrIfNotZero(entry.Nr),
 				Message:  prefix + entry.Text,
@@ -250,32 +253,32 @@ func (h *langHandler) lintDocument(ctx context.Context, conn *jsonrpc2.Conn, uri
 	}
 	return uriToDiagnostics, nil
 }
-func getSeverity(typ rune, categoryMap map[string]string, defaultSeverity DiagnosticSeverity) DiagnosticSeverity {
+func getSeverity(typ rune, categoryMap map[string]string, defaultSeverity types.DiagnosticSeverity) types.DiagnosticSeverity {
 	// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
 	if len(categoryMap) > 0 {
 		typ = []rune(categoryMap[string(typ)])[0]
 	}
 
-	severity := Error
+	severity := types.Error
 	if defaultSeverity != 0 {
 		severity = defaultSeverity
 	}
 
 	switch typ {
 	case 'E', 'e':
-		severity = Error
+		severity = types.Error
 	case 'W', 'w':
-		severity = Warning
+		severity = types.Warning
 	case 'I', 'i':
-		severity = Information
+		severity = types.Information
 	case 'N', 'n':
-		severity = Hint
+		severity = types.Hint
 	}
 	return severity
 }
 
-func lintConfigsForDocument(fname, langId string, allConfigs map[string][]Language, eventType eventType) []Language {
-	var configs []Language
+func lintConfigsForDocument(fname, langId string, allConfigs map[string][]types.Language, eventType types.EventType) []types.Language {
+	var configs []types.Language
 	if cfgs, ok := allConfigs[langId]; ok {
 		for _, cfg := range cfgs {
 			// if we require markers and find that they dont exist we do not add the configuration
@@ -283,12 +286,12 @@ func lintConfigsForDocument(fname, langId string, allConfigs map[string][]Langua
 				continue
 			}
 			switch eventType {
-			case eventTypeOpen:
+			case types.EventTypeOpen:
 				// if LintAfterOpen is not true, ignore didOpen
 				if !cfg.LintAfterOpen {
 					continue
 				}
-			case eventTypeChange:
+			case types.EventTypeChange:
 				// if LintOnSave is true, ignore didChange
 				if cfg.LintOnSave {
 					continue
@@ -300,7 +303,7 @@ func lintConfigsForDocument(fname, langId string, allConfigs map[string][]Langua
 			}
 		}
 	}
-	if cfgs, ok := allConfigs[wildcard]; ok {
+	if cfgs, ok := allConfigs[types.Wildcard]; ok {
 		for _, cfg := range cfgs {
 			if cfg.LintCommand != "" {
 				configs = append(configs, cfg)

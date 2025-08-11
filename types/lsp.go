@@ -1,6 +1,4 @@
-package langserver
-
-const wildcard = "="
+package types
 
 // DocumentURI is
 type DocumentURI string

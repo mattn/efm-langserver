@@ -1,24 +1,26 @@
-package langserver
+package core
 
 import (
 	"log"
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/konradmalik/efm-langserver/types"
 )
 
 func TestFormattingRequireRootMatcher(t *testing.T) {
 	base, _ := os.Getwd()
-	file := filepath.Join(base, "foo")
-	uri := toURI(file)
+	filepath := filepath.Join(base, "foo")
+	uri := toURI(filepath)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
-					LintCommand:        `echo ` + file + `:2:No it is normal!`,
+					LintCommand:        `echo ` + filepath + `:2:No it is normal!`,
 					LintIgnoreExitCode: true,
 					LintAfterOpen:      true,
 					LintStdin:          true,
@@ -27,7 +29,7 @@ func TestFormattingRequireRootMatcher(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -35,8 +37,8 @@ func TestFormattingRequireRootMatcher(t *testing.T) {
 		},
 	}
 
-	rng := Range{Position{-1, -1}, Position{-1, -1}}
-	d, err := h.RangeFormatRequest(uri, rng, FormattingOptions{})
+	rng := types.Range{Start: types.Position{Line: -1, Character: -1}, End: types.Position{Line: -1, Character: -1}}
+	d, err := h.RangeFormatRequest(uri, rng, types.FormattingOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -1,4 +1,4 @@
-package langserver
+package core
 
 import (
 	"context"
@@ -9,33 +9,35 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/konradmalik/efm-langserver/types"
 )
 
 func TestLintNoLinter(t *testing.T) {
-	h := &langHandler{
+	h := &LangHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),
-		configs: map[string][]Language{},
-		files: map[DocumentURI]*File{
-			DocumentURI("file:///foo"): {},
+		configs: map[string][]types.Language{},
+		files: map[types.DocumentURI]*fileRef{
+			types.DocumentURI("file:///foo"): {},
 		},
 	}
 
-	_, err := h.lintDocument(context.Background(), nil, "file:///foo", eventTypeChange)
+	_, err := h.lintDocument(context.Background(), nil, "file:///foo", types.EventTypeChange)
 	if err != nil {
 		t.Fatal("Should not be an error if no linters")
 	}
 }
 
 func TestLintNoFileMatched(t *testing.T) {
-	h := &langHandler{
+	h := &LangHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),
-		configs: map[string][]Language{},
-		files: map[DocumentURI]*File{
-			DocumentURI("file:///foo"): {},
+		configs: map[string][]types.Language{},
+		files: map[types.DocumentURI]*fileRef{
+			types.DocumentURI("file:///foo"): {},
 		},
 	}
 
-	_, err := h.lintDocument(context.Background(), nil, "file:///bar", eventTypeChange)
+	_, err := h.lintDocument(context.Background(), nil, "file:///bar", types.EventTypeChange)
 	if err == nil {
 		t.Fatal("Should be an error if no linters")
 	}
@@ -46,10 +48,10 @@ func TestLintFileMatched(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
 					LintCommand:        `echo ` + file + `:2:No it is normal!`,
@@ -58,7 +60,7 @@ func TestLintFileMatched(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -66,7 +68,7 @@ func TestLintFileMatched(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -93,11 +95,11 @@ func TestLintFileMatchedForce(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
-			wildcard: {
+		RootPath: base,
+		configs: map[string][]types.Language{
+			types.Wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:No it is normal!`,
 					LintIgnoreExitCode: true,
@@ -105,7 +107,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -113,7 +115,7 @@ func TestLintFileMatchedForce(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -142,11 +144,11 @@ func TestLintOffsetColumnsZero(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
-			wildcard: {
+		RootPath: base,
+		configs: map[string][]types.Language{
+			types.Wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:0:msg`,
 					LintFormats:        []string{"%f:%l:%c:%m"},
@@ -156,7 +158,7 @@ func TestLintOffsetColumnsZero(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -164,7 +166,7 @@ func TestLintOffsetColumnsZero(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -184,11 +186,11 @@ func TestLintOffsetColumnsNoOffset(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
-			wildcard: {
+		RootPath: base,
+		configs: map[string][]types.Language{
+			types.Wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:1:msg`,
 					LintFormats:        []string{"%f:%l:%c:%m"},
@@ -197,7 +199,7 @@ func TestLintOffsetColumnsNoOffset(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -205,7 +207,7 @@ func TestLintOffsetColumnsNoOffset(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -225,11 +227,11 @@ func TestLintOffsetColumnsNonZero(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
-			wildcard: {
+		RootPath: base,
+		configs: map[string][]types.Language{
+			types.Wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:1:msg`,
 					LintFormats:        []string{"%f:%l:%c:%m"},
@@ -239,7 +241,7 @@ func TestLintOffsetColumnsNonZero(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -247,7 +249,7 @@ func TestLintOffsetColumnsNonZero(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -270,11 +272,11 @@ func TestLintCategoryMap(t *testing.T) {
 
 	formats := []string{"%f:%l:%c:%t:%m"}
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
-			wildcard: {
+		RootPath: base,
+		configs: map[string][]types.Language{
+			types.Wildcard: {
 				{
 					LintCommand:        `echo ` + file + `:2:1:R:No it is normal!`,
 					LintIgnoreExitCode: true,
@@ -284,7 +286,7 @@ func TestLintCategoryMap(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -292,7 +294,7 @@ func TestLintCategoryMap(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	d := uriToDiag[uri]
 	if err != nil {
 		t.Fatal(err)
@@ -311,10 +313,10 @@ func TestLintRequireRootMarker(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
 					LintCommand:        `echo ` + file + `:2:No it is normal!`,
@@ -325,7 +327,7 @@ func TestLintRequireRootMarker(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -333,7 +335,7 @@ func TestLintRequireRootMarker(t *testing.T) {
 		},
 	}
 
-	d, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	d, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -350,10 +352,10 @@ func TestLintMultipleFiles(t *testing.T) {
 	uri := toURI(file)
 	uri2 := toURI(file2)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
 					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file!`,
@@ -363,7 +365,7 @@ func TestLintMultipleFiles(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -373,10 +375,10 @@ func TestLintMultipleFiles(t *testing.T) {
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
 		},
-		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
+		lastPublishedURIs: make(map[string]map[types.DocumentURI]struct{}),
 	}
 
-	d, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	d, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -397,7 +399,7 @@ func TestLintMultipleFiles(t *testing.T) {
 	}
 
 	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
-	d, err = h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	d, err = h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -423,10 +425,10 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	uri := toURI(file)
 	uri2 := toURI(file2)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
 					LintCommand:        `echo ` + file + `:2:1:First file! && echo ` + file2 + `:1:2:Second file! && echo ` + file2 + `:Empty l and c!`,
@@ -436,7 +438,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -446,10 +448,10 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 				Text:       "scriptencoding utf-8\nabnormal!\n",
 			},
 		},
-		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
+		lastPublishedURIs: make(map[string]map[types.DocumentURI]struct{}),
 	}
 
-	d, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	d, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -483,7 +485,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	h.configs["vim"][0].LintCommand = `touch ` + startedFlagPath + ` && sleep 1000000 && echo ` + file + `:2:1:First file only!`
 	ctx, cancel := context.WithCancel(context.Background())
 	go func() {
-		_, _ = h.lintDocument(ctx, nil, uri, eventTypeChange)
+		_, _ = h.lintDocument(ctx, nil, uri, types.EventTypeChange)
 	}()
 	for {
 		if _, err := os.Stat(startedFlagPath); errors.Is(err, os.ErrNotExist) {
@@ -494,7 +496,7 @@ func TestLintMultipleFilesWithCancel(t *testing.T) {
 	}
 	cancel()
 	h.configs["vim"][0].LintCommand = `echo ` + file + `:2:1:First file only!`
-	d, err = h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	d, err = h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -517,10 +519,10 @@ func TestLintNoDiagnostics(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
 					LintCommand:        "echo ",
@@ -529,7 +531,7 @@ func TestLintNoDiagnostics(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -537,7 +539,7 @@ func TestLintNoDiagnostics(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -555,10 +557,10 @@ func TestLintOnSave(t *testing.T) {
 	file := filepath.Join(base, "foo")
 	uri := toURI(file)
 
-	h := &langHandler{
+	h := &LangHandler{
 		logger:   log.New(log.Writer(), "", log.LstdFlags),
-		rootPath: base,
-		configs: map[string][]Language{
+		RootPath: base,
+		configs: map[string][]types.Language{
 			"vim": {
 				{
 					LintCommand:        `echo ` + file + `:2:No it is normal!`,
@@ -568,7 +570,7 @@ func TestLintOnSave(t *testing.T) {
 				},
 			},
 		},
-		files: map[DocumentURI]*File{
+		files: map[types.DocumentURI]*fileRef{
 			uri: {
 				LanguageID: "vim",
 				Text:       "scriptencoding utf-8\nabnormal!\n",
@@ -576,7 +578,7 @@ func TestLintOnSave(t *testing.T) {
 		},
 	}
 
-	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, eventTypeChange)
+	uriToDiag, err := h.lintDocument(context.Background(), nil, uri, types.EventTypeChange)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -585,7 +587,7 @@ func TestLintOnSave(t *testing.T) {
 		t.Fatal("diagnostics should be empty", d)
 	}
 
-	uriToDiag, err = h.lintDocument(context.Background(), nil, uri, eventTypeSave)
+	uriToDiag, err = h.lintDocument(context.Background(), nil, uri, types.EventTypeSave)
 	if err != nil {
 		t.Fatal(err)
 	}

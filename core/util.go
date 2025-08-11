@@ -1,4 +1,4 @@
-package langserver
+package core
 
 import (
 	"strings"

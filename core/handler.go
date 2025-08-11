@@ -1,7 +1,6 @@
-package langserver
+package core
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/url"
@@ -15,68 +14,27 @@ import (
 	"unicode"
 	"unicode/utf16"
 
-	"github.com/sourcegraph/jsonrpc2"
-
 	"github.com/mattn/go-unicodeclass"
+
+	"github.com/konradmalik/efm-langserver/types"
 )
 
-type eventType int
-
-const (
-	eventTypeChange eventType = iota
-	eventTypeSave
-	eventTypeOpen
-)
-
-// Config is
-type Config struct {
-	Version        int
-	LogLevel       int
-	Languages      *map[string][]Language
-	RootMarkers    *[]string
-	LintDebounce   time.Duration
-	FormatDebounce time.Duration
-}
-
-func NewConfig() *Config {
-	languages := make(map[string][]Language)
+func NewConfig() *types.Config {
+	languages := make(map[string][]types.Language)
 	rootMarkers := make([]string, 0)
-	return &Config{
+	return &types.Config{
 		Languages:   &languages,
 		RootMarkers: &rootMarkers,
 	}
 }
 
-// Language is
-type Language struct {
-	Prefix             string
-	LintFormats        []string
-	LintStdin          bool
-	LintOffset         int
-	LintOffsetColumns  int
-	LintCommand        string
-	LintIgnoreExitCode bool
-	LintCategoryMap    map[string]string
-	LintSource         string
-	LintSeverity       DiagnosticSeverity
-	LintWorkspace      bool
-	LintAfterOpen      bool
-	LintOnSave         bool
-	FormatCommand      string
-	FormatCanRange     bool
-	FormatStdin        bool
-	Env                []string
-	RootMarkers        []string
-	RequireMarker      bool
-}
-
 // NewHandler create JSON-RPC handler for this language server.
-func NewHandler(logger *log.Logger, config *Config) *langHandler {
-	handler := &langHandler{
+func NewHandler(logger *log.Logger, config *types.Config) *LangHandler {
+	handler := &LangHandler{
 		loglevel:     config.LogLevel,
 		logger:       logger,
 		configs:      *config.Languages,
-		files:        make(map[DocumentURI]*File),
+		files:        make(map[types.DocumentURI]*fileRef),
 		lintDebounce: time.Duration(config.LintDebounce),
 		lintTimer:    nil,
 
@@ -84,66 +42,109 @@ func NewHandler(logger *log.Logger, config *Config) *langHandler {
 		formatTimer:    nil,
 		rootMarkers:    *config.RootMarkers,
 
-		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
+		lastPublishedURIs: make(map[string]map[types.DocumentURI]struct{}),
 	}
 	return handler
 }
 
-type langHandler struct {
+type LangHandler struct {
 	formatMu       sync.Mutex
 	lintMu         sync.Mutex
 	loglevel       int
 	logger         *log.Logger
-	configs        map[string][]Language
-	files          map[DocumentURI]*File
+	configs        map[string][]types.Language
+	files          map[types.DocumentURI]*fileRef
 	lintDebounce   time.Duration
 	lintTimer      *time.Timer
 	formatDebounce time.Duration
 	formatTimer    *time.Timer
-	rootPath       string
+	RootPath       string
 	rootMarkers    []string
 
 	// lastPublishedURIs is mapping from LanguageID string to mapping of
 	// whether diagnostics are published in a DocumentURI or not.
-	lastPublishedURIs map[string]map[DocumentURI]struct{}
+	lastPublishedURIs map[string]map[types.DocumentURI]struct{}
 }
 
-func (h *langHandler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) (result any, err error) {
-	switch req.Method {
-	case "initialize":
-		return h.handleInitialize(ctx, conn, req)
-	case "initialized":
-		return
-	case "shutdown":
-		return h.handleShutdown(ctx, conn, req)
-	case "textDocument/didOpen":
-		return h.handleTextDocumentDidOpen(ctx, conn, req)
-	case "textDocument/didChange":
-		return h.handleTextDocumentDidChange(ctx, conn, req)
-	case "textDocument/didSave":
-		return h.handleTextDocumentDidSave(ctx, conn, req)
-	case "textDocument/didClose":
-		return h.handleTextDocumentDidClose(ctx, conn, req)
-	case "textDocument/formatting":
-		return h.handleTextDocumentFormatting(ctx, conn, req)
-	case "textDocument/rangeFormatting":
-		return h.handleTextDocumentRangeFormatting(ctx, conn, req)
-	case "workspace/didChangeConfiguration":
-		return h.handleWorkspaceDidChangeConfiguration(ctx, conn, req)
+func (h *LangHandler) Initialize(params types.InitializeParams) (types.InitializeResult, error) {
+	if params.RootURI != "" {
+		rootPath, err := fromURI(params.RootURI)
+		if err != nil {
+			return types.InitializeResult{}, err
+		}
+		h.RootPath = filepath.Clean(rootPath)
 	}
 
-	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
+	var hasFormatCommand bool
+	var hasRangeFormatCommand bool
+
+	if params.InitializationOptions != nil {
+		hasFormatCommand = params.InitializationOptions.DocumentFormatting
+		hasRangeFormatCommand = params.InitializationOptions.RangeFormatting
+	}
+
+	for _, config := range h.configs {
+		for _, lang := range config {
+			if lang.FormatCommand != "" {
+				hasFormatCommand = true
+				if lang.FormatCanRange {
+					hasRangeFormatCommand = true
+					break
+				}
+			}
+		}
+	}
+
+	return types.InitializeResult{
+		Capabilities: types.ServerCapabilities{
+			TextDocumentSync:           types.TDSKFull,
+			DocumentFormattingProvider: hasFormatCommand,
+			RangeFormattingProvider:    hasRangeFormatCommand,
+		},
+	}, nil
 }
 
-// File is
-type File struct {
+func (h *LangHandler) UpdateConfiguration(config *types.Config) (any, error) {
+	if config.Languages != nil {
+		h.configs = *config.Languages
+	}
+	if config.RootMarkers != nil {
+		h.rootMarkers = *config.RootMarkers
+	}
+	if config.LogLevel > 0 {
+		h.loglevel = config.LogLevel
+	}
+	if config.LintDebounce > 0 {
+		h.lintDebounce = config.LintDebounce
+	}
+	if config.FormatDebounce > 0 {
+		h.formatDebounce = config.FormatDebounce
+	}
+	if config.LogLevel > 0 {
+		h.loglevel = config.LogLevel
+	}
+
+	return nil, nil
+}
+
+func (h *LangHandler) Close() {
+	if h.formatTimer != nil {
+		h.formatTimer.Stop()
+	}
+	if h.lintTimer != nil {
+		h.lintTimer.Stop()
+	}
+}
+
+// fileRef is
+type fileRef struct {
 	LanguageID string
 	Text       string
 	Version    int
 }
 
 // WordAt is
-func (f *File) WordAt(pos Position) string {
+func (f *fileRef) WordAt(pos types.Position) string {
 	lines := strings.Split(f.Text, "\n")
 	if pos.Line < 0 || pos.Line >= len(lines) {
 		return ""
@@ -190,7 +191,7 @@ func isWindowsDriveURI(uri string) bool {
 	return uri[0] == '/' && unicode.IsLetter(rune(uri[1])) && uri[2] == ':'
 }
 
-func fromURI(uri DocumentURI) (string, error) {
+func fromURI(uri types.DocumentURI) (string, error) {
 	u, err := url.ParseRequestURI(string(uri))
 	if err != nil {
 		return "", err
@@ -204,24 +205,14 @@ func fromURI(uri DocumentURI) (string, error) {
 	return u.Path, nil
 }
 
-func toURI(path string) DocumentURI {
+func toURI(path string) types.DocumentURI {
 	if isWindowsDrivePath(path) {
 		path = "/" + path
 	}
-	return DocumentURI((&url.URL{
+	return types.DocumentURI((&url.URL{
 		Scheme: "file",
 		Path:   filepath.ToSlash(path),
 	}).String())
-}
-
-func (h *langHandler) logMessage(conn *jsonrpc2.Conn, typ MessageType, message string) {
-	_ = conn.Notify(
-		context.Background(),
-		"window/logMessage",
-		&LogMessageParams{
-			Type:    typ,
-			Message: message,
-		})
 }
 
 func matchRootPath(fname string, markers []string) string {
@@ -258,7 +249,7 @@ func matchRootPath(fname string, markers []string) string {
 	return ""
 }
 
-func (h *langHandler) findRootPath(fname string, lang Language) string {
+func (h *LangHandler) findRootPath(fname string, lang types.Language) string {
 	if dir := matchRootPath(fname, lang.RootMarkers); dir != "" {
 		return dir
 	}
@@ -266,7 +257,7 @@ func (h *langHandler) findRootPath(fname string, lang Language) string {
 		return dir
 	}
 
-	return h.rootPath
+	return h.RootPath
 }
 
 func isFilename(s string) bool {
@@ -286,29 +277,29 @@ func itoaPtrIfNotZero(n int) *string {
 	return &s
 }
 
-func (h *langHandler) onCloseFile(uri DocumentURI) error {
+func (h *LangHandler) OnCloseFile(uri types.DocumentURI) error {
 	delete(h.files, uri)
 	return nil
 }
 
-func (h *langHandler) onSaveFile(conn *jsonrpc2.Conn, uri DocumentURI) error {
-	h.ScheduleLinting(conn, uri, eventTypeSave)
+func (h *LangHandler) OnSaveFile(notifier notifier, uri types.DocumentURI) error {
+	h.ScheduleLinting(notifier, uri, types.EventTypeSave)
 	return nil
 }
 
-func (h *langHandler) onOpenFile(conn *jsonrpc2.Conn, uri DocumentURI, languageID string, version int, text string) error {
-	f := &File{
+func (h *LangHandler) OnOpenFile(notifier notifier, uri types.DocumentURI, languageID string, version int, text string) error {
+	f := &fileRef{
 		Text:       text,
 		LanguageID: languageID,
 		Version:    version,
 	}
 	h.files[uri] = f
 
-	h.ScheduleLinting(conn, uri, eventTypeOpen)
+	h.ScheduleLinting(notifier, uri, types.EventTypeOpen)
 	return nil
 }
 
-func (h *langHandler) onUpdateFile(conn *jsonrpc2.Conn, uri DocumentURI, text string, version *int, eventType eventType) error {
+func (h *LangHandler) OnUpdateFile(notifier notifier, uri types.DocumentURI, text string, version *int, eventType types.EventType) error {
 	f, ok := h.files[uri]
 	if !ok {
 		return fmt.Errorf("document not found: %v", uri)
@@ -318,7 +309,7 @@ func (h *langHandler) onUpdateFile(conn *jsonrpc2.Conn, uri DocumentURI, text st
 		f.Version = *version
 	}
 
-	h.ScheduleLinting(conn, uri, eventType)
+	h.ScheduleLinting(notifier, uri, eventType)
 	return nil
 }
 

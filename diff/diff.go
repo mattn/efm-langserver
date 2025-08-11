@@ -4,10 +4,12 @@
 // Source:
 // https://github.com/golang/tools/blob/78b158585360beccadc3faac6e35759f491831f3/internal/lsp/diff/myers/diff.go
 
-package langserver
+package diff
 
 import (
 	"strings"
+
+	"github.com/konradmalik/efm-langserver/types"
 )
 
 // OpKind is used to denote the type of operation a line represents.
@@ -29,24 +31,24 @@ const (
 // https://www.codeproject.com/Articles/42279/%2FArticles%2F42279%2FInvestigating-Myers-diff-algorithm-Part-1-of-2
 
 // ComputeEdits computes diff edits from 2 string inputs
-func ComputeEdits(_ DocumentURI, before, after string) []TextEdit {
+func ComputeEdits(_ types.DocumentURI, before, after string) []types.TextEdit {
 	ops := operations(splitLines(before), splitLines(after))
-	edits := make([]TextEdit, 0, len(ops))
+	edits := make([]types.TextEdit, 0, len(ops))
 	for _, op := range ops {
 		switch op.Kind {
 		case Delete:
 			// Delete: unformatted[i1:i2] is deleted.
-			edits = append(edits, TextEdit{Range: Range{
-				Start: Position{Line: op.I1, Character: 0},
-				End:   Position{Line: op.I2, Character: 0},
+			edits = append(edits, types.TextEdit{Range: types.Range{
+				Start: types.Position{Line: op.I1, Character: 0},
+				End:   types.Position{Line: op.I2, Character: 0},
 			}})
 		case Insert:
 			// Insert: formatted[j1:j2] is inserted at unformatted[i1:i1].
 			if content := strings.Join(op.Content, ""); content != "" {
-				edits = append(edits, TextEdit{
-					Range: Range{
-						Start: Position{Line: op.I1, Character: 0},
-						End:   Position{Line: op.I2, Character: 0},
+				edits = append(edits, types.TextEdit{
+					Range: types.Range{
+						Start: types.Position{Line: op.I1, Character: 0},
+						End:   types.Position{Line: op.I2, Character: 0},
 					},
 					NewText: content,
 				})

@@ -12,18 +12,15 @@ import (
 	"github.com/konradmalik/efm-langserver/types"
 )
 
-// OpKind is used to denote the type of operation a line represents.
-type OpKind int
+// opKind is used to denote the type of operation a line represents.
+type opKind int
 
 const (
-	// Delete is the operation kind for a line that is present in the input
+	// delete is the operation kind for a line that is present in the input
 	// but not in the output.
-	Delete OpKind = iota
-	// Insert is the operation kind for a line that is new in the output.
-	Insert
-	// Equal is the operation kind for a line that is the same in the input and
-	// output, often used to provide context around edited lines.
-	Equal
+	delete opKind = iota
+	// insert is the operation kind for a line that is new in the output.
+	insert
 )
 
 // Sources:
@@ -36,13 +33,13 @@ func ComputeEdits(_ types.DocumentURI, before, after string) []types.TextEdit {
 	edits := make([]types.TextEdit, 0, len(ops))
 	for _, op := range ops {
 		switch op.Kind {
-		case Delete:
+		case delete:
 			// Delete: unformatted[i1:i2] is deleted.
 			edits = append(edits, types.TextEdit{Range: types.Range{
 				Start: types.Position{Line: op.I1, Character: 0},
 				End:   types.Position{Line: op.I2, Character: 0},
 			}})
-		case Insert:
+		case insert:
 			// Insert: formatted[j1:j2] is inserted at unformatted[i1:i1].
 			if content := strings.Join(op.Content, ""); content != "" {
 				edits = append(edits, types.TextEdit{
@@ -59,7 +56,7 @@ func ComputeEdits(_ types.DocumentURI, before, after string) []types.TextEdit {
 }
 
 type operation struct {
-	Kind    OpKind
+	Kind    opKind
 	Content []string // content from b
 	I1, I2  int      // indices of the line in a
 	J1      int      // indices of the line in b, J2 implied by len(Content)
@@ -85,7 +82,7 @@ func operations(a, b []string) []*operation {
 			return
 		}
 		op.I2 = i2
-		if op.Kind == Insert {
+		if op.Kind == insert {
 			op.Content = b[op.J1:j2]
 		}
 		solution[i] = op
@@ -101,7 +98,7 @@ func operations(a, b []string) []*operation {
 		for snake[0]-snake[1] > x-y {
 			if op == nil {
 				op = &operation{
-					Kind: Delete,
+					Kind: delete,
 					I1:   x,
 					J1:   y,
 				}
@@ -117,7 +114,7 @@ func operations(a, b []string) []*operation {
 		for snake[0]-snake[1] < x-y {
 			if op == nil {
 				op = &operation{
-					Kind: Insert,
+					Kind: insert,
 					I1:   x,
 					J1:   y,
 				}

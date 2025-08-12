@@ -37,8 +37,7 @@ func TestFormattingRequireRootMatcher(t *testing.T) {
 		},
 	}
 
-	rng := types.Range{Start: types.Position{Line: -1, Character: -1}, End: types.Position{Line: -1, Character: -1}}
-	d, err := h.RangeFormatRequest(uri, rng, types.FormattingOptions{})
+	d, err := h.Formatting(uri, nil, types.FormattingOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}

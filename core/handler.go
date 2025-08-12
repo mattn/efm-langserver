@@ -19,34 +19,6 @@ import (
 	"github.com/konradmalik/efm-langserver/types"
 )
 
-func NewConfig() *types.Config {
-	languages := make(map[string][]types.Language)
-	rootMarkers := make([]string, 0)
-	return &types.Config{
-		Languages:   &languages,
-		RootMarkers: &rootMarkers,
-	}
-}
-
-// NewHandler create JSON-RPC handler for this language server.
-func NewHandler(logger *log.Logger, config *types.Config) *LangHandler {
-	handler := &LangHandler{
-		loglevel:     config.LogLevel,
-		logger:       logger,
-		configs:      *config.Languages,
-		files:        make(map[types.DocumentURI]*fileRef),
-		lintDebounce: time.Duration(config.LintDebounce),
-		lintTimer:    nil,
-
-		formatDebounce: time.Duration(config.FormatDebounce),
-		formatTimer:    nil,
-		rootMarkers:    *config.RootMarkers,
-
-		lastPublishedURIs: make(map[string]map[types.DocumentURI]struct{}),
-	}
-	return handler
-}
-
 type LangHandler struct {
 	formatMu       sync.Mutex
 	lintMu         sync.Mutex
@@ -64,6 +36,39 @@ type LangHandler struct {
 	// lastPublishedURIs is mapping from LanguageID string to mapping of
 	// whether diagnostics are published in a DocumentURI or not.
 	lastPublishedURIs map[string]map[types.DocumentURI]struct{}
+}
+
+type fileRef struct {
+	LanguageID string
+	Text       string
+	Version    int
+}
+
+func NewConfig() *types.Config {
+	languages := make(map[string][]types.Language)
+	rootMarkers := make([]string, 0)
+	return &types.Config{
+		Languages:   &languages,
+		RootMarkers: &rootMarkers,
+	}
+}
+
+func NewHandler(logger *log.Logger, config *types.Config) *LangHandler {
+	handler := &LangHandler{
+		loglevel:     config.LogLevel,
+		logger:       logger,
+		configs:      *config.Languages,
+		files:        make(map[types.DocumentURI]*fileRef),
+		lintDebounce: config.LintDebounce,
+		lintTimer:    nil,
+
+		formatDebounce: config.FormatDebounce,
+		formatTimer:    nil,
+		rootMarkers:    *config.RootMarkers,
+
+		lastPublishedURIs: make(map[string]map[types.DocumentURI]struct{}),
+	}
+	return handler
 }
 
 func (h *LangHandler) Initialize(params types.InitializeParams) (types.InitializeResult, error) {
@@ -136,15 +141,54 @@ func (h *LangHandler) Close() {
 	}
 }
 
-// fileRef is
-type fileRef struct {
-	LanguageID string
-	Text       string
-	Version    int
+func (h *LangHandler) OnCloseFile(uri types.DocumentURI) error {
+	delete(h.files, uri)
+	return nil
 }
 
-// WordAt is
-func (f *fileRef) WordAt(pos types.Position) string {
+func (h *LangHandler) OnSaveFile(notifier notifier, uri types.DocumentURI) error {
+	h.ScheduleLinting(notifier, uri, types.EventTypeSave)
+	return nil
+}
+
+func (h *LangHandler) OnOpenFile(notifier notifier, uri types.DocumentURI, languageID string, version int, text string) error {
+	f := &fileRef{
+		Text:       text,
+		LanguageID: languageID,
+		Version:    version,
+	}
+	h.files[uri] = f
+
+	h.ScheduleLinting(notifier, uri, types.EventTypeOpen)
+	return nil
+}
+
+func (h *LangHandler) OnUpdateFile(notifier notifier, uri types.DocumentURI, text string, version *int, eventType types.EventType) error {
+	f, ok := h.files[uri]
+	if !ok {
+		return fmt.Errorf("document not found: %v", uri)
+	}
+	f.Text = text
+	if version != nil {
+		f.Version = *version
+	}
+
+	h.ScheduleLinting(notifier, uri, eventType)
+	return nil
+}
+
+func (h *LangHandler) findRootPath(fname string, lang types.Language) string {
+	if dir := matchRootPath(fname, lang.RootMarkers); dir != "" {
+		return dir
+	}
+	if dir := matchRootPath(fname, h.rootMarkers); dir != "" {
+		return dir
+	}
+
+	return h.RootPath
+}
+
+func (f *fileRef) wordAt(pos types.Position) string {
 	lines := strings.Split(f.Text, "\n")
 	if pos.Line < 0 || pos.Line >= len(lines) {
 		return ""
@@ -249,17 +293,6 @@ func matchRootPath(fname string, markers []string) string {
 	return ""
 }
 
-func (h *LangHandler) findRootPath(fname string, lang types.Language) string {
-	if dir := matchRootPath(fname, lang.RootMarkers); dir != "" {
-		return dir
-	}
-	if dir := matchRootPath(fname, h.rootMarkers); dir != "" {
-		return dir
-	}
-
-	return h.RootPath
-}
-
 func isFilename(s string) bool {
 	switch s {
 	case "stdin", "-", "<text>", "<stdin>":
@@ -275,42 +308,6 @@ func itoaPtrIfNotZero(n int) *string {
 	}
 	s := strconv.Itoa(n)
 	return &s
-}
-
-func (h *LangHandler) OnCloseFile(uri types.DocumentURI) error {
-	delete(h.files, uri)
-	return nil
-}
-
-func (h *LangHandler) OnSaveFile(notifier notifier, uri types.DocumentURI) error {
-	h.ScheduleLinting(notifier, uri, types.EventTypeSave)
-	return nil
-}
-
-func (h *LangHandler) OnOpenFile(notifier notifier, uri types.DocumentURI, languageID string, version int, text string) error {
-	f := &fileRef{
-		Text:       text,
-		LanguageID: languageID,
-		Version:    version,
-	}
-	h.files[uri] = f
-
-	h.ScheduleLinting(notifier, uri, types.EventTypeOpen)
-	return nil
-}
-
-func (h *LangHandler) OnUpdateFile(notifier notifier, uri types.DocumentURI, text string, version *int, eventType types.EventType) error {
-	f, ok := h.files[uri]
-	if !ok {
-		return fmt.Errorf("document not found: %v", uri)
-	}
-	f.Text = text
-	if version != nil {
-		f.Version = *version
-	}
-
-	h.ScheduleLinting(notifier, uri, eventType)
-	return nil
 }
 
 func replaceCommandInputFilename(command, fname, rootPath string) string {

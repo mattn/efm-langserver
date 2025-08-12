@@ -15,7 +15,7 @@ import (
 	"github.com/konradmalik/efm-langserver/types"
 )
 
-func (h *LangHandler) RangeFormatRequest(uri types.DocumentURI, rng types.Range, opt types.FormattingOptions) ([]types.TextEdit, error) {
+func (h *LangHandler) Formatting(uri types.DocumentURI, rng *types.Range, opt types.FormattingOptions) ([]types.TextEdit, error) {
 	if h.formatTimer != nil {
 		if h.loglevel >= 4 {
 			h.logger.Printf("format debounced: %v", h.formatDebounce)
@@ -33,7 +33,7 @@ func (h *LangHandler) RangeFormatRequest(uri types.DocumentURI, rng types.Range,
 	return h.rangeFormatting(uri, rng, opt)
 }
 
-func (h *LangHandler) rangeFormatting(uri types.DocumentURI, rng types.Range, options types.FormattingOptions) ([]types.TextEdit, error) {
+func (h *LangHandler) rangeFormatting(uri types.DocumentURI, rng *types.Range, options types.FormattingOptions) ([]types.TextEdit, error) {
 	f, ok := h.files[uri]
 	if !ok {
 		return nil, fmt.Errorf("document not found: %v", uri)
@@ -105,7 +105,7 @@ Configs:
 		}
 
 		// Range Options
-		if rng.Start.Line != -1 {
+		if rng != nil {
 			charStart := convertRowColToIndex(text, rng.Start.Line, rng.Start.Character)
 			charEnd := convertRowColToIndex(text, rng.End.Line, rng.End.Character)
 
@@ -195,4 +195,29 @@ func formatConfigsForDocument(fname, langId string, allConfigs map[string][]type
 		}
 	}
 	return configs
+}
+
+func convertRowColToIndex(s string, row, col int) int {
+	lines := strings.Split(s, "\n")
+
+	if row < 0 {
+		row = 0
+	} else if row >= len(lines) {
+		row = len(lines) - 1
+	}
+
+	if col < 0 {
+		col = 0
+	} else if col > len(lines[row]) {
+		col = len(lines[row])
+	}
+
+	index := 0
+	for i := 0; i < row; i++ {
+		// Add the length of each line plus 1 for the newline character
+		index += len(lines[i]) + 1
+	}
+	index += col
+
+	return index
 }

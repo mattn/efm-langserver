@@ -207,7 +207,7 @@ func (h *LangHandler) lintDocument(ctx context.Context, notifier notifier, uri t
 			if entry.Col == 0 {
 				entry.Col = 1 // entry.Col == 0 indicates the whole line without column, set to 1 because it is subtracted later
 			} else {
-				word = f.WordAt(types.Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
+				word = f.wordAt(types.Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
 
 			diagURI := uri

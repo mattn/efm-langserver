@@ -13,6 +13,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
 	"unicode"
 	"unicode/utf16"
@@ -447,7 +448,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 		if runtime.GOOS == "windows" {
 			cmd = exec.CommandContext(ctx, "cmd", "/c", command)
 		} else {
-			cmd = exec.CommandContext(ctx, "sh", "-c", command)
+			cmd = killableCommand(ctx, command)
 		}
 		cmd.Dir = rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
@@ -585,6 +586,30 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 		}
 	}
 	return uriToDiagnostics, nil
+}
+
+// killableComand configures a command so that it *and* all of its children will be killed when
+// 'ctx' is cancelled.
+// See: https://medium.com/@felixge/killing-a-child-process-and-all-of-its-children-in-go-54079af94773
+func killableCommand(ctx context.Context, command string) *exec.Cmd {
+	cmd := exec.CommandContext(ctx, "sh", "-c", command)
+
+	// By default, exec.CommandContext() sets Cancel() to only kill the main process.
+	// (In this case, `sh`.)
+	// But we want to kill that process and any processes it may have spawned.
+
+	// Create a new process group when we spawn this process:
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	// Update the Cancel function to kill the whole process group:
+	cmd.Cancel = func() error {
+		// The new pgid is the same as the parent process:
+		pgid := cmd.Process.Pid
+		// Use -pgid to show we mean to kill a group ID:
+		return syscall.Kill(-pgid, syscall.SIGKILL)
+	}
+
+	return cmd
 }
 
 func itoaPtrIfNotZero(n int) *string {

@@ -447,7 +447,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 		if runtime.GOOS == "windows" {
 			cmd = exec.CommandContext(ctx, "cmd", "/c", command)
 		} else {
-			cmd = exec.CommandContext(ctx, "sh", "-c", command)
+			cmd = killableCommand(ctx, command)
 		}
 		cmd.Dir = rootPath
 		cmd.Env = append(os.Environ(), config.Env...)

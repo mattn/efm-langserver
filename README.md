@@ -146,12 +146,14 @@ tools:
     format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
 
   javascript-eslint: &javascript-eslint
-    lint-command: 'eslint -f visualstudio --stdin --stdin-filename ${INPUT}'
+    lint-command: 'eslint --stdin --stdin-filename ${INPUT}'
     lint-ignore-exit-code: true
     lint-stdin: true
+    lint-after-open: true
     lint-formats:
-      - "%f(%l,%c): %tarning %m"
-      - "%f(%l,%c): %rror %m"
+      - "%+P%f" # a file-like string on a single line.
+      - "%*[ ]%l:%c%*[ ]%t%*[^ ]%*[ ]%m" # Parse %l(ine) %c(olumn), %t(ype) and %m(essage)
+      - "%-O" # if not a match, pop filename from %P stack.
 
   json-fixjson: &json-fixjson
     format-command: 'fixjson'

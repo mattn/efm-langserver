@@ -36,7 +36,7 @@ test: build
 
 .PHONY: schema_doc
 schema_doc:
-	# https://github.com/coveooss/json-schema-for-humans
+	# https://github.com/coveooss/json-schema-for-humans v0.45.2
 	generate-schema-doc --config template_name=md --config description_is_markdown=true --config show_breadcrumbs=false schema.json schema.md
 	sed -i.bak 's/\\`/`/g' schema.md
 	[ -f schema.md.bak ] && rm schema.md.bak

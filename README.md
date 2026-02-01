@@ -146,12 +146,14 @@ tools:
     format-command: './node_modules/.bin/prettier ${--tab-width:tabWidth} ${--single-quote:singleQuote} --parser html'
 
   javascript-eslint: &javascript-eslint
-    lint-command: 'eslint -f visualstudio --stdin --stdin-filename ${INPUT}'
+    lint-command: 'eslint --stdin --stdin-filename ${INPUT}'
     lint-ignore-exit-code: true
     lint-stdin: true
+    lint-after-open: true
     lint-formats:
-      - "%f(%l,%c): %tarning %m"
-      - "%f(%l,%c): %rror %m"
+      - "%+P%f" # a file-like string on a single line.
+      - "%*[ ]%l:%c%*[ ]%t%*[^ ]%*[ ]%m" # Parse %l(ine) %c(olumn), %t(ype) and %m(essage)
+      - "%-O" # if not a match, pop filename from %P stack.
 
   json-fixjson: &json-fixjson
     format-command: 'fixjson'
@@ -517,6 +519,22 @@ Example `settings.json` (change to fit your local installs):
   "glspc.languageId": "lua",
   "glspc.serverCommand": "/Users/me/.local/share/nvim/mason/bin/efm-langserver",
   "glspc.pathPrepend": "/Users/me/.local/share/rtx/installs/python/3.11.4/bin:/Users/me/.local/share/rtx/installs/node/20.3.1/bin",
+}
+```
+
+### Configuration for [SublimeText LSP](https://lsp.sublimetext.io)
+
+Open `Preferences: LSP Settings` command from the Command Palette (Ctrl+Shift+P)
+
+```
+{
+	"clients": {
+	    "efm-langserver": {
+	      "enabled": true,
+	      "command": ["efm-langserver"],
+	      "selector": "source.c | source.php | source.python" // see https://www.sublimetext.com/docs/3/selectors.html
+	    }
+  	}
 }
 ```
 

@@ -214,7 +214,10 @@ Configs:
 		text = strings.Replace(string(b), "\r", "", -1)
 	}
 
-	if formatted {
+	if text == originalText || text == "" {
+		// probably it was formatted in place
+		return nil, nil
+	} else if formatted {
 		if h.loglevel >= 3 {
 			h.logger.Println("format succeeded")
 		}

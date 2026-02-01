@@ -65,35 +65,36 @@ type Config1 struct {
 
 // Language is
 type Language struct {
-	Prefix             string            `yaml:"prefix" json:"prefix"`
-	LintFormats        []string          `yaml:"lint-formats" json:"lintFormats"`
-	LintStdin          bool              `yaml:"lint-stdin" json:"lintStdin"`
-	LintOffset         int               `yaml:"lint-offset" json:"lintOffset"`
-	LintOffsetColumns  int               `yaml:"lint-offset-columns" json:"lintOffsetColumns"`
-	LintCommand        string            `yaml:"lint-command" json:"lintCommand"`
-	LintIgnoreExitCode bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
-	LintCategoryMap    map[string]string `yaml:"lint-category-map" json:"lintCategoryMap"`
-	LintSource         string            `yaml:"lint-source" json:"lintSource"`
-	LintSeverity       int               `yaml:"lint-severity" json:"lintSeverity"`
-	LintWorkspace      bool              `yaml:"lint-workspace" json:"lintWorkspace"`
-	LintAfterOpen      bool              `yaml:"lint-after-open" json:"lintAfterOpen"`
-	LintOnSave         bool              `yaml:"lint-on-save" json:"lintOnSave"`
-	FormatCommand      string            `yaml:"format-command" json:"formatCommand"`
-	FormatCanRange     bool              `yaml:"format-can-range" json:"formatCanRange"`
-	FormatStdin        bool              `yaml:"format-stdin" json:"formatStdin"`
-	SymbolCommand      string            `yaml:"symbol-command" json:"symbolCommand"`
-	SymbolStdin        bool              `yaml:"symbol-stdin" json:"symbolStdin"`
-	SymbolFormats      []string          `yaml:"symbol-formats" json:"symbolFormats"`
-	CompletionCommand  string            `yaml:"completion-command" json:"completionCommand"`
-	CompletionStdin    bool              `yaml:"completion-stdin" json:"completionStdin"`
-	HoverCommand       string            `yaml:"hover-command" json:"hoverCommand"`
-	HoverStdin         bool              `yaml:"hover-stdin" json:"hoverStdin"`
-	HoverType          string            `yaml:"hover-type" json:"hoverType"`
-	HoverChars         string            `yaml:"hover-chars" json:"hoverChars"`
-	Env                []string          `yaml:"env" json:"env"`
-	RootMarkers        []string          `yaml:"root-markers" json:"rootMarkers"`
-	RequireMarker      bool              `yaml:"require-marker" json:"requireMarker"`
-	Commands           []Command         `yaml:"commands" json:"commands"`
+	Prefix               string            `yaml:"prefix" json:"prefix"`
+	LintFormats          []string          `yaml:"lint-formats" json:"lintFormats"`
+	LintStdin            bool              `yaml:"lint-stdin" json:"lintStdin"`
+	LintOffset           int               `yaml:"lint-offset" json:"lintOffset"`
+	LintOffsetColumns    int               `yaml:"lint-offset-columns" json:"lintOffsetColumns"`
+	LintCommand          string            `yaml:"lint-command" json:"lintCommand"`
+	LintIgnoreExitCode   bool              `yaml:"lint-ignore-exit-code" json:"lintIgnoreExitCode"`
+	LintCategoryMap      map[string]string `yaml:"lint-category-map" json:"lintCategoryMap"`
+	LintSource           string            `yaml:"lint-source" json:"lintSource"`
+	LintSeverity         int               `yaml:"lint-severity" json:"lintSeverity"`
+	LintWorkspace        bool              `yaml:"lint-workspace" json:"lintWorkspace"`
+	LintAfterOpen        bool              `yaml:"lint-after-open" json:"lintAfterOpen"`
+	LintOnSave           bool              `yaml:"lint-on-save" json:"lintOnSave"`
+	FormatCommand        string            `yaml:"format-command" json:"formatCommand"`
+	FormatCanRange       bool              `yaml:"format-can-range" json:"formatCanRange"`
+	FormatIgnoreExitCode bool              `yaml:"format-ignore-exit-code" json:"formatIgnoreExitCode"`
+	FormatStdin          bool              `yaml:"format-stdin" json:"formatStdin"`
+	SymbolCommand        string            `yaml:"symbol-command" json:"symbolCommand"`
+	SymbolStdin          bool              `yaml:"symbol-stdin" json:"symbolStdin"`
+	SymbolFormats        []string          `yaml:"symbol-formats" json:"symbolFormats"`
+	CompletionCommand    string            `yaml:"completion-command" json:"completionCommand"`
+	CompletionStdin      bool              `yaml:"completion-stdin" json:"completionStdin"`
+	HoverCommand         string            `yaml:"hover-command" json:"hoverCommand"`
+	HoverStdin           bool              `yaml:"hover-stdin" json:"hoverStdin"`
+	HoverType            string            `yaml:"hover-type" json:"hoverType"`
+	HoverChars           string            `yaml:"hover-chars" json:"hoverChars"`
+	Env                  []string          `yaml:"env" json:"env"`
+	RootMarkers          []string          `yaml:"root-markers" json:"rootMarkers"`
+	RequireMarker        bool              `yaml:"require-marker" json:"requireMarker"`
+	Commands             []Command         `yaml:"commands" json:"commands"`
 }
 
 // NewHandler create JSON-RPC handler for this language server.

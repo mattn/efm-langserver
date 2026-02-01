@@ -197,7 +197,11 @@ Configs:
 		var buf bytes.Buffer
 		cmd.Stderr = &buf
 		b, err := cmd.Output()
-		if err != nil {
+
+		// Most format tools exit with zero status code when formatting is successful.
+		// Some do not.
+		// To handle a formatter that exits with non-zero value, use format-ignore-exit-code.
+		if err != nil && !config.FormatIgnoreExitCode {
 			h.logger.Println(command+":", buf.String())
 			continue
 		}

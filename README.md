@@ -457,7 +457,7 @@ Neovim's built-in LSP client sends `DidChangeConfiguration`, so `config.yaml` is
 `init.lua` example (`settings` follows [`schema.md`](schema.md)):
 
 ```lua
-require "lspconfig".efm.setup {
+vim.lsp.config("efm", {
     init_options = {documentFormatting = true},
     settings = {
         rootMarkers = {".git/"},
@@ -467,7 +467,8 @@ require "lspconfig".efm.setup {
             }
         }
     }
-}
+})
+vim.lsp.enable("efm")
 ```
 
 You can get premade tool definitions from [`creativenull/efmls-configs-nvim`](https://github.com/creativenull/efmls-configs-nvim):

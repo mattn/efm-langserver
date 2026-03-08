@@ -143,6 +143,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (any, error) 
 			h.triggerChars = config.TriggerChars
 			h.loglevel = config.LogLevel
 			h.lintDebounce = time.Duration(config.LintDebounce)
+			h.formatDebounce = time.Duration(config.FormatDebounce)
 		}
 		h.logMessage(LogInfo, "Reloaded configuration file")
 		output = "OK"

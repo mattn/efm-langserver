@@ -66,15 +66,13 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (any, error) 
 		}
 	}
 	if command == nil {
-		if command == nil {
-			if cfgs, ok := h.configs[wildcard]; ok {
-			loop_wild:
-				for _, cfg := range cfgs {
-					for _, v := range cfg.Commands {
-						if tok[1] == v.Command {
-							command = &v
-							break loop_wild
-						}
+		if cfgs, ok := h.configs[wildcard]; ok {
+		loop_wild:
+			for _, cfg := range cfgs {
+				for _, v := range cfg.Commands {
+					if tok[1] == v.Command {
+						command = &v
+						break loop_wild
 					}
 				}
 			}

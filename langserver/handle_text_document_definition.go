@@ -130,7 +130,7 @@ func (h *langHandler) definition(uri DocumentURI, params *DocumentDefinitionPara
 	}
 
 	lines := strings.Split(f.Text, "\n")
-	if params.Position.Line < 0 || params.Position.Line > len(lines) {
+	if params.Position.Line < 0 || params.Position.Line >= len(lines) {
 		return nil, fmt.Errorf("invalid position: %v", params.Position)
 	}
 	chars := utf16.Encode([]rune(lines[params.Position.Line]))

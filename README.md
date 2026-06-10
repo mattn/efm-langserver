@@ -2,8 +2,25 @@
 
 [![Actions Status](https://github.com/mattn/efm-langserver/workflows/CI/badge.svg)](https://github.com/mattn/efm-langserver/actions)
 
-General purpose Language Server that can use specified error message format
-generated from specified command. This is useful for editing code with linter.
+A general-purpose language server that adds [LSP](https://microsoft.github.io/language-server-protocol/)
+support to traditional linters and formatters by acting as a proxy. Once
+[configured](#configuration) and [set up](#client-setup) for your editor
+of choice, it calls those tools when triggered over LSP, translates their
+output, and returns the result over LSP.
+
+```mermaid
+
+graph LR
+
+E["EDITOR or IDE"] <== LSP ==> S(("`**efm-langserver**`"))
+
+S <--> L["LINTER"]
+S <--> F["FORMATTER"]
+
+style S fill:orange,color:black
+```
+
+Here's `efm-langserver` in action:
 
 ![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)
 

@@ -33,7 +33,7 @@ Here's `efm-langserver` in action:
 * [Client Setup](#client-setup)
   + [Configuration for vim-lsp](#configuration-for-vim-lsp)
   + [Configuration for coc.nvim](#configuration-for-cocnvim)
-  + [Configuration for Eglot (Emacs)](#configuration-for-eglot)
+  + [Configuration for Eglot (Emacs)](#configuration-for-eglot-emacs)
   + [Configuration for neovim builtin LSP with nvim-lspconfig](#configuration-for-neovim-builtin-lsp-with-nvim-lspconfig)
   + [Configuration for Helix](#configuration-for-helix)
   + [Configuration for VSCode](#configuration-for-vscode)

@@ -748,6 +748,16 @@ func (h *langHandler) handle(ctx context.Context, conn *jsonrpc2.Conn, req *json
 		return h.handleWorkspaceWorkspaceFolders(ctx, conn, req)
 	}
 
+	// LSP requires servers to ignore notifications they do not handle
+	// (e.g. window/progress, $/setTrace) instead of responding with an
+	// error.
+	if req.Notif {
+		if h.loglevel >= 1 {
+			h.logger.Printf("notification not supported: %s", req.Method)
+		}
+		return nil, nil
+	}
+
 	return nil, &jsonrpc2.Error{Code: jsonrpc2.CodeMethodNotFound, Message: fmt.Sprintf("method not supported: %s", req.Method)}
 }
 

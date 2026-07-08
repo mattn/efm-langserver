@@ -2,8 +2,25 @@
 
 [![Actions Status](https://github.com/mattn/efm-langserver/workflows/CI/badge.svg)](https://github.com/mattn/efm-langserver/actions)
 
-General purpose Language Server that can use specified error message format
-generated from specified command. This is useful for editing code with linter.
+A general-purpose language server that adds [LSP](https://microsoft.github.io/language-server-protocol/)
+support to traditional linters and formatters by acting as a proxy. Once
+[configured](#configuration) and [set up](#client-setup) for your editor
+of choice, it calls those tools when triggered over LSP, translates their
+output, and returns the result over LSP.
+
+```mermaid
+
+graph LR
+
+E["EDITOR or IDE"] <== LSP ==> S(("`**efm-langserver**`"))
+
+S <--> L["LINTER"]
+S <--> F["FORMATTER"]
+
+style S fill:orange,color:black
+```
+
+Here's `efm-langserver` in action:
 
 ![efm](https://raw.githubusercontent.com/mattn/efm-langserver/master/screenshot.png)
 
@@ -16,7 +33,7 @@ generated from specified command. This is useful for editing code with linter.
 * [Client Setup](#client-setup)
   + [Configuration for vim-lsp](#configuration-for-vim-lsp)
   + [Configuration for coc.nvim](#configuration-for-cocnvim)
-  + [Configuration for Eglot (Emacs)](#configuration-for-eglot)
+  + [Configuration for Eglot (Emacs)](#configuration-for-eglot-emacs)
   + [Configuration for neovim builtin LSP with nvim-lspconfig](#configuration-for-neovim-builtin-lsp-with-nvim-lspconfig)
   + [Configuration for Helix](#configuration-for-helix)
   + [Configuration for VSCode](#configuration-for-vscode)

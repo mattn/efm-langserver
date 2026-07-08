@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -31,6 +32,58 @@ func TestLintRequestDebounceKeepsAllURIs(t *testing.T) {
 			t.Fatalf("timed out waiting for lint requests, got: %v", got)
 		}
 	}
+}
+
+func TestLintConcurrentFileUpdate(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	h := &langHandler{
+		logger:            log.New(log.Writer(), "", log.LstdFlags),
+		rootPath:          base,
+		lintDebounce:      100 * time.Millisecond,
+		request:           make(chan lintRequest, 10),
+		pendingLints:      make(map[DocumentURI]eventType),
+		lastPublishedURIs: make(map[string]map[DocumentURI]struct{}),
+		configs: map[string][]Language{
+			"vim": {
+				{
+					LintCommand:        `echo ` + file + `:2:No it is normal!`,
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	stop := make(chan struct{})
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for i := 0; ; i++ {
+			select {
+			case <-stop:
+				return
+			default:
+			}
+			_ = h.updateFile(uri, strings.Repeat("x", i%64)+"\n", nil, eventTypeChange)
+		}
+	}()
+	for i := 0; i < 5; i++ {
+		if _, err := h.lint(context.Background(), uri, eventTypeChange); err != nil {
+			t.Fatal(err)
+		}
+	}
+	close(stop)
+	wg.Wait()
 }
 
 func TestLintNoLinter(t *testing.T) {

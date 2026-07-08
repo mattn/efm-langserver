@@ -28,7 +28,9 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 		if err != nil {
 			return nil, err
 		}
+		h.mu.Lock()
 		h.rootPath = filepath.Clean(rootPath)
+		h.mu.Unlock()
 		h.addFolder(rootPath)
 	}
 

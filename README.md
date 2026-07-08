@@ -51,6 +51,16 @@ or via [Homebrew](https://brew.sh/):
 brew install efm-langserver
 ```
 
+### Termux (Android)
+
+Plain Linux binaries do not work in Termux due to a Go runtime limitation
+([golang/go#60125](https://github.com/golang/go/issues/60125)). Build with
+the android target instead:
+
+```console
+GOOS=android go install github.com/mattn/efm-langserver@latest
+```
+
 ## Usage
 
 ```text

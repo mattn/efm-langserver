@@ -214,6 +214,13 @@ Configs:
 		text = strings.Replace(string(b), "\r", "", -1)
 	}
 
+	// The formatter output was normalized to LF above; when the original
+	// document uses CRLF, restore it so the diff is computed against
+	// matching line endings instead of treating every line as changed.
+	if strings.Contains(originalText, "\r\n") {
+		text = strings.Replace(text, "\n", "\r\n", -1)
+	}
+
 	if text == originalText || text == "" {
 		// probably it was formatted in place
 		return nil, nil

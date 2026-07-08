@@ -8,6 +8,7 @@ package langserver
 
 import (
 	"strings"
+	"unicode/utf16"
 )
 
 // OpKind is used to denote the type of operation a line represents.
@@ -50,6 +51,24 @@ func ComputeEdits(_ DocumentURI, before, after string) []TextEdit {
 					},
 					NewText: content,
 				})
+			}
+		}
+	}
+
+	// When the document does not end with a newline, the line-based
+	// operations above can reference the line one past the last one, which
+	// does not exist. Clamp those positions to the end of the last line so
+	// clients are not left to guess how to apply out-of-range edits.
+	if before != "" && !strings.HasSuffix(before, "\n") {
+		lines := splitLines(before)
+		lastLine := len(lines) - 1
+		lastChar := len(utf16.Encode([]rune(lines[lastLine])))
+		for i := range edits {
+			if edits[i].Range.Start.Line > lastLine {
+				edits[i].Range.Start = Position{Line: lastLine, Character: lastChar}
+			}
+			if edits[i].Range.End.Line > lastLine {
+				edits[i].Range.End = Position{Line: lastLine, Character: lastChar}
 			}
 		}
 	}

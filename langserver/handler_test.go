@@ -11,6 +11,28 @@ import (
 	"time"
 )
 
+func TestLintRequestDebounceKeepsAllURIs(t *testing.T) {
+	h := &langHandler{
+		lintDebounce: 10 * time.Millisecond,
+		request:      make(chan lintRequest),
+		pendingLints: make(map[DocumentURI]eventType),
+	}
+
+	h.lintRequest("file:///a", eventTypeChange)
+	h.lintRequest("file:///b", eventTypeChange)
+
+	got := map[DocumentURI]bool{}
+	timeout := time.After(3 * time.Second)
+	for len(got) < 2 {
+		select {
+		case req := <-h.request:
+			got[req.URI] = true
+		case <-timeout:
+			t.Fatalf("timed out waiting for lint requests, got: %v", got)
+		}
+	}
+}
+
 func TestLintNoLinter(t *testing.T) {
 	h := &langHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),

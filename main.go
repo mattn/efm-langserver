@@ -95,7 +95,17 @@ func main() {
 	if logfile == "" {
 		logfile = config.LogFile
 	}
-	if config.LogLevel > 0 {
+	loglevelSet := false
+	flag.Visit(func(f *flag.Flag) {
+		if f.Name == "loglevel" {
+			loglevelSet = true
+		}
+	})
+	if loglevelSet {
+		// An explicitly passed -loglevel takes precedence over the
+		// configuration file.
+		config.LogLevel = loglevel
+	} else if config.LogLevel > 0 {
 		loglevel = config.LogLevel
 	}
 

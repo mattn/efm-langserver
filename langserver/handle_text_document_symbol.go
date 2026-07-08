@@ -107,7 +107,7 @@ func (h *langHandler) symbol(uri DocumentURI) ([]SymbolInformation, error) {
 		}
 		command = replaceCommandInputFilename(command, fname, h.rootPath)
 
-		formats := config.LintFormats
+		formats := config.SymbolFormats
 		if len(formats) == 0 {
 			formats = []string{"%f:%l:%m", "%f:%l:%c:%m"}
 		}

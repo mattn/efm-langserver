@@ -48,9 +48,9 @@ func LoadConfig(yamlfile string) (*Config, error) {
 	}
 	config.Filename = yamlfile
 	for _, v := range *config.Languages {
-		for _, l := range v {
-			if l.HoverChars == "" {
-				l.HoverChars = "_"
+		for i := range v {
+			if v[i].HoverChars == "" {
+				v[i].HoverChars = "_"
 			}
 		}
 	}

@@ -17,8 +17,11 @@ func (h *langHandler) handleTextDocumentDidChange(_ context.Context, _ *jsonrpc2
 		return nil, err
 	}
 
-	if len(params.ContentChanges) == 1 {
-		if err := h.updateFile(params.TextDocument.URI, params.ContentChanges[0].Text, &params.TextDocument.Version, eventTypeChange); err != nil {
+	if len(params.ContentChanges) > 0 {
+		// The server requests full sync, so every change carries the whole
+		// text and the last one wins.
+		text := params.ContentChanges[len(params.ContentChanges)-1].Text
+		if err := h.updateFile(params.TextDocument.URI, text, &params.TextDocument.Version, eventTypeChange); err != nil {
 			return nil, err
 		}
 	}

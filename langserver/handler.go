@@ -113,6 +113,7 @@ func NewHandler(config *Config) jsonrpc2.Handler {
 		request:           make(chan lintRequest),
 		lintDebounce:      time.Duration(config.LintDebounce),
 		lintTimer:         nil,
+		pendingLints:      make(map[DocumentURI]eventType),
 
 		formatDebounce: time.Duration(config.FormatDebounce),
 		formatTimer:    nil,
@@ -138,6 +139,7 @@ type langHandler struct {
 	request           chan lintRequest
 	lintDebounce      time.Duration
 	lintTimer         *time.Timer
+	pendingLints      map[DocumentURI]eventType
 	formatDebounce    time.Duration
 	formatTimer       *time.Timer
 	conn              *jsonrpc2.Conn
@@ -231,14 +233,23 @@ func toURI(path string) DocumentURI {
 	}).String())
 }
 
-func (h *langHandler) lintRequest(uri DocumentURI, eventType eventType) {
+func (h *langHandler) lintRequest(uri DocumentURI, event eventType) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.pendingLints[uri] = event
 	if h.lintTimer != nil {
 		h.lintTimer.Reset(h.lintDebounce)
 		return
 	}
 	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
+		h.mu.Lock()
 		h.lintTimer = nil
-		h.request <- lintRequest{URI: uri, EventType: eventType}
+		pending := h.pendingLints
+		h.pendingLints = make(map[DocumentURI]eventType)
+		h.mu.Unlock()
+		for pendingURI, pendingEventType := range pending {
+			h.request <- lintRequest{URI: pendingURI, EventType: pendingEventType}
+		}
 	})
 }
 

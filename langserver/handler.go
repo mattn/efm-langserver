@@ -597,15 +597,17 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 					diagURI = toURI(filepath.Join(rootPath, entry.Filename))
 				}
 			}
+			diagFname, _ := fromURI(diagURI)
+			sameFile := diagFname == fname
 			if runtime.GOOS == "windows" {
-				if strings.ToLower(string(diagURI)) != strings.ToLower(string(uri)) && !config.LintWorkspace {
-					continue
-				}
-			} else {
-				diagFname, _ := fromURI(diagURI)
-				if diagFname != fname && !config.LintWorkspace {
-					continue
-				}
+				sameFile = strings.EqualFold(diagFname, fname)
+			}
+			if sameFile {
+				// Reuse the client's URI so its escaping (e.g. %5B for
+				// "[") matches what the client expects.
+				diagURI = uri
+			} else if !config.LintWorkspace {
+				continue
 			}
 
 			if config.LintWorkspace {

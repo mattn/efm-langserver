@@ -421,6 +421,49 @@ func TestLintEndPositions(t *testing.T) {
 	}
 }
 
+func TestLintClientURIEscaping(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.ToSlash(filepath.Join(base, "[id]", "foo"))
+
+	// Clients may percent-encode URIs differently from toURI (e.g. VSCode
+	// sends c%3A for the drive colon); diagnostics must still be published
+	// under the URI the client uses. "%6f%6f" decodes to "oo".
+	clientURI := DocumentURI(strings.Replace(string(toURI(file)), "foo", "f%6f%6f", 1))
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			wildcard: {
+				{
+					LintCommand:        `echo ` + file + `:2:1:msg`,
+					LintFormats:        []string{"%f:%l:%c:%m"},
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			clientURI: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\n",
+			},
+		},
+	}
+
+	uriToDiag, err := h.lint(context.Background(), clientURI, eventTypeChange)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d, ok := uriToDiag[clientURI]
+	if !ok {
+		t.Fatalf("diagnostics should be published with the client's URI %q but got: %v", clientURI, uriToDiag)
+	}
+	if len(d) != 1 {
+		t.Fatalf("diagnostics should be only one but got: %v", d)
+	}
+}
+
 func TestLintCategoryMap(t *testing.T) {
 	base, _ := os.Getwd()
 	file := filepath.Join(base, "foo")

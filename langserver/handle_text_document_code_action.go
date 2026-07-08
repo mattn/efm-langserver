@@ -137,6 +137,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (any, error) 
 			if err != nil {
 				return nil, err
 			}
+			h.mu.Lock()
 			h.commands = *config.Commands
 			h.configs = *config.Languages
 			h.rootMarkers = *config.RootMarkers
@@ -144,6 +145,7 @@ func (h *langHandler) executeCommand(params *ExecuteCommandParams) (any, error) 
 			h.loglevel = config.LogLevel
 			h.lintDebounce = time.Duration(config.LintDebounce)
 			h.formatDebounce = time.Duration(config.FormatDebounce)
+			h.mu.Unlock()
 		}
 		h.logMessage(LogInfo, "Reloaded configuration file")
 		output = "OK"

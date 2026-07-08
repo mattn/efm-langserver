@@ -21,6 +21,8 @@ func (h *langHandler) handleDidChangeWorkspaceWorkspaceFolders(_ context.Context
 }
 
 func (h *langHandler) didChangeWorkspaceFolders(params *DidChangeWorkspaceFoldersParams) (result any, err error) {
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	var folders []string
 	for _, removed := range params.Event.Removed {
 		for _, folder := range h.folders {

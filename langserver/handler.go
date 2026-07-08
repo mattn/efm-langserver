@@ -283,7 +283,10 @@ func (h *langHandler) linter() {
 		go func() {
 			uriToDiagnostics, err := h.lint(ctx, lintReq.URI, lintReq.EventType)
 			if err != nil {
-				h.logger.Println(err)
+				h.mu.Lock()
+				logger := h.logger
+				h.mu.Unlock()
+				logger.Println(err)
 				return
 			}
 
@@ -292,9 +295,11 @@ func (h *langHandler) linter() {
 					diagURI = lintReq.URI
 				}
 				version := 0
-				if _, ok := h.files[lintReq.URI]; ok {
-					version = h.files[lintReq.URI].Version
+				h.mu.Lock()
+				if f, ok := h.files[lintReq.URI]; ok {
+					version = f.Version
 				}
+				h.mu.Unlock()
 				h.conn.Notify(
 					ctx,
 					"textDocument/publishDiagnostics",
@@ -346,17 +351,22 @@ func (h *langHandler) findRootPath(fname string, lang Language) string {
 	if dir := matchRootPath(fname, lang.RootMarkers); dir != "" {
 		return dir
 	}
-	if dir := matchRootPath(fname, h.rootMarkers); dir != "" {
+	h.mu.Lock()
+	rootMarkers := h.rootMarkers
+	folders := append([]string{}, h.folders...)
+	rootPath := h.rootPath
+	h.mu.Unlock()
+	if dir := matchRootPath(fname, rootMarkers); dir != "" {
 		return dir
 	}
 
-	for _, folder := range h.folders {
+	for _, folder := range folders {
 		if len(fname) > len(folder) && strings.EqualFold(fname[:len(folder)], folder) {
 			return folder
 		}
 	}
 
-	return h.rootPath
+	return rootPath
 }
 
 func isFilename(s string) bool {
@@ -369,10 +379,21 @@ func isFilename(s string) bool {
 }
 
 func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType eventType) (map[DocumentURI][]Diagnostic, error) {
+	// Snapshot the shared state under the lock: this function runs in its
+	// own goroutine and must not touch h.files or h.configs while the
+	// handler goroutine mutates them.
+	h.mu.Lock()
 	f, ok := h.files[uri]
 	if !ok {
+		h.mu.Unlock()
 		return nil, fmt.Errorf("document not found: %v", uri)
 	}
+	file := *f
+	loglevel := h.loglevel
+	logger := h.logger
+	langConfigs := append([]Language{}, h.configs[file.LanguageID]...)
+	wildcardConfigs := append([]Language{}, h.configs[wildcard]...)
+	h.mu.Unlock()
 
 	fname, err := fromURI(uri)
 	if err != nil {
@@ -381,41 +402,37 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 	fname = filepath.ToSlash(fname)
 
 	var configs []Language
-	if cfgs, ok := h.configs[f.LanguageID]; ok {
-		for _, cfg := range cfgs {
-			// if we require markers and find that they dont exist we do not add the configuration
-			if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker == true {
+	for _, cfg := range langConfigs {
+		// if we require markers and find that they dont exist we do not add the configuration
+		if dir := matchRootPath(fname, cfg.RootMarkers); dir == "" && cfg.RequireMarker == true {
+			continue
+		}
+		switch eventType {
+		case eventTypeOpen:
+			// if LintAfterOpen is not true, ignore didOpen
+			if !cfg.LintAfterOpen {
 				continue
 			}
-			switch eventType {
-			case eventTypeOpen:
-				// if LintAfterOpen is not true, ignore didOpen
-				if !cfg.LintAfterOpen {
-					continue
-				}
-			case eventTypeChange:
-				// if LintOnSave is true, ignore didChange
-				if cfg.LintOnSave {
-					continue
-				}
-			default:
+		case eventTypeChange:
+			// if LintOnSave is true, ignore didChange
+			if cfg.LintOnSave {
+				continue
 			}
-			if cfg.LintCommand != "" {
-				configs = append(configs, cfg)
-			}
+		default:
+		}
+		if cfg.LintCommand != "" {
+			configs = append(configs, cfg)
 		}
 	}
-	if cfgs, ok := h.configs[wildcard]; ok {
-		for _, cfg := range cfgs {
-			if cfg.LintCommand != "" {
-				configs = append(configs, cfg)
-			}
+	for _, cfg := range wildcardConfigs {
+		if cfg.LintCommand != "" {
+			configs = append(configs, cfg)
 		}
 	}
 
 	if len(configs) == 0 {
-		if h.loglevel >= 1 {
-			h.logger.Printf("lint for LanguageID not supported: %v", f.LanguageID)
+		if loglevel >= 1 {
+			logger.Printf("lint for LanguageID not supported: %v", file.LanguageID)
 		}
 		return map[DocumentURI][]Diagnostic{}, nil
 	}
@@ -427,11 +444,13 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 	for i, config := range configs {
 		// To publish empty diagnostics when errors are fixed
 		if config.LintWorkspace {
-			for lastPublishedURI := range h.lastPublishedURIs[f.LanguageID] {
+			h.mu.Lock()
+			for lastPublishedURI := range h.lastPublishedURIs[file.LanguageID] {
 				if _, ok := uriToDiagnostics[lastPublishedURI]; !ok {
 					uriToDiagnostics[lastPublishedURI] = []Diagnostic{}
 				}
 			}
+			h.mu.Unlock()
 		}
 
 		if config.LintCommand == "" {
@@ -464,7 +483,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 		cmd.Dir = rootPath
 		cmd.Env = append(os.Environ(), config.Env...)
 		if config.LintStdin {
-			cmd.Stdin = strings.NewReader(f.Text)
+			cmd.Stdin = strings.NewReader(file.Text)
 		}
 		b, err := cmd.CombinedOutput()
 		if err != nil {
@@ -481,8 +500,8 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 			h.logMessage(LogError, "command `"+command+"` exit with zero. probably you forgot to specify `lint-ignore-exit-code: true`.")
 			continue
 		}
-		if h.loglevel >= 3 {
-			h.logger.Println(command+":", string(b))
+		if loglevel >= 3 {
+			logger.Println(command+":", string(b))
 		}
 		var source *string
 		if config.LintSource != "" {
@@ -531,7 +550,7 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 			if entry.Col == 0 {
 				entry.Col = 1 // entry.Col == 0 indicates the whole line without column, set to 1 because it is subtracted later
 			} else {
-				word = f.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
+				word = file.WordAt(Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1})
 			}
 
 			// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
@@ -595,7 +614,9 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 	// Update state here as no possibility of cancelation
 	for _, config := range configs {
 		if config.LintWorkspace {
-			h.lastPublishedURIs[f.LanguageID] = publishedURIs
+			h.mu.Lock()
+			h.lastPublishedURIs[file.LanguageID] = publishedURIs
+			h.mu.Unlock()
 			break
 		}
 	}
@@ -611,7 +632,9 @@ func itoaPtrIfNotZero(n int) *string {
 }
 
 func (h *langHandler) closeFile(uri DocumentURI) error {
+	h.mu.Lock()
 	delete(h.files, uri)
+	h.mu.Unlock()
 	return nil
 }
 
@@ -626,19 +649,24 @@ func (h *langHandler) openFile(uri DocumentURI, languageID string, version int) 
 		LanguageID: languageID,
 		Version:    version,
 	}
+	h.mu.Lock()
 	h.files[uri] = f
+	h.mu.Unlock()
 	return nil
 }
 
 func (h *langHandler) updateFile(uri DocumentURI, text string, version *int, eventType eventType) error {
+	h.mu.Lock()
 	f, ok := h.files[uri]
 	if !ok {
+		h.mu.Unlock()
 		return fmt.Errorf("document not found: %v", uri)
 	}
 	f.Text = text
 	if version != nil {
 		f.Version = *version
 	}
+	h.mu.Unlock()
 
 	h.lintRequest(uri, eventType)
 	return nil
@@ -658,6 +686,8 @@ func (h *langHandler) configFor(uri DocumentURI) []Language {
 
 func (h *langHandler) addFolder(folder string) {
 	folder = filepath.Clean(folder)
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	found := false
 	for _, cur := range h.folders {
 		if cur == folder {

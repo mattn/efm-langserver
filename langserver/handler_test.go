@@ -359,6 +359,48 @@ func TestLintOffsetColumnsNonZero(t *testing.T) {
 	}
 }
 
+func TestLintEndPositions(t *testing.T) {
+	base, _ := os.Getwd()
+	file := filepath.Join(base, "foo")
+	uri := toURI(file)
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: base,
+		configs: map[string][]Language{
+			wildcard: {
+				{
+					LintCommand:        `echo ` + file + `:2:1:3:6:msg`,
+					LintFormats:        []string{"%f:%l:%c:%e:%k:%m"},
+					LintIgnoreExitCode: true,
+					LintStdin:          true,
+				},
+			},
+		},
+		files: map[DocumentURI]*File{
+			uri: {
+				LanguageID: "vim",
+				Text:       "scriptencoding utf-8\nabnormal!\nabnormal!\n",
+			},
+		},
+	}
+
+	uriToDiag, err := h.lint(context.Background(), uri, eventTypeChange)
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := uriToDiag[uri]
+	if len(d) != 1 {
+		t.Fatal("diagnostics should be only one")
+	}
+	if d[0].Range.Start.Line != 1 || d[0].Range.Start.Character != 0 {
+		t.Fatalf("range.start should be {1 0} but got: %v", d[0].Range.Start)
+	}
+	if d[0].Range.End.Line != 2 || d[0].Range.End.Character != 5 {
+		t.Fatalf("range.end should be {2 5} but got: %v", d[0].Range.End)
+	}
+}
+
 func TestLintCategoryMap(t *testing.T) {
 	base, _ := os.Getwd()
 	file := filepath.Join(base, "foo")

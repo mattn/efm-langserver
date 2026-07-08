@@ -547,8 +547,13 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 			// entry.Col is expected to be one based, if the linter returns zero based we
 			// have the ability to add an offset here.
 			// We only add the offset if the linter reports entry.Col > 0 because 0 means the whole line
-			if config.LintOffsetColumns > 0 && entry.Col > 0 {
-				entry.Col = entry.Col + config.LintOffsetColumns
+			if config.LintOffsetColumns > 0 {
+				if entry.Col > 0 {
+					entry.Col = entry.Col + config.LintOffsetColumns
+				}
+				if entry.EndCol > 0 {
+					entry.EndCol = entry.EndCol + config.LintOffsetColumns
+				}
 			}
 
 			if entry.Lnum == 0 {
@@ -606,10 +611,23 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 			if config.LintWorkspace {
 				publishedURIs[diagURI] = struct{}{}
 			}
+			start := Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1}
+			end := Position{Line: start.Line, Character: entry.Col - 1 + len([]rune(word))}
+			// %e (end line) and %k (end column, exclusive like eslint's
+			// endColumn) take precedence over the word-based guess.
+			if entry.EndLnum > 0 {
+				end.Line = entry.EndLnum - 1 - config.LintOffset
+			}
+			if entry.EndCol > 0 {
+				end.Character = entry.EndCol - 1
+			}
+			if end.Line < start.Line || (end.Line == start.Line && end.Character < start.Character) {
+				end = start
+			}
 			uriToDiagnostics[diagURI] = append(uriToDiagnostics[diagURI], Diagnostic{
 				Range: Range{
-					Start: Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1},
-					End:   Position{Line: entry.Lnum - 1 - config.LintOffset, Character: entry.Col - 1 + len([]rune(word))},
+					Start: start,
+					End:   end,
 				},
 				Code:     itoaPtrIfNotZero(entry.Nr),
 				Message:  prefix + entry.Text,

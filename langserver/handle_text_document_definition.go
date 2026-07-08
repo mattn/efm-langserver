@@ -59,11 +59,11 @@ func (h *langHandler) findTag(fname string, tag string) ([]Location, error) {
 				pattern := token[2]
 				hasPrefix := strings.HasPrefix(pattern, "/^")
 				if hasPrefix {
-					pattern = strings.TrimLeft(pattern, "/^")
+					pattern = strings.TrimPrefix(pattern, "/^")
 				}
 				hasSuffix := strings.HasSuffix(pattern, "$/")
 				if hasSuffix {
-					pattern = strings.TrimRight(pattern, "$/")
+					pattern = strings.TrimSuffix(pattern, "$/")
 				}
 				for i, line := range lines {
 					match := false

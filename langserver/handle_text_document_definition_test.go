@@ -37,3 +37,30 @@ func TestFindTag(t *testing.T) {
 	}
 	fmt.Println(locations)
 }
+
+func TestFindTagPatternWithDollar(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "src.txt")
+	if err := os.WriteFile(src, []byte("start$\nstart extra\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	tags := filepath.Join(dir, "tags")
+	if err := os.WriteFile(tags, []byte("mytag\tsrc.txt\t/^start$$/;\"\tv\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	h := &langHandler{
+		logger:   log.New(log.Writer(), "", log.LstdFlags),
+		rootPath: dir,
+	}
+	locations, err := h.findTag(tags, "mytag")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(locations) != 1 {
+		t.Fatalf("locations should be only one but got: %v", locations)
+	}
+	if locations[0].Range.Start.Line != 0 {
+		t.Fatalf("range.start.line should be %v but got: %v", 0, locations[0].Range.Start.Line)
+	}
+}

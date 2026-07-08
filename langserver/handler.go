@@ -525,7 +525,9 @@ func (h *langHandler) lint(ctx context.Context, uri DocumentURI, eventType event
 
 			// we allow the config to provide a mapping between LSP types E,W,I,N and whatever categories the linter has
 			if len(config.LintCategoryMap) > 0 {
-				entry.Type = []rune(config.LintCategoryMap[string(entry.Type)])[0]
+				if mapped, ok := config.LintCategoryMap[string(entry.Type)]; ok && mapped != "" {
+					entry.Type = []rune(mapped)[0]
+				}
 			}
 
 			severity := 1

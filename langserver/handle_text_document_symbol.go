@@ -139,53 +139,57 @@ func (h *langHandler) symbol(uri DocumentURI) ([]SymbolInformation, error) {
 
 		scanner := bufio.NewScanner(bytes.NewReader(b))
 		for scanner.Scan() {
+			var m *errorformat.Match
 			for _, ef := range efms.Efms {
-				m := ef.Match(string(scanner.Text()))
-				if m == nil {
-					continue
+				m = ef.Match(string(scanner.Text()))
+				if m != nil {
+					break
 				}
-				if config.SymbolStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
-					m.F = fname
-				} else {
-					m.F = filepath.ToSlash(m.F)
-				}
-				if m.C == 0 {
-					m.C = 1
-				}
-				path, err := filepath.Abs(m.F)
-				if err != nil {
-					h.logger.Println(err)
-					continue
-				}
-				path = filepath.ToSlash(path)
-				if runtime.GOOS == "windows" {
-					path = strings.ToLower(path)
-				}
-				if path != fname {
-					h.logger.Println(path, fname)
-					continue
-				}
-				token := strings.SplitN(m.M, "!", 2)
-				kind := symbolKindMap["key"]
-				if len(token) == 2 {
-					if tmp, ok := symbolKindMap[strings.ToLower(token[0])]; ok {
-						kind = tmp
-					}
-				} else {
-					token = []string{"", m.M}
-				}
-				symbols = append(symbols, SymbolInformation{
-					Location: Location{
-						URI: uri,
-						Range: Range{
-							Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-							End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
-						},
-					},
-					Kind: int64(kind),
-					Name: token[1],
-				})
 			}
+			if m == nil {
+				continue
+			}
+			if config.SymbolStdin && (m.F == "stdin" || m.F == "-" || m.F == "<text>") {
+				m.F = fname
+			} else {
+				m.F = filepath.ToSlash(m.F)
+			}
+			if m.C == 0 {
+				m.C = 1
+			}
+			path, err := filepath.Abs(m.F)
+			if err != nil {
+				h.logger.Println(err)
+				continue
+			}
+			path = filepath.ToSlash(path)
+			if runtime.GOOS == "windows" {
+				path = strings.ToLower(path)
+			}
+			if path != fname {
+				h.logger.Println(path, fname)
+				continue
+			}
+			token := strings.SplitN(m.M, "!", 2)
+			kind := symbolKindMap["key"]
+			if len(token) == 2 {
+				if tmp, ok := symbolKindMap[strings.ToLower(token[0])]; ok {
+					kind = tmp
+				}
+			} else {
+				token = []string{"", m.M}
+			}
+			symbols = append(symbols, SymbolInformation{
+				Location: Location{
+					URI: uri,
+					Range: Range{
+						Start: Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+						End:   Position{Line: m.L - 1 - config.LintOffset, Character: m.C - 1},
+					},
+				},
+				Kind: int64(kind),
+				Name: token[1],
+			})
 		}
 	}
 

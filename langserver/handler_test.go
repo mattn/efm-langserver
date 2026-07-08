@@ -10,6 +10,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/sourcegraph/jsonrpc2"
 )
 
 func TestLintRequestDebounceKeepsAllURIs(t *testing.T) {
@@ -84,6 +86,24 @@ func TestLintConcurrentFileUpdate(t *testing.T) {
 	}
 	close(stop)
 	wg.Wait()
+}
+
+func TestUnknownMethods(t *testing.T) {
+	h := &langHandler{
+		logger: log.New(log.Writer(), "", log.LstdFlags),
+	}
+
+	// Unknown notifications must be ignored per the LSP spec.
+	if _, err := h.handle(context.Background(), nil, &jsonrpc2.Request{Method: "window/progress", Notif: true}); err != nil {
+		t.Fatalf("unknown notification should be ignored but got: %v", err)
+	}
+
+	// Unknown requests must still return MethodNotFound.
+	_, err := h.handle(context.Background(), nil, &jsonrpc2.Request{Method: "textDocument/rename"})
+	var rpcErr *jsonrpc2.Error
+	if !errors.As(err, &rpcErr) || rpcErr.Code != jsonrpc2.CodeMethodNotFound {
+		t.Fatalf("unknown request should return MethodNotFound but got: %v", err)
+	}
 }
 
 func TestShutdownWithPendingLintDoesNotPanic(t *testing.T) {

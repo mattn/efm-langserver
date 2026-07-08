@@ -104,6 +104,10 @@ func TestShutdownWithPendingLintDoesNotPanic(t *testing.T) {
 	// New lint requests after shutdown must be ignored.
 	h.lintRequest("file:///b", eventTypeChange)
 	time.Sleep(50 * time.Millisecond)
+
+	if _, ok := <-h.request; ok {
+		t.Fatal("no lint request should be sent after shutdown")
+	}
 }
 
 func TestLintNoLinter(t *testing.T) {

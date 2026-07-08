@@ -86,6 +86,30 @@ func TestLintConcurrentFileUpdate(t *testing.T) {
 	wg.Wait()
 }
 
+func TestShutdownWithPendingLintDoesNotPanic(t *testing.T) {
+	h := &langHandler{
+		lintDebounce: 10 * time.Millisecond,
+		request:      make(chan lintRequest),
+		pendingLints: make(map[DocumentURI]eventType),
+	}
+
+	h.lintRequest("file:///a", eventTypeChange)
+	h.shutdown()
+	// A second shutdown must not panic either.
+	h.shutdown()
+	// Give the debounce timer a chance to fire; sending on the closed
+	// channel would panic and crash the test.
+	time.Sleep(50 * time.Millisecond)
+
+	// New lint requests after shutdown must be ignored.
+	h.lintRequest("file:///b", eventTypeChange)
+	time.Sleep(50 * time.Millisecond)
+
+	if _, ok := <-h.request; ok {
+		t.Fatal("no lint request should be sent after shutdown")
+	}
+}
+
 func TestLintNoLinter(t *testing.T) {
 	h := &langHandler{
 		logger:  log.New(log.Writer(), "", log.LstdFlags),

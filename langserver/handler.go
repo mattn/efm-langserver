@@ -140,6 +140,7 @@ type langHandler struct {
 	lintDebounce      time.Duration
 	lintTimer         *time.Timer
 	pendingLints      map[DocumentURI]eventType
+	isShutdown        bool
 	formatDebounce    time.Duration
 	formatTimer       *time.Timer
 	conn              *jsonrpc2.Conn
@@ -236,20 +237,27 @@ func toURI(path string) DocumentURI {
 func (h *langHandler) lintRequest(uri DocumentURI, event eventType) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
+	if h.isShutdown {
+		return
+	}
 	h.pendingLints[uri] = event
 	if h.lintTimer != nil {
 		h.lintTimer.Reset(h.lintDebounce)
 		return
 	}
 	h.lintTimer = time.AfterFunc(h.lintDebounce, func() {
+		// Sending while holding the lock serializes this callback with
+		// shutdown(), which closes h.request under the same lock.
 		h.mu.Lock()
+		defer h.mu.Unlock()
 		h.lintTimer = nil
-		pending := h.pendingLints
-		h.pendingLints = make(map[DocumentURI]eventType)
-		h.mu.Unlock()
-		for pendingURI, pendingEventType := range pending {
+		if h.isShutdown {
+			return
+		}
+		for pendingURI, pendingEventType := range h.pendingLints {
 			h.request <- lintRequest{URI: pendingURI, EventType: pendingEventType}
 		}
+		h.pendingLints = make(map[DocumentURI]eventType)
 	})
 }
 

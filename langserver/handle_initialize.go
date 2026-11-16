@@ -93,7 +93,11 @@ func (h *langHandler) handleInitialize(_ context.Context, conn *jsonrpc2.Conn, r
 
 	return InitializeResult{
 		Capabilities: ServerCapabilities{
-			TextDocumentSync:           TDSKFull,
+			TextDocumentSync: &TextDocumentSyncOptions{
+				OpenClose: true,
+				Change:    TDSKFull,
+				Save:      &SaveOptions{IncludeText: false},
+			},
 			DocumentFormattingProvider: hasFormatCommand,
 			RangeFormattingProvider:    hasRangeFormatCommand,
 			DocumentSymbolProvider:     hasSymbolCommand,
